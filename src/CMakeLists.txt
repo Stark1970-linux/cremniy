@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui LinguistTools Test Svg)
 
 find_library(LIBGIT2_LIB NAMES git2 libgit2 REQUIRED)
+find_path(LIBGIT2_INCLUDE_DIR NAMES git2.h REQUIRED)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -129,6 +130,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Modules/Windows/)
 
 # - - Menus - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ui/MenuBar/Menus/)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGIT2_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
