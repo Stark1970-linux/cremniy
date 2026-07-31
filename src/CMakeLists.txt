@@ -14,6 +14,13 @@ find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui LinguistTools Test S
 find_library(LIBGIT2_LIB NAMES git2 libgit2 REQUIRED)
 find_path(LIBGIT2_INCLUDE_DIR NAMES git2.h REQUIRED)
 
+if(NOT WIN32)
+    find_package(ZLIB REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    find_library(PCRE_LIB NAMES pcre REQUIRED)
+    find_library(HTTP_PARSER_LIB NAMES http_parser REQUIRED)
+endif()
+
 set(PROJECT_SOURCES
         main.cpp
 )
@@ -140,6 +147,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Svg
     ${LIBGIT2_LIB}
 )
+
+if(NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ${HTTP_PARSER_LIB}
+        ${PCRE_LIB}
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        ZLIB::ZLIB
+    )
+endif()
 
 set(APP_LANGUAGES
         en
