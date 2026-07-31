@@ -13,12 +13,12 @@
 
 ### 🐞 Баги
 
+*пусто*
+
 ### ✨ Улучшения и новые задачи
 
-- [ ] 🟡 [Отображение чисел в разных системах счисления при наведении](https://github.com/Cremniy-Project/cremniy/issues/28)
 - [ ] 🟡 [Улучшить терминал](https://github.com/munirov/cremniy/issues/100)
 - [ ] 🟢 [Поиск строки по всем файлам проекта](https://github.com/Cremniy-Project/cremniy/issues/76)
-- [ ] 🟢 [Работа с Git](https://github.com/Cremniy-Project/cremniy/issues/42)
 
 ## 🔮 Будущие планы
 
