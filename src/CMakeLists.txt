@@ -17,7 +17,7 @@ find_path(LIBGIT2_INCLUDE_DIR NAMES git2.h REQUIRED)
 if(NOT WIN32)
     find_package(ZLIB REQUIRED)
     find_package(OpenSSL REQUIRED)
-    find_library(PCRE_LIB NAMES pcre REQUIRED)
+    find_library(PCRE_LIB NAMES pcre2-8 pcre)
     find_library(HTTP_PARSER_LIB NAMES http_parser REQUIRED)
 endif()
 
