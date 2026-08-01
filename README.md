@@ -66,15 +66,16 @@ You constantly **switch** between different windows, and the tools are **not lin
 |---|---|
 | **CMake** | 3.16 |
 | **Qt** | 6.8.2 |
+| **[libgit2](https://libgit2.org/)** | 1.x |
 | **C++ compiler** | C++17 support |
 
 <details>
 <summary><b>🪟 Windows</b></summary>
 
 1. Install [MSYS2](https://www.msys2.org/)
-2. Install MinGW, CMake, Qt6-base via **MSYS2 terminal**:
+2. Install MinGW, CMake, Qt6-base, and libgit2 via **MSYS2 terminal**:
 ```base
-pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-qt6-base
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-qt6-base mingw-w64-ucrt-x86_64-libgit2
 ```
 3. Add MSYS2 package directory to PATH  
    MSYS2 packages are located in `C:\msys64\ucrt64\bin` by default.
@@ -86,7 +87,7 @@ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86
 
 ```bash
 sudo apt update
-sudo apt install cmake g++ qt6-base-dev
+sudo apt install cmake g++ qt6-base-dev libgit2-dev
 ```
 
 > [!NOTE]
@@ -100,7 +101,7 @@ sudo apt install cmake g++ qt6-base-dev
 Using [Homebrew](https://brew.sh/):
 
 ```bash
-brew install cmake qt@6
+brew install cmake qt@6 libgit2
 ```
 
 </details>
