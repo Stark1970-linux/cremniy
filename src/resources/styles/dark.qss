@@ -269,43 +269,72 @@ QScrollBar::sub-page:horizontal {
     background: #181818;
 }
 
-QWidget#searchWidget {
+QWidget#searchPanel {
     background-color: #252526;
-    border-top: 1px solid #3C3C3C;
+    border-left: 1px solid #3C3C3C;
 }
 
-QWidget#searchWidget QLineEdit {
+QWidget#searchPanel QLineEdit,
+QWidget#searchPanel QComboBox {
     background-color: #181818;
     color: #D4D4D4;
     border: 1px solid #3C3C3C;
     border-radius: 3px;
 }
 
-QWidget#searchWidget QLineEdit:focus {
+QWidget#searchPanel QLineEdit:focus,
+QWidget#searchPanel QComboBox:focus {
     border: 1px solid #007ACC;
 }
 
-QWidget#searchWidget QLineEdit[state="error"] {
+QWidget#searchPanel QLineEdit[state="error"] {
     background-color: #3A1A1A;
     border: 1px solid #F44747;
 }
 
-QWidget#searchWidget QPushButton {
+QWidget#searchPanel QPushButton,
+QWidget#searchPanel QToolButton {
     background-color: #2D2D2D;
     color: #D4D4D4;
     border: 1px solid #3C3C3C;
     border-radius: 3px;
 }
 
-QWidget#searchWidget QPushButton:hover {
+QWidget#searchPanel QPushButton:hover,
+QWidget#searchPanel QToolButton:hover {
     background-color: #264F78;
     border: 1px solid #007ACC;
 }
 
-QWidget#searchWidget QPushButton:pressed {
+QWidget#searchPanel QPushButton:pressed,
+QWidget#searchPanel QToolButton:pressed,
+QWidget#searchPanel QToolButton:checked {
     background-color: #264F78;
-    border: 2px solid #007ACC;
-    font-weight: bold;
+    border: 1px solid #007ACC;
+}
+
+QWidget#searchPanel QPushButton:focus,
+QWidget#searchPanel QToolButton:focus,
+QWidget#searchPanel QTreeWidget:focus {
+    border: 1px solid #007ACC;
+}
+
+QWidget#searchPanel QLabel#searchEmptyDetail,
+QWidget#searchPanel QLabel#searchStatusLabel {
+    color: #A8A8A8;
+}
+
+QWidget#searchPanel QLabel#searchStatusLabel[statusState="error"] {
+    color: #F48771;
+}
+
+QWidget#searchPanel QLabel#searchStatusLabel[statusState="warning"] {
+    color: #DCDCAA;
+}
+
+QWidget#searchPanel QTreeWidget#searchResultsTree {
+    border: 1px solid #3C3C3C;
+    border-radius: 3px;
 }
 
 QDialog#settingsDialog QLabel#settingsSectionTitle {

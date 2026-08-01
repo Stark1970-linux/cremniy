@@ -9,6 +9,8 @@
 #include <QApplication>
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
+#include "widgets/search/searchpanel.h"
+#include <QShortcut>
 
 IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     : QMainWindow(parent), m_projectPath(ProjectPath) {
@@ -56,7 +58,13 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 
     m_mainSplitter->addWidget(m_leftSidebar);
     m_mainSplitter->addWidget(m_filesTabWidget);
-    m_mainSplitter->setSizes({200, 1000});
+    m_searchPanel = new SearchPanel(ProjectPath, m_filesTabWidget, m_mainSplitter);
+    m_mainSplitter->addWidget(m_searchPanel);
+    m_searchPanel->hide();
+    m_mainSplitter->setSizes({200, 1000, 0});
+    m_mainSplitter->setStretchFactor(0, 0);
+    m_mainSplitter->setStretchFactor(1, 1);
+    m_mainSplitter->setStretchFactor(2, 0);
 
     m_verticalSplitter->addWidget(m_mainSplitter); // Сверху все наше IDE
     m_verticalSplitter->setSizes({800, 200});
@@ -66,9 +74,10 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 
 
     // - - Tunning Widgets/Layouts - -
-    m_mainSplitter->setSizes({200, 1000});
+    m_mainSplitter->setSizes({200, 1000, 0});
     m_mainSplitter->setCollapsible(0, false);
     m_mainSplitter->setCollapsible(1, false);
+    m_mainSplitter->setCollapsible(2, true);
 
     m_verticalSplitter->setSizes({800, 200});
 
@@ -101,6 +110,37 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 
     connect(m_filesTreeView, &FileTreePanel::openFileRequested, this, [this](const QString& filePath, const QString& fileName) {
             m_filesTabWidget->openFile(filePath, fileName);
+    });
+    m_closeSearchShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    m_closeSearchShortcut->setContext(Qt::WindowShortcut);
+    m_closeSearchShortcut->setEnabled(false);
+    const auto closeSearch = [this] {
+        m_searchPanel->hide();
+        m_closeSearchShortcut->setEnabled(false);
+        if (auto* tab = currentFileTab())
+            tab->setFocus(Qt::ShortcutFocusReason);
+    };
+    connect(m_searchPanel, &SearchPanel::closeRequested, this, closeSearch);
+    connect(m_closeSearchShortcut, &QShortcut::activated, this, closeSearch);
+
+    auto* nextSearchResult = new QShortcut(QKeySequence(Qt::Key_F3), this);
+    nextSearchResult->setContext(Qt::WindowShortcut);
+    connect(nextSearchResult, &QShortcut::activated, this, [this] {
+        if (m_searchPanel->isVisible())
+            m_searchPanel->nextResult();
+        else
+            on_Find();
+    });
+    auto* previousSearchResult = new QShortcut(QKeySequence(Qt::SHIFT | Qt::Key_F3), this);
+    previousSearchResult->setContext(Qt::WindowShortcut);
+    connect(previousSearchResult, &QShortcut::activated, this, [this] {
+        if (m_searchPanel->isVisible())
+            m_searchPanel->previousResult();
+        else
+            on_Find();
+    });
+    connect(m_searchPanel, &SearchPanel::statusMessage, this, [this](const QString& message) {
+        m_statusLabel->setText(message);
     });
 }
 
@@ -160,4 +200,41 @@ void IDEWindow::on_SaveFile() {
 void IDEWindow::on_openSettings() {
     SettingsDialog dlg(this);
     dlg.exec();
+}
+
+FileTab* IDEWindow::currentFileTab() const
+{
+    return qobject_cast<FileTab*>(m_filesTabWidget->currentWidget());
+}
+
+void IDEWindow::showSearch(SearchScope scope, bool replaceMode)
+{
+    m_searchPanel->show();
+    m_closeSearchShortcut->setEnabled(true);
+    const int totalWidth = qMax(1, m_mainSplitter->width());
+    const int sidebarWidth = qMax(180, m_leftSidebar->width());
+    const int panelWidth = qBound(360, totalWidth / 3, 480);
+    const int editorWidth = qMax(320, totalWidth - sidebarWidth - panelWidth);
+    m_mainSplitter->setSizes({sidebarWidth, editorWidth, panelWidth});
+    m_searchPanel->open(scope, replaceMode, m_filesTabWidget->selectedSearchText());
+}
+
+void IDEWindow::on_Find()
+{
+    showSearch(SearchScope::CurrentFile, false);
+}
+
+void IDEWindow::on_FindOpenFiles()
+{
+    showSearch(SearchScope::OpenFiles, false);
+}
+
+void IDEWindow::on_FindInProject()
+{
+    showSearch(SearchScope::Project, false);
+}
+
+void IDEWindow::on_Replace()
+{
+    showSearch(SearchScope::CurrentFile, true);
 }

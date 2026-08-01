@@ -8,6 +8,7 @@
 #include "ui/ToolsTabWidget/toolstabwidget.h"
 #include "core/modules/ModuleManager.h"
 #include "core/modules/TabBase.h"
+#include "Modules/Tabs/CodeEditor/codeeditortab.h"
 
 ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
     : QTabWidget(parent)
@@ -60,6 +61,19 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
             this,
             &ToolsTabWidget::closeToolTab
             );
+}
+
+CodeEditorTab* ToolsTabWidget::codeEditorTab(bool activate)
+{
+    for (int index = 0; index < count(); ++index) {
+        auto* editor = qobject_cast<CodeEditorTab*>(widget(index));
+        if (!editor)
+            continue;
+        if (activate)
+            setCurrentIndex(index);
+        return editor;
+    }
+    return nullptr;
 }
 
 void ToolsTabWidget::updateCloseButtons()

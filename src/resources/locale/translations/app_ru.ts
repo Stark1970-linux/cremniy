@@ -718,6 +718,22 @@ Check the Log panel for details.</source>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
+    <message>
+        <source>Find</source>
+        <translation>Найти</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Заменить</translation>
+    </message>
+    <message>
+        <source>Find in Open Files</source>
+        <translation>Найти в открытых файлах</translation>
+    </message>
+    <message>
+        <source>Find in Project</source>
+        <translation>Найти в проекте</translation>
+    </message>
 </context>
 <context>
     <name>ExclusionFilterProxyModel</name>
@@ -3611,6 +3627,118 @@ Download: https://www.nasm.us/pub/nasm/releasebuilds/</source>
     <message>
         <source>Disassembler</source>
         <translation type="vanished">Дизассемблер</translation>
+    </message>
+</context>
+<context>
+    <name>SearchEngine</name>
+    <message>
+        <source>Invalid regular expression: %1</source>
+        <translation>Некорректное регулярное выражение: %1</translation>
+    </message>
+    <message>
+        <source>The expression must not match empty text.</source>
+        <translation>Выражение не должно совпадать с пустым текстом.</translation>
+    </message>
+    <message>
+        <source>The file is not valid UTF-8 text.</source>
+        <translation>Файл не является корректным текстом UTF-8.</translation>
+    </message>
+    <message>
+        <source>The result changed. Search again before replacing it.</source>
+        <translation>Результат изменился. Повторите поиск перед заменой.</translation>
+    </message>
+</context>
+<context>
+    <name>SearchPanel</name>
+    <message><source>Current file</source><translation>Текущий файл</translation></message>
+    <message><source>Open files</source><translation>Открытые файлы</translation></message>
+    <message><source>Entire project</source><translation>Весь проект</translation></message>
+    <message><source>Search this project</source><translation>Поиск по проекту</translation></message>
+    <message><source>Enter text above to find matches.</source><translation>Введите текст выше, чтобы найти совпадения.</translation></message>
+    <message><source>Show replace controls (Ctrl+H)</source><translation>Показать элементы замены (Ctrl+H)</translation></message>
+    <message><source>Show replace controls</source><translation>Показать элементы замены</translation></message>
+    <message><source>&amp;Search</source><translation>&amp;Поиск</translation></message>
+    <message><source>Text or regular expression</source><translation>Текст или регулярное выражение</translation></message>
+    <message><source>Search text</source><translation>Текст для поиска</translation></message>
+    <message><source>Search scope</source><translation>Область поиска</translation></message>
+    <message><source>Match case</source><translation>Учитывать регистр</translation></message>
+    <message><source>Match whole word</source><translation>Слово целиком</translation></message>
+    <message><source>Use regular expression</source><translation>Использовать регулярное выражение</translation></message>
+    <message><source>Previous</source><translation>Предыдущий</translation></message>
+    <message><source>Previous result (Shift+F3)</source><translation>Предыдущий результат (Shift+F3)</translation></message>
+    <message><source>Next</source><translation>Следующий</translation></message>
+    <message><source>Next result (F3)</source><translation>Следующий результат (F3)</translation></message>
+    <message><source>Close search (Esc)</source><translation>Закрыть поиск (Esc)</translation></message>
+    <message><source>Close search</source><translation>Закрыть поиск</translation></message>
+    <message><source>&amp;Replace</source><translation>&amp;Заменить</translation></message>
+    <message><source>Replacement text</source><translation>Текст замены</translation></message>
+    <message><source>Replace result</source><translation>Заменить результат</translation></message>
+    <message><source>Replace all</source><translation>Заменить все</translation></message>
+    <message><source>&amp;Include</source><translation>&amp;Включить</translation></message>
+    <message><source>For example: *.cpp, src/*</source><translation>Например: *.cpp, src/*</translation></message>
+    <message><source>Files to include</source><translation>Включаемые файлы</translation></message>
+    <message><source>E&amp;xclude</source><translation>И&amp;сключить</translation></message>
+    <message><source>For example: build, *.min.js</source><translation>Например: build, *.min.js</translation></message>
+    <message><source>Files to exclude</source><translation>Исключаемые файлы</translation></message>
+    <message><source>Result</source><translation>Результат</translation></message>
+    <message><source>Location</source><translation>Расположение</translation></message>
+    <message><source>Search results</source><translation>Результаты поиска</translation></message>
+    <message><source>Search status</source><translation>Состояние поиска</translation></message>
+    <message><source>Enter text to search</source><translation>Введите текст для поиска</translation></message>
+    <message><source>Results appear as you type.</source><translation>Результаты появятся по мере ввода.</translation></message>
+    <message><source>Searching…</source><translation>Поиск…</translation></message>
+    <message><source>Unable to search</source><translation>Не удалось выполнить поиск</translation></message>
+    <message><source>Open a text file or choose another scope.</source><translation>Откройте текстовый файл или выберите другую область поиска.</translation></message>
+    <message><source>Try another query or adjust the file filters.</source><translation>Измените запрос или фильтры файлов.</translation></message>
+    <message><source>No matches found</source><translation>Совпадений не найдено</translation></message>
+    <message><source>Empty line</source><translation>Пустая строка</translation></message>
+    <message><source>Line %1, column %2</source><translation>Строка %1, столбец %2</translation></message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation><numerusform>%n совпадение</numerusform><numerusform>%n совпадения</numerusform><numerusform>%n совпадений</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source xml:space="preserve"> in %n file(s)</source>
+        <translation><numerusform xml:space="preserve"> в %n файле</numerusform><numerusform xml:space="preserve"> в %n файлах</numerusform><numerusform xml:space="preserve"> в %n файлах</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source xml:space="preserve"> · %n binary, unreadable, or large file(s) skipped</source>
+        <translation><numerusform xml:space="preserve"> · пропущен %n бинарный, нечитаемый или большой файл</numerusform><numerusform xml:space="preserve"> · пропущено %n бинарных, нечитаемых или больших файла</numerusform><numerusform xml:space="preserve"> · пропущено %n бинарных, нечитаемых или больших файлов</numerusform></translation>
+    </message>
+    <message><source xml:space="preserve"> · Result limit reached</source><translation xml:space="preserve"> · Достигнут лимит результатов</translation></message>
+    <message><source>Unable to replace</source><translation>Не удалось заменить</translation></message>
+    <message><source>Unable to read %1.</source><translation>Не удалось прочитать %1.</translation></message>
+    <message><source>Unable to write %1: %2</source><translation>Не удалось записать %1: %2</translation></message>
+    <message><source>Replaced one match in %1.</source><translation>Одно совпадение заменено в %1.</translation></message>
+    <message><source>Replace all matches</source><translation>Заменить все совпадения</translation></message>
+    <message numerus="yes">
+        <source>Replace %n match(es)</source>
+        <translation><numerusform>Заменить %n совпадение</numerusform><numerusform>Заменить %n совпадения</numerusform><numerusform>Заменить %n совпадений</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source xml:space="preserve"> in %n file(s)?</source>
+        <translation><numerusform xml:space="preserve"> в %n файле?</numerusform><numerusform xml:space="preserve"> в %n файлах?</numerusform><numerusform xml:space="preserve"> в %n файлах?</numerusform></translation>
+    </message>
+    <message><source>Cancel</source><translation>Отмена</translation></message>
+    <message><source>Unable to read %1</source><translation>Не удалось прочитать %1</translation></message>
+    <message><source>%1: %2</source><translation>%1: %2</translation></message>
+    <message><source>Some files were not changed</source><translation>Некоторые файлы не изменены</translation></message>
+    <message><source>Refine the search before replacing all matches.</source><translation>Уточните поиск перед заменой всех совпадений.</translation></message>
+    <message numerus="yes">
+        <source>Replaced %n match(es).
+
+%1</source>
+        <translation><numerusform>Заменено %n совпадение.
+
+%1</numerusform><numerusform>Заменено %n совпадения.
+
+%1</numerusform><numerusform>Заменено %n совпадений.
+
+%1</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>Replaced %n match(es).</source>
+        <translation><numerusform>Заменено %n совпадение.</numerusform><numerusform>Заменено %n совпадения.</numerusform><numerusform>Заменено %n совпадений.</numerusform></translation>
     </message>
 </context>
 </TS>

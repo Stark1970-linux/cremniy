@@ -12,6 +12,9 @@
 #include <QLabel>
 #include "widgets/terminal/terminalwidget.h"
 
+class SearchPanel;
+class QShortcut;
+
 class IDEWindow : public QMainWindow {
     Q_OBJECT
 
@@ -21,6 +24,7 @@ public:
 
 private:
     FileTab* currentFileTab() const;
+    void showSearch(SearchScope scope, bool replaceMode);
 
     // - - Main Widgets - -
     QMenuBar* m_menuBar;
@@ -40,6 +44,8 @@ private:
 
     // - - Terminal Widget - -
     TerminalWidget *m_terminal;
+    SearchPanel* m_searchPanel;
+    QShortcut* m_closeSearchShortcut;
     QString m_projectPath;
 
 public slots:
@@ -69,6 +75,10 @@ public slots:
      * Открывает окно Settings
     */
     void on_openSettings();
+    void on_Find();
+    void on_FindOpenFiles();
+    void on_FindInProject();
+    void on_Replace();
 
     /**
      * @brief Отображение терминала

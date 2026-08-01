@@ -815,6 +815,35 @@ bool CustomCodeEditor::goToLine(qint64 oneBasedLineNumber)
     return true;
 }
 
+bool CustomCodeEditor::selectTextRange(qint64 oneBasedLineNumber, int zeroBasedColumn, int utf16Length)
+{
+    if (!m_buffer || m_lineIndex->lineCount() == 0 || utf16Length <= 0)
+        return false;
+
+    const qint64 lineNum = qBound<qint64>(0, oneBasedLineNumber - 1, m_lineIndex->lineCount() - 1);
+    const QString lineText = displayTextForLine(lineNum);
+    const int boundedColumn = qBound(0, zeroBasedColumn, lineText.size());
+    const qint64 lineStart = lineVisibleStart(lineNum);
+    const QByteArray lineBytes = m_buffer->read(lineStart, lineVisibleEnd(lineNum) - lineStart);
+    const qint64 start = lineStart + m_utf8Decoder->charPosToByte(lineBytes, boundedColumn);
+    const QByteArray remainingBytes = m_buffer->read(start, m_buffer->size() - start);
+    const QString remainingText = QString::fromUtf8(remainingBytes);
+    const qint64 byteLength = remainingText.left(utf16Length).toUtf8().size();
+    if (byteLength <= 0)
+        return false;
+
+    m_selectionStart = start;
+    m_selectionLength = byteLength;
+    m_selectionAnchor = start;
+    m_cursorBytePos = start + byteLength;
+    syncSelectionToBuffer();
+    ensureCursorVisible();
+    setFocus(Qt::OtherFocusReason);
+    emit cursorPositionChanged();
+    viewport()->update();
+    return true;
+}
+
 int CustomCodeEditor::countMatches(const QString& text, Qt::CaseSensitivity caseSensitivity) const
 {
     if (!m_buffer || text.isEmpty())

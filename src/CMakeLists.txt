@@ -9,10 +9,63 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui LinguistTools Test Svg)
+find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui Concurrent LinguistTools Test Svg)
 
-find_library(LIBGIT2_LIB NAMES git2 libgit2 REQUIRED)
-find_path(LIBGIT2_INCLUDE_DIR NAMES git2.h REQUIRED)
+# libgit2 ships a CMake package on some platforms and only a pkg-config file or
+# plain headers/libraries on others. Support all three layouts so developers do
+# not have to pass platform-specific paths to CMake.
+set(CREMNIY_LIBGIT2_TARGET "")
+set(CREMNIY_LIBGIT2_INCLUDE_DIRS "")
+
+get_filename_component(CREMNIY_COMPILER_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+get_filename_component(CREMNIY_TOOLCHAIN_PREFIX "${CREMNIY_COMPILER_BIN_DIR}" DIRECTORY)
+set(CREMNIY_LIBGIT2_HINTS
+    "$ENV{LIBGIT2_ROOT}"
+    "$ENV{MINGW_PREFIX}"
+    "${CREMNIY_TOOLCHAIN_PREFIX}"
+    "$ENV{HOMEBREW_PREFIX}/opt/libgit2"
+    "/opt/homebrew/opt/libgit2"
+    "/usr/local/opt/libgit2"
+)
+list(FILTER CREMNIY_LIBGIT2_HINTS EXCLUDE REGEX "^$")
+
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+    pkg_check_modules(LIBGIT2 QUIET IMPORTED_TARGET libgit2)
+    if(TARGET PkgConfig::LIBGIT2)
+        set(CREMNIY_LIBGIT2_TARGET PkgConfig::LIBGIT2)
+    endif()
+endif()
+
+if(NOT CREMNIY_LIBGIT2_TARGET)
+    find_package(libgit2 CONFIG QUIET HINTS ${CREMNIY_LIBGIT2_HINTS})
+    if(TARGET libgit2::libgit2package)
+        set(CREMNIY_LIBGIT2_TARGET libgit2::libgit2package)
+    elseif(TARGET libgit2::libgit2)
+        set(CREMNIY_LIBGIT2_TARGET libgit2::libgit2)
+    endif()
+endif()
+
+if(NOT CREMNIY_LIBGIT2_TARGET)
+    find_path(LIBGIT2_INCLUDE_DIR
+        NAMES git2.h
+        HINTS ${CREMNIY_LIBGIT2_HINTS}
+        PATH_SUFFIXES include
+    )
+    find_library(LIBGIT2_LIBRARY
+        NAMES git2 libgit2
+        HINTS ${CREMNIY_LIBGIT2_HINTS}
+        PATH_SUFFIXES lib lib64
+    )
+    if(NOT LIBGIT2_INCLUDE_DIR OR NOT LIBGIT2_LIBRARY)
+        message(FATAL_ERROR
+            "libgit2 was not found. Install the libgit2 development package "
+            "or set LIBGIT2_ROOT to its installation prefix."
+        )
+    endif()
+    set(CREMNIY_LIBGIT2_TARGET "${LIBGIT2_LIBRARY}")
+    set(CREMNIY_LIBGIT2_INCLUDE_DIRS "${LIBGIT2_INCLUDE_DIR}")
+endif()
 
 if(NOT WIN32)
     find_package(ZLIB REQUIRED)
@@ -49,6 +102,8 @@ qt_add_executable(${PROJECT_NAME}
     widgets/filetreepanel.h
     widgets/terminal/terminalwidget.cpp
     widgets/terminal/terminalwidget.h
+    widgets/search/searchpanel.cpp
+    widgets/search/searchpanel.h
 
     # Resources
     resources/cremniy_res.qrc
@@ -65,6 +120,9 @@ qt_add_executable(${PROJECT_NAME}
     core/file/FileDataBuffer.h
     core/file/filemanager.cpp
     core/file/filemanager.h
+
+    core/search/searchengine.cpp
+    core/search/searchengine.h
 
     core/project/projectshistorymanager.cpp
     core/project/projectshistorymanager.h
@@ -138,14 +196,17 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Modules/Windows/)
 # - - Menus - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ui/MenuBar/Menus/)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGIT2_INCLUDE_DIR})
+if(CREMNIY_LIBGIT2_INCLUDE_DIRS)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${CREMNIY_LIBGIT2_INCLUDE_DIRS})
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Widgets
     Qt6::Gui
+    Qt6::Concurrent
     Qt6::Svg
-    ${LIBGIT2_LIB}
+    ${CREMNIY_LIBGIT2_TARGET}
 )
 
 if(NOT WIN32)

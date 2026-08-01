@@ -3,6 +3,7 @@
 #include <qabstractbutton.h>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDir>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QTabBar>
@@ -16,6 +17,25 @@
 #include <qboxlayout.h>
 #include <qfileinfo.h>
 #include <QPushButton>
+#include "Modules/Tabs/CodeEditor/codeeditortab.h"
+
+namespace {
+
+QString comparablePath(const QString& path)
+{
+    return QDir::cleanPath(QFileInfo(path).absoluteFilePath()).replace('\\', '/');
+}
+
+bool samePath(const QString& left, const QString& right)
+{
+#ifdef Q_OS_WIN
+    return comparablePath(left).compare(comparablePath(right), Qt::CaseInsensitive) == 0;
+#else
+    return comparablePath(left) == comparablePath(right);
+#endif
+}
+
+} // namespace
 
 FilesTabWidget::FilesTabWidget(QWidget *parent) {
     connect(this, &QTabWidget::currentChanged, this, &FilesTabWidget::tabSelect);
@@ -43,6 +63,7 @@ void FilesTabWidget::tabSelect(int index) {
     QWidget* currentTool = tab->toolsTabWidget()->currentWidget();
     QString lastInfo = currentTool ? currentTool->property("lastStatusBarInfo").toString() : QString();
     emit statusBarInfoChanged(lastInfo);
+    emit searchDocumentsChanged();
 }
 
 // Create new tab and open file if he is not open already
@@ -51,7 +72,7 @@ void FilesTabWidget::openFile(QString filePath, QString tabTitle) {
     // check already open
     for (int i = 0; i < this->count(); ++i) {
         FileTab *t = qobject_cast<FileTab *>(this->widget(i));
-        if (t && t->filePath == filePath) {
+        if (t && samePath(t->filePath, filePath)) {
             this->setCurrentIndex(i);
             return;
         }
@@ -67,11 +88,81 @@ void FilesTabWidget::openFile(QString filePath, QString tabTitle) {
     connect(filetab, &FileTab::setupStarSignal, this, &FilesTabWidget::setupStar);
     connect(filetab, &FileTab::pinnedChanged, this, &FilesTabWidget::updatePinnedState);
     connect(filetab, &FileTab::statusBarInfoChanged, this, &FilesTabWidget::statusBarInfoChanged);
+    if (filetab->toolsTabWidget() && filetab->toolsTabWidget()->sharedBuffer()) {
+        connect(filetab->toolsTabWidget()->sharedBuffer(), &FileDataBuffer::dataChanged,
+                this, &FilesTabWidget::searchDocumentsChanged);
+    }
 
     connect(this, &FilesTabWidget::setWordWrapSignal, filetab, &FileTab::setWordWrapSlot);
     connect(this, &FilesTabWidget::setTabReplaceSignal, filetab, &FileTab::setTabReplaceSlot);
     connect(this, &FilesTabWidget::setTabWidthSignal, filetab, &FileTab::setTabWidthSlot);
 
+}
+
+QVector<SearchDocument> FilesTabWidget::searchDocuments(SearchScope scope) const
+{
+    QVector<SearchDocument> documents;
+    if (scope == SearchScope::CurrentFile) {
+        auto* tab = qobject_cast<FileTab*>(currentWidget());
+        if (tab && tab->toolsTabWidget() && tab->toolsTabWidget()->sharedBuffer())
+            documents.append({tab->filePath, tab->toolsTabWidget()->sharedBuffer()->data()});
+        return documents;
+    }
+
+    documents.reserve(count());
+    for (int index = 0; index < count(); ++index) {
+        auto* tab = qobject_cast<FileTab*>(widget(index));
+        if (!tab || !tab->toolsTabWidget() || !tab->toolsTabWidget()->sharedBuffer())
+            continue;
+        documents.append({tab->filePath, tab->toolsTabWidget()->sharedBuffer()->data()});
+    }
+    return documents;
+}
+
+QByteArray FilesTabWidget::documentContents(const QString& filePath, bool* found) const
+{
+    if (found)
+        *found = false;
+    for (int index = 0; index < count(); ++index) {
+        auto* tab = qobject_cast<FileTab*>(widget(index));
+        if (!tab || !samePath(tab->filePath, filePath) || !tab->toolsTabWidget()->sharedBuffer())
+            continue;
+        if (found)
+            *found = true;
+        return tab->toolsTabWidget()->sharedBuffer()->data();
+    }
+    return {};
+}
+
+bool FilesTabWidget::replaceOpenDocument(const QString& filePath, const QByteArray& contents)
+{
+    for (int index = 0; index < count(); ++index) {
+        auto* tab = qobject_cast<FileTab*>(widget(index));
+        if (!tab || !samePath(tab->filePath, filePath) || !tab->toolsTabWidget()->sharedBuffer())
+            continue;
+        tab->toolsTabWidget()->sharedBuffer()->replaceData(contents);
+        return true;
+    }
+    return false;
+}
+
+bool FilesTabWidget::openSearchMatch(const SearchMatch& match)
+{
+    openFile(match.filePath, QFileInfo(match.filePath).fileName());
+    auto* tab = qobject_cast<FileTab*>(currentWidget());
+    if (!tab || !tab->toolsTabWidget())
+        return false;
+    CodeEditorTab* editor = tab->toolsTabWidget()->codeEditorTab(true);
+    return editor && editor->revealSearchMatch(match.line, match.column, match.length);
+}
+
+QString FilesTabWidget::selectedSearchText() const
+{
+    auto* tab = qobject_cast<FileTab*>(currentWidget());
+    if (!tab || !tab->toolsTabWidget())
+        return {};
+    CodeEditorTab* editor = tab->toolsTabWidget()->codeEditorTab(false);
+    return editor ? editor->selectedSearchText() : QString();
 }
 
 void FilesTabWidget::removeStar(FileTab *tab) {
@@ -223,6 +314,7 @@ void FilesTabWidget::closeTab(int index) {
         tab->deleteLater();
     if (count() == 0)
         emit statusBarInfoChanged(QString());
+    emit searchDocumentsChanged();
 }
 
 void FilesTabWidget::switchTab(int page) {
