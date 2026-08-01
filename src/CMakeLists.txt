@@ -9,7 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui LinguistTools Test Svg)
+find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui Concurrent LinguistTools Test Svg)
 
 find_library(LIBGIT2_LIB NAMES git2 libgit2 REQUIRED)
 find_path(LIBGIT2_INCLUDE_DIR NAMES git2.h REQUIRED)
@@ -49,6 +49,8 @@ qt_add_executable(${PROJECT_NAME}
     widgets/filetreepanel.h
     widgets/terminal/terminalwidget.cpp
     widgets/terminal/terminalwidget.h
+    widgets/search/searchpanel.cpp
+    widgets/search/searchpanel.h
 
     # Resources
     resources/cremniy_res.qrc
@@ -65,6 +67,9 @@ qt_add_executable(${PROJECT_NAME}
     core/file/FileDataBuffer.h
     core/file/filemanager.cpp
     core/file/filemanager.h
+
+    core/search/searchengine.cpp
+    core/search/searchengine.h
 
     core/project/projectshistorymanager.cpp
     core/project/projectshistorymanager.h
@@ -144,6 +149,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Widgets
     Qt6::Gui
+    Qt6::Concurrent
     Qt6::Svg
     ${LIBGIT2_LIB}
 )
