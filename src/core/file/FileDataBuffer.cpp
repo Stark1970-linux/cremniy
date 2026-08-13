@@ -87,7 +87,6 @@ void FileDataBuffer::loadData(const QByteArray& data)
 void FileDataBuffer::replaceData(const QByteArray& data)
 {
     QMutexLocker locker(&m_mutex);
-    endHistoryGroupLocked();
     const QByteArray before = materializeLocked();
     if (before == data)
         return;
@@ -226,7 +225,6 @@ void FileDataBuffer::endHistoryGroupLocked()
 void FileDataBuffer::setByte(qint64 pos, char byte)
 {
     QMutexLocker locker(&m_mutex);
-    endHistoryGroupLocked();
     const QByteArray before = materializeLocked();
     const qint64 totalSize = before.size();
     if (pos < 0 || pos >= totalSize)
@@ -257,7 +255,6 @@ void FileDataBuffer::setBytes(qint64 pos, const QByteArray& bytes)
         return;
 
     QMutexLocker locker(&m_mutex);
-    endHistoryGroupLocked();
     const QByteArray before = materializeLocked();
     const qint64 totalSize = before.size();
     if (pos < 0 || pos >= totalSize)
