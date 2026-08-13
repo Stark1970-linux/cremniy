@@ -75,7 +75,13 @@ void ELFPage::setPageData(QByteArray& data)
     QString endian = bytes[5] == 1 ? "Little Endian" : bytes[5] == 2 ? "Big Endian" : "Unknown";
     addRow("Data", endian);
 
-    uint16_t type = qFromLittleEndian<uint16_t>(bytes + 16);
+	const bool bigEndian = bytes[5] == 2;
+	
+	const uint16_t type = bigEndian
+    ? qFromBigEndian<uint16_t>(bytes + 16)
+    : qFromLittleEndian<uint16_t>(bytes + 16);
+    
+
     QString typeStr;
     switch(type) {
         case 1: typeStr = "Relocatable (ET_REL)"; break;
@@ -86,7 +92,10 @@ void ELFPage::setPageData(QByteArray& data)
     }
     addRow("Type", typeStr);
 
-    uint16_t machine = qFromLittleEndian<uint16_t>(bytes + 18);
+	const uint16_t machine = bigEndian
+    ? qFromBigEndian<uint16_t>(bytes + 18)
+    : qFromLittleEndian<uint16_t>(bytes + 18);
+    
     QString machineStr;
     switch(machine) {
         case 0x03: machineStr = "x86"; break;
