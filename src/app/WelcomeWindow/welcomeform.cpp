@@ -328,8 +328,6 @@ WelcomeForm::WelcomeForm(QWidget *parent)
     stack->setCurrentIndex(0);
 
     // Events
-    connect(RecentProjectsList->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WelcomeForm::SelectProjectInList);
-
     connect(open_recent_proj_btn, &QPushButton::clicked, this, &WelcomeForm::OpenRecentProjectHandler);
     connect(remove_recent_proj_btn, &QPushButton::clicked, this, &WelcomeForm::RemoveRecentProjectHandler);
     connect(open_browse_proj_btn, &QPushButton::clicked, this, &WelcomeForm::OpenProjectHandler);
@@ -505,9 +503,9 @@ bool WelcomeForm::eventFilter(QObject *obj, QEvent *event)
 }
 
 void WelcomeForm::SelectProjectInList(){
-    open_recent_proj_btn->setEnabled(true);
-
-    remove_recent_proj_btn->setEnabled(true);
+    const bool hasSelection = RecentProjectsList->currentIndex().isValid();
+    open_recent_proj_btn->setEnabled(hasSelection);
+    remove_recent_proj_btn->setEnabled(hasSelection);
 }
 
 void WelcomeForm::OpenRecentProjectHandler(){
@@ -625,10 +623,7 @@ void WelcomeForm::L2CreateButton()
         return;
     }
 
-    IDEWindow *mw = new IDEWindow(new_project_path, nullptr);
-    mw->setAttribute(Qt::WA_DeleteOnClose);
-    mw->show();
-    this->close();
+    OpenProject(new_project_path);
 }
 
 void WelcomeForm::L2CreateProject(QString name, QString path, QString language){
@@ -639,7 +634,16 @@ void WelcomeForm::L2CreateProject(QString name, QString path, QString language){
 void WelcomeForm::SetProjectHistoryList(){
     const QStringList history = utils::ProjectsHistoryManager::loadProjectsHistory();
 
-    QStringListModel *model = new QStringListModel(this);
+    auto *model = qobject_cast<QStringListModel *>(RecentProjectsList->model());
+    if (!model) {
+        model = new QStringListModel(RecentProjectsList);
+        model->setStringList(history);
+        RecentProjectsList->setModel(model);
+        connect(RecentProjectsList->selectionModel(), &QItemSelectionModel::selectionChanged,
+                this, &WelcomeForm::SelectProjectInList);
+        return;
+    }
+
     model->setStringList(history);
-    RecentProjectsList->setModel(model);
+    SelectProjectInList();
 }

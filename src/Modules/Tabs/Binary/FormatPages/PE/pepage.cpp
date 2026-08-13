@@ -59,14 +59,14 @@ void PEPage::setPageData(QByteArray& data)
         return;
     }
 
-	const uint32_t peOffset = qFromLittleEndian<uint32_t>(bytes + 0x3C);
-	// 24 -- PE + IMAGE_FILE_HEADER
-	if (static_cast<quint64>(peOffset) + 24 > static_cast<quint64>(data.size())) {
-	    m_warning->setText("Некорректное смещение PE заголовка");
-	    m_warning->show();
-	    emit dataEqual();
-	    return;
-	}
+    const uint32_t peOffset = qFromLittleEndian<uint32_t>(bytes + 0x3C);
+    // 24 -- PE + IMAGE_FILE_HEADER
+    if (static_cast<quint64>(peOffset) + 24 > static_cast<quint64>(data.size())) {
+        m_warning->setText("Некорректное смещение PE заголовка");
+        m_warning->show();
+        emit dataEqual();
+        return;
+    }
 
     bool peValid = (bytes[peOffset]   == 'P' && bytes[peOffset+1] == 'E' &&
                     bytes[peOffset+2] == 0   && bytes[peOffset+3] == 0);

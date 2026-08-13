@@ -21,7 +21,7 @@ signals:
     void openFileRequested(const QString& filePath, const QString& fileName);
 
 private slots:
-    void showMenu(const QPoint& point) const;
+    void showMenu(const QPoint& point);
 
 private:
     void setupUi();
@@ -45,6 +45,6 @@ private:
     QAction* m_rename{};
     QAction* m_delete{};
 
-    mutable QString m_contextPath;
+    QString m_contextPath;
     const QString m_root_path;
 };

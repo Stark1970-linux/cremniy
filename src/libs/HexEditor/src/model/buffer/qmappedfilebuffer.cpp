@@ -13,11 +13,11 @@ QMappedFileBuffer::~QMappedFileBuffer() {
 }
 
 QByteArray QMappedFileBuffer::read(qint64 offset, int length) {
-    if(offset >= this->length())
+    if(!m_mappeddata || offset < 0 || length <= 0 || offset >= this->length())
         return {};
 
-    if(offset + length >= this->length())
-        length = this->length() - offset;
+    if(length > this->length() - offset)
+        length = static_cast<int>(this->length() - offset);
 
     return QByteArray::fromRawData(
         reinterpret_cast<const char*>(m_mappeddata + offset), length);
@@ -33,6 +33,9 @@ bool QMappedFileBuffer::read(QIODevice* iodevice) {
 }
 
 void QMappedFileBuffer::write(QIODevice* iodevice) {
+    if(!iodevice || !m_device || !m_mappeddata)
+        return;
+
     if(iodevice == m_device)
         this->remap();
     else

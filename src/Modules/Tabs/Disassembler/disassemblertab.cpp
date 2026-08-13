@@ -629,9 +629,11 @@ void DisassemblerTab::setupUi()
                 emit modifyData();
 
                 // Update cached bytes and refresh view.
-                m_lines[idx].bytes = normalizeBytes(text);
-                m_lines[idx].bytesL = m_lines[idx].bytes.toLower();
-                m_lines[idx].size = newBytes.size();
+                if (idx >= 0 && idx < m_lines.size()) {
+                    m_lines[idx].bytes = normalizeBytes(text);
+                    m_lines[idx].bytesL = m_lines[idx].bytes.toLower();
+                    m_lines[idx].size = newBytes.size();
+                }
                 applyFilter();
                 appendLog(QString("[patch] wrote %1 bytes at 0x%2")
                               .arg(newBytes.size())
