@@ -79,10 +79,7 @@ void FileDataBuffer::loadData(const QByteArray& data)
     resetOverlayLocked();
     m_undoStack.clear();
     m_redoStack.clear();
-    QCryptographicHash hash(QCryptographicHash::Sha256);
-    hash.addData(data);
-    m_originalHash = 0;
-    memcpy(&m_originalHash, hash.result().constData(), qMin(static_cast<qsizetype>(sizeof(m_originalHash)), hash.result().size()));
+	m_originalHash = qHash(m_data, 0);
     locker.unlock();
     emit dataChanged();
 }
