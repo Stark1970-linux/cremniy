@@ -14,7 +14,7 @@ protected:
      *
      * Хранит все данные файла и обеспечивает синхронизацию между вкладками
      */
-    FileDataBuffer* m_dataBuffer;
+    FileDataBuffer* m_dataBuffer = nullptr;
 
     /**
      * @brief Контекст файла
