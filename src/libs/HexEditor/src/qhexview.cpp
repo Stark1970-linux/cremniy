@@ -596,11 +596,14 @@ void QHexView::selectAll() {
 }
 
 void QHexView::removeSelection() {
-    if(!m_hexcursor->hasSelection())
-        return;
-    if(!m_readonly)
-        m_hexdocument->remove(m_hexcursor->selectionStartOffset(),
-                              m_hexcursor->selectionLength() - 1);
+    if(!m_hexcursor->hasSelection()) {
+		return;
+    }
+    if(!m_readonly){
+    	m_hexdocument->remove(
+    	    m_hexcursor->selectionStartOffset(),
+    	    m_hexcursor->selectionLength());
+    }
     m_hexcursor->clearSelection();
 }
 
