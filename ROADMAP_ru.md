@@ -18,7 +18,6 @@
 ### ✨ Улучшения и новые задачи
 
 - [ ] 🟡 [Улучшить терминал](https://github.com/munirov/cremniy/issues/100)
-- [ ] 🟢 [Поиск строки по всем файлам проекта](https://github.com/Cremniy-Project/cremniy/issues/76)
 
 ## 🔮 Будущие планы
 
