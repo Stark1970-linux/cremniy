@@ -148,6 +148,8 @@ Contributions are **welcome and encouraged**.
 
 Whether it's a bug fix, a new feature, or an improvement to documentation — feel free to open an issue or submit a pull request.
 
+Current tasks are [in the ROADMAP](https://github.com/munirov/cremniy/blob/main/ROADMAP.md)
+
 All contributors are credited in [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) and mentioned in videos on the [YouTube channel](https://www.youtube.com/@igmunv).
 
 For guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
