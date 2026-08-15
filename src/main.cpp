@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QImageReader>
 #include <QDirIterator>
+#include <QDir>
 #include <QDebug>
 #include <QResource>
 #include <QFontDatabase>
@@ -80,6 +81,19 @@ int main(int argc, char *argv[])
     a.setStyleSheet(baseStyle + "\n" + themeData);
 
     WelcomeForm wf;
-    wf.show();
+
+    //cli path selector
+    const QStringList args = QCoreApplication::arguments();
+    if (args.size() > 1) {
+        const QString projectPath = args.at(1);
+        if (QDir(projectPath).exists()) {
+            wf.OpenProject(projectPath);
+        } else {
+            qWarning() << "Project path does not exist:" << projectPath;
+            wf.show();
+        }
+    } else {
+        wf.show();
+    }
     return QCoreApplication::exec();
 }
