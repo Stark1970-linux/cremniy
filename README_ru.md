@@ -148,6 +148,8 @@ cmake --build . --config Release
 
 Будь то исправление ошибок, новая функциональность или улучшение документации — открывайте issue или отправляйте pull request.
 
+Текущие задачи [находятся в ROADMAP](https://github.com/munirov/cremniy/blob/main/ROADMAP_ru.md)
+
 Все участники указываются в [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) и упоминаются в видео на [YouTube-канале](https://www.youtube.com/@igmunv).
 
 Подробнее — в [CONTRIBUTING.md](CONTRIBUTING_ru.md).
