@@ -78,24 +78,10 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
             emit dataEqual();
     });
 
-    m_goToLineShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_G), this);
-
-    connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
-}
-
-void CodeEditorTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
-    m_dataBuffer = newFileDataBuffer;
-
-    connect(m_dataBuffer, &FileDataBuffer::byteChanged,
-            this, &CodeEditorTab::onByteChanged);
-    connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
-            this, &CodeEditorTab::onBytesChanged);
-    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
-            this, &CodeEditorTab::onSelectionChanged);
-    connect(m_dataBuffer, &FileDataBuffer::dataChanged,
-            this, &CodeEditorTab::onDataChanged);
-
     connect(m_codeEditorWidget, &CustomCodeEditor::contentsChanged, this, [this]() {
+        if (!m_dataBuffer)
+            return;
+
         if (m_dataBuffer->isModified()) {
             setModifyIndicator(true);
             emit modifyData();
@@ -105,6 +91,16 @@ void CodeEditorTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
         }
     });
 
+    m_goToLineShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_G), this);
+
+    connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
+}
+
+void CodeEditorTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer) {
+    if (m_dataBuffer == newFileDataBuffer)
+        return;
+
+    TabBase::setFileDataBuffer(newFileDataBuffer);
     m_codeEditorWidget->setBuffer(newFileDataBuffer);
 }
 
@@ -266,4 +262,3 @@ void CodeEditorTab::setTabWidthSlot(int width) {
     m_codeEditorWidget->setTabDisplaySize(width);
     m_codeEditorWidget->setTabReplaceSize(width);
 }
-

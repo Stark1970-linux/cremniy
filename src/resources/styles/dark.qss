@@ -164,7 +164,7 @@ QMenuBar::item:selected {
 }
 
 QMenuBar::item:hover {
-    background-color: #1E1E1E;
+    background-color: #3C3C3C;
 }
 
 QMenu {

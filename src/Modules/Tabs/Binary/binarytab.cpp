@@ -58,39 +58,26 @@ BinaryTab::BinaryTab(QWidget *parent)
     // find
     m_findShortcut = new QShortcut(QKeySequence::Find, this);
     connect(m_findShortcut, &QShortcut::activated, this, &BinaryTab::openFindDialog);
+
+    connect(m_pageList, &QListWidget::currentRowChanged,
+            this, [this](int row) {
+                pageView->setCurrentIndex(row);
+                if (row >= 0 && m_dataBuffer)
+                    syncCurrentFormatPage(pageView, m_dataBuffer);
+                m_pageDataDirty = false;
+            });
 }
 
 
 // - - override functions - -
 
-void BinaryTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
-    m_dataBuffer = newFileDataBuffer;
+void BinaryTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer) {
+    if (m_dataBuffer == newFileDataBuffer)
+        return;
 
-    connect(m_dataBuffer, &FileDataBuffer::byteChanged,
-            this, &BinaryTab::onByteChanged);
-    connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
-            this, &BinaryTab::onBytesChanged);
-    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
-            this, &BinaryTab::onSelectionChanged);
-    connect(m_dataBuffer, &FileDataBuffer::dataChanged,
-            this, &BinaryTab::onDataChanged);
-
-    createPages();
-
-    // TabList: select tab
-    connect(m_pageList, &QListWidget::currentRowChanged,
-            this, [this](int row) {
-                pageView->setCurrentIndex(row);
-                if (row >= 0)
-                    syncCurrentFormatPage(pageView, m_dataBuffer);
-                m_pageDataDirty = false;
-            });
-
-    connect(m_dataBuffer,
-            &FileDataBuffer::selectionChanged,
-            this,
-            &BinaryTab::onSelectionChanged
-            );
+    TabBase::setFileDataBuffer(newFileDataBuffer);
+    if (m_dataBuffer && pageView->count() == 0)
+        createPages();
 }
 
 void BinaryTab::createPages(){

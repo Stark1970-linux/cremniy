@@ -6,6 +6,7 @@
 
 #include "filetreepanel.h"
 
+#include <QItemSelectionModel>
 #include <QMenu>
 
 #include "exclusionfilterproxymodel.h"
@@ -149,11 +150,13 @@ QModelIndex FileTreePanel::getSourceIndex() const{
     return m_proxy->mapToSource(idx);
 }
 
-void FileTreePanel::showMenu(const QPoint& point) const {
+void FileTreePanel::showMenu(const QPoint& point) {
     const auto index = m_treeView->indexAt(point);
     const bool onItem = index.isValid();
 
     if (onItem) {
+        m_treeView->selectionModel()->setCurrentIndex(
+            index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
         const QModelIndex srcIdx = m_proxy->mapToSource(index);
         m_contextPath = m_fileModel->filePath(srcIdx);
     } else {
