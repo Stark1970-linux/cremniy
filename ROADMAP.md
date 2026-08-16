@@ -23,7 +23,7 @@ Create a **unified tool for system programming** that eliminates the need for sc
 - [ ] 🟡 [Improve settings](https://github.com/munirov/cremniy/issues/248)
 - [ ] 🟡 [Module configuration](https://github.com/munirov/cremniy/issues/245)
 - [ ] 🟡 [Auto-check for new Cremniy versions](https://github.com/munirov/cremniy/issues/242)
-- [ ] 🟡 [Launch from terminal with command-line arguments](https://github.com/munirov/cremniy/issues/247)
+- [x] 🟡 [Launch from terminal with command-line arguments](https://github.com/munirov/cremniy/issues/247)
 - [ ] 🟢 [Improve terminal](https://github.com/munirov/cremniy/issues/100)
 - [ ] 🟢 [Unified support for adding new language syntax to code editor](https://github.com/munirov/cremniy/issues/243)
 - [ ] 🟢 [Highlight in yellow across other tools when selecting in one tool](https://github.com/munirov/cremniy/issues/244)
