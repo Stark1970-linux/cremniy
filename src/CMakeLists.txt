@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(cremniy VERSION 0.2.0 LANGUAGES C CXX)
 
+include(CTest)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -199,6 +201,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/HexEditor/ ${CMAKE_BINARY_DIR}
 target_link_libraries(${PROJECT_NAME} PRIVATE HexEditor)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/Terminal/ ${CMAKE_BINARY_DIR}/libs/Terminal/)
+target_link_libraries(${PROJECT_NAME} PRIVATE cremniy_terminal_core)
 
 # - - Modules - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Modules/References/)

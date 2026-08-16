@@ -34,6 +34,8 @@ add_library(cremniy_terminal_core STATIC
     glyphcache.h
     keys.cpp
     keys.h
+    ptyprocess.cpp
+    ptyprocess.h
     scrollback.cpp
     scrollback.h
     surfaceintegration.h
@@ -43,6 +45,22 @@ add_library(cremniy_terminal_core STATIC
     terminalview.cpp
     terminalview.h
 )
+
+if(WIN32)
+    target_sources(cremniy_terminal_core PRIVATE
+        ptyprocess_windows.cpp
+        ptyprocess_windows.h
+    )
+else()
+    target_sources(cremniy_terminal_core PRIVATE
+        ptyprocess_posix.cpp
+        ptyprocess_posix.h
+    )
+    find_library(CREMNIY_UTIL_LIBRARY util)
+    if(CREMNIY_UTIL_LIBRARY)
+        target_link_libraries(cremniy_terminal_core PRIVATE ${CREMNIY_UTIL_LIBRARY})
+    endif()
+endif()
 
 target_include_directories(cremniy_terminal_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(cremniy_terminal_core PUBLIC TERMINALLIB_STATIC_LIBRARY)
@@ -59,3 +77,15 @@ set_target_properties(cremniy_terminal_core PROPERTIES
     CXX_STANDARD_REQUIRED ON
     POSITION_INDEPENDENT_CODE ON
 )
+
+if(BUILD_TESTING)
+    qt_add_executable(cremniy_terminal_pty_test
+        tests/ptyprocesstest.cpp
+    )
+    target_link_libraries(cremniy_terminal_pty_test
+        PRIVATE
+            cremniy_terminal_core
+            Qt6::Test
+    )
+    add_test(NAME terminal_pty COMMAND cremniy_terminal_pty_test)
+endif()
