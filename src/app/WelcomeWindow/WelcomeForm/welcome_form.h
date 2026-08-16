@@ -26,12 +26,13 @@ public:
     explicit WelcomeForm(QWidget* parent = nullptr);
     ~WelcomeForm() override = default;
 
+    void openProject(const QString& path, const QString& language = {});
+
 private:
     QStackedWidget*     m_stack;
     RecentProjectsPage* m_recentPage;
     CreateProjectPage*  m_createPage;
 
-    void openProject(const QString& path, const QString& language = {});
     void loadStyles();
 };
 

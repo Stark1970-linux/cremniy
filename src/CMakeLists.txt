@@ -133,9 +133,6 @@ qt_add_executable(${PROJECT_NAME}
     core/search/searchengine.cpp
     core/search/searchengine.h
 
-    core/project/projectshistorymanager.cpp
-    core/project/projectshistorymanager.h
-
     core/settings/appsettings.cpp
     core/settings/appsettings.h
 
