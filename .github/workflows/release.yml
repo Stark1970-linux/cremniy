@@ -212,7 +212,8 @@ jobs:
             cmake gcc-c++ \
             qt6-qtbase-devel qt6-qttools-devel qt6-qtsvg-devel \
             desktop-file-utils \
-            libgit2-devel
+            libgit2-devel \
+            http-parser-devel
 
       - name: Setup rpmbuild tree
         run: rpmdev-setuptree
