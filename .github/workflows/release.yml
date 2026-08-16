@@ -165,14 +165,14 @@ jobs:
       
           Copy-Item build/cremniy.exe package/
       
-          # Copy libgit2 runtime DLL
-          $git2Dll = "vcpkg/installed/x64-windows/bin/git2.dll"
-      
-          if (!(Test-Path $git2Dll)) {
-            throw "git2.dll was not found at $git2Dll"
+          # Copy runtime DLL's
+          $vcpkgBin = "vcpkg/installed/x64-windows/bin"
+
+          if (!(Test-Path $vcpkgBin)) {
+            throw "vcpkg bin directory was not found: $vcpkgBin"
           }
-      
-          Copy-Item $git2Dll package/
+          
+          Copy-Item "$vcpkgBin/*.dll" package/
       
           # Translations
           New-Item -ItemType Directory -Path "package/Resources/translations" -Force
