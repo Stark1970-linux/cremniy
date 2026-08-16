@@ -211,7 +211,8 @@ jobs:
             rpm-build rpmdevtools git tar rsync \
             cmake gcc-c++ \
             qt6-qtbase-devel qt6-qttools-devel qt6-qtsvg-devel \
-            desktop-file-utils
+            desktop-file-utils \
+            libgit2-devel
 
       - name: Setup rpmbuild tree
         run: rpmdev-setuptree
