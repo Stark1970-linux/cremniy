@@ -5,7 +5,7 @@
 
 class QTabWidget;
 class QToolButton;
-class TerminalSession;
+class TerminalWidget;
 
 class TerminalPanel final : public QWidget
 {
@@ -18,19 +18,16 @@ public:
 
 public slots:
     void newTerminal();
-    void splitRight();
-    void splitDown();
     void closeActiveTerminal();
 
 private:
-    TerminalSession *currentSession() const;
+    TerminalWidget *currentTerminal() const;
     void closeTerminalTab(int index);
     void updateActions();
 
     QString m_workingDirectory;
+    QString m_projectName;
     QTabWidget *m_tabs = nullptr;
-    QToolButton *m_splitRightButton = nullptr;
-    QToolButton *m_splitDownButton = nullptr;
     QToolButton *m_closeButton = nullptr;
     int m_nextTerminalNumber = 1;
 };

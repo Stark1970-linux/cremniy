@@ -54,14 +54,14 @@ ShellCommand defaultShell()
     return {};
 }
 
-std::array<QColor, 20> defaultTerminalColors()
+std::array<QColor, 19> defaultTerminalColors()
 {
     return {
         QColor("#000000"), QColor("#cd3131"), QColor("#0dbc79"), QColor("#e5e510"),
         QColor("#2472c8"), QColor("#bc3fbc"), QColor("#11a8cd"), QColor("#e5e5e5"),
         QColor("#666666"), QColor("#f14c4c"), QColor("#23d18b"), QColor("#f5f543"),
         QColor("#3b8eea"), QColor("#d670d6"), QColor("#29b8db"), QColor("#ffffff"),
-        QColor("#cccccc"), QColor("#1e1e1e"), QColor("#264f78"), QColor("#515c6a"),
+        QColor("#cccccc"), QColor("#1e1e1e"), QColor("#264f78"),
     };
 }
 
@@ -99,11 +99,6 @@ TerminalWidget::TerminalWidget(QWidget *parent, const QString &workingDirectory)
 TerminalWidget::~TerminalWidget()
 {
     m_pty->stop();
-}
-
-QString TerminalWidget::title() const
-{
-    return m_title;
 }
 
 bool TerminalWidget::isRunning() const
@@ -147,8 +142,6 @@ void TerminalWidget::contextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Restart Terminal"), this, &TerminalWidget::restartShell);
     menu.addSeparator();
     menu.addAction(tr("New Terminal"), this, [this] { emit newTerminalRequested(); });
-    menu.addAction(tr("Split Right"), this, [this] { emit splitRequested(Qt::Horizontal); });
-    menu.addAction(tr("Split Down"), this, [this] { emit splitRequested(Qt::Vertical); });
     QAction *stop = menu.addAction(tr("Kill Terminal"), this, [this] { emit closeRequested(); });
     stop->setEnabled(isRunning());
     menu.exec(viewport()->mapToGlobal(pos));
@@ -198,12 +191,6 @@ void TerminalWidget::keyPressEvent(QKeyEvent *event)
     TerminalSolution::TerminalView::keyPressEvent(event);
 }
 
-void TerminalWidget::focusInEvent(QFocusEvent *event)
-{
-    TerminalSolution::TerminalView::focusInEvent(event);
-    emit activated();
-}
-
 void TerminalWidget::startShell()
 {
     const ShellCommand shell = defaultShell();
@@ -229,10 +216,7 @@ void TerminalWidget::startShell()
     options.workingDirectory = workingDirectory;
     options.environment = environment;
     options.initialSize = surface()->liveSize();
-    if (m_pty->start(options)) {
-        m_title = QFileInfo(shell.executable).completeBaseName();
-        emit titleChanged(m_title);
-    }
+    m_pty->start(options);
 }
 
 void TerminalWidget::writeStatus(const QString &message, bool error)
@@ -255,10 +239,7 @@ void TerminalWidget::onBell()
 
 void TerminalWidget::onTitle(const QString &title)
 {
-    if (title == m_title)
-        return;
-    m_title = title;
-    emit titleChanged(m_title);
+    Q_UNUSED(title)
 }
 
 void TerminalWidget::onSetClipboard(const QByteArray &)

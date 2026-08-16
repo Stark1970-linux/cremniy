@@ -83,7 +83,7 @@ public:
     QTimer m_scrollTimer;
     int m_scrollDirection{0};
 
-    std::array<QColor, 20> m_currentColors;
+    std::array<QColor, 19> m_currentColors;
 
     system_clock::time_point m_lastFlush{system_clock::now()};
     system_clock::time_point m_lastDoubleClick{system_clock::now()};
@@ -278,7 +278,7 @@ QColor TerminalView::toQColor(std::variant<int, QColor> color) const
     return std::get<QColor>(color);
 }
 
-void TerminalView::setColors(const std::array<QColor, 20> &newColors)
+void TerminalView::setColors(const std::array<QColor, 19> &newColors)
 {
     if (d->m_currentColors == newColors)
         return;
@@ -683,34 +683,6 @@ static void drawTextItemDecoration(QPainter &painter,
     painter.setBrush(oldBrush);
 }
 
-bool TerminalView::paintFindMatches(QPainter &p,
-                                    QList<SearchHit>::const_iterator &it,
-                                    const QRectF &cellRect,
-                                    const QPoint gridPos) const
-{
-    if (it == searchHits().constEnd())
-        return false;
-
-    const int pos = d->m_surface->gridToPos(gridPos);
-    while (it != searchHits().constEnd()) {
-        if (pos < it->start)
-            return false;
-
-        if (pos >= it->end) {
-            ++it;
-            continue;
-        }
-        break;
-    }
-
-    if (it == searchHits().constEnd())
-        return false;
-
-    p.fillRect(cellRect, d->m_currentColors[(size_t) WidgetColorIdx::FindMatch]);
-
-    return true;
-}
-
 bool TerminalView::paintSelection(QPainter &p, const QRectF &cellRect, const QPoint gridPos) const
 {
     bool isInSelection = false;
@@ -729,11 +701,9 @@ int TerminalView::paintCell(QPainter &p,
                             const QRectF &cellRect,
                             QPoint gridPos,
                             const TerminalCell &cell,
-                            QFont &f,
-                            QList<SearchHit>::const_iterator &searchIt) const
+                            QFont &f) const
 {
-    bool paintBackground = !paintSelection(p, cellRect, gridPos)
-                           && !paintFindMatches(p, searchIt, cellRect, gridPos);
+    bool paintBackground = !paintSelection(p, cellRect, gridPos);
 
     bool isDefaultBg = std::holds_alternative<int>(cell.backgroundColor)
                        && std::get<int>(cell.backgroundColor) == 17;
@@ -885,14 +855,6 @@ void TerminalView::paintCells(QPainter &p, QPaintEvent *event) const
                                   / d->m_cellSize.height())
                                 + scrollOffset);
 
-    QList<SearchHit>::const_iterator searchIt
-        = std::lower_bound(searchHits().constBegin(),
-                           searchHits().constEnd(),
-                           startRow,
-                           [this](const SearchHit &hit, int value) {
-                               return d->m_surface->posToGrid(hit.start).y() < value;
-                           });
-
     for (int cellY = startRow; cellY < endRow; ++cellY) {
         for (int cellX = 0; cellX < d->m_surface->liveSize().width();) {
             const auto cell = d->m_surface->fetchCell(cellX, cellY);
@@ -900,7 +862,7 @@ void TerminalView::paintCells(QPainter &p, QPaintEvent *event) const
             QRectF cellRect(gridToGlobal({cellX, cellY}),
                             QSizeF{d->m_cellSize.width() * cell.width, d->m_cellSize.height()});
 
-            int numCells = paintCell(p, cellRect, {cellX, cellY}, cell, f, searchIt);
+            int numCells = paintCell(p, cellRect, {cellX, cellY}, cell, f);
 
             cellX += numCells;
         }
@@ -1412,4 +1374,3 @@ bool TerminalView::event(QEvent *event)
 }
 
 } // namespace TerminalSolution
-

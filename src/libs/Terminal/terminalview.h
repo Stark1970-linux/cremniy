@@ -20,18 +20,6 @@ namespace TerminalSolution {
 class SurfaceIntegration;
 class TerminalViewPrivate;
 
-struct SearchHit
-{
-    int start{-1};
-    int end{-1};
-
-    bool operator!=(const SearchHit &other) const
-    {
-        return start != other.start || end != other.end;
-    }
-    bool operator==(const SearchHit &other) const { return !operator!=(other); }
-};
-
 QString TERMINAL_EXPORT defaultFontFamily();
 int TERMINAL_EXPORT defaultFontSize();
 
@@ -44,7 +32,6 @@ public:
         Foreground = ColorIndex::Foreground,
         Background = ColorIndex::Background,
         Selection,
-        FindMatch,
     };
 
     TerminalView(QWidget *parent = nullptr);
@@ -89,7 +76,7 @@ public:
     void clearContents();
 
     void setSurfaceIntegration(SurfaceIntegration *surfaceIntegration);
-    void setColors(const std::array<QColor, 20> &colors);
+    void setColors(const std::array<QColor, 19> &colors);
 
     void setPasswordMode(bool passwordMode);
 
@@ -119,12 +106,6 @@ public:
     void writeToTerminal(const QByteArray &data, bool forceFlush);
 
     void restart();
-
-    virtual const QList<SearchHit> &searchHits() const
-    {
-        static QList<SearchHit> noHits;
-        return noHits;
-    }
 
     virtual bool resizePty(QSize newSize)
     {
@@ -177,16 +158,10 @@ protected:
                   const QRectF &cellRect,
                   QPoint gridPos,
                   const TerminalCell &cell,
-                  QFont &f,
-                  QList<SearchHit>::const_iterator &searchIt) const;
+                  QFont &f) const;
     void paintCells(QPainter &painter, QPaintEvent *event) const;
     void paintCursor(QPainter &painter) const;
     void paintPreedit(QPainter &painter) const;
-    bool paintFindMatches(QPainter &painter,
-                          QList<SearchHit>::const_iterator &searchIt,
-                          const QRectF &cellRect,
-                          const QPoint gridPos) const;
-
     bool paintSelection(QPainter &painter, const QRectF &cellRect, const QPoint gridPos) const;
     void paintDebugSelection(QPainter &painter, const Selection &selection) const;
 
@@ -243,5 +218,4 @@ private:
 };
 
 } // namespace TerminalSolution
-
 
