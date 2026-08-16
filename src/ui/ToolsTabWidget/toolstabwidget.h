@@ -16,6 +16,7 @@ class QStyleSyntaxHighlighter;
 class QCodeEditor;
 class FileDataBuffer;
 class TabBase;
+class CodeEditorTab;
 
 class ToolsTabWidget : public QTabWidget
 {
@@ -25,6 +26,8 @@ public:
     TabBase* openToolTab(const QString& toolId, bool activate = true);
     int saveToFileCurrentTab(QString path);
     void setDataInTabs(QByteArray &data, int index = -1, int excluded_index = -1);
+    FileDataBuffer* sharedBuffer() const { return m_sharedBuffer; }
+    CodeEditorTab* codeEditorTab(bool activate = false);
 
 private:
     void loadStyle(QString path, QString name);

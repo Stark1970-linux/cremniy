@@ -44,6 +44,9 @@ public:
     void beginHistoryGroup();
     void endHistoryGroup();
 
+    // Установить позицию курсора для следующей записи истории
+    void setPendingCursorPos(qint64 cursorBefore, qint64 cursorAfter);
+
     // Изменить один байт
     void setByte(qint64 pos, char byte);
 
@@ -96,6 +99,9 @@ signals:
     // Изменилось выделение
     void selectionChanged(qint64 pos, qint64 length);
 
+    // Запрос восстановления позиции курсора (при undo/redo)
+    void cursorRestoreRequested(qint64 cursorPos);
+
 private:
     static constexpr qint64 kDefaultChunkSize = 64 * 1024;
     static constexpr int kDefaultMaxCachedChunks = 64;
@@ -118,6 +124,8 @@ private:
     struct HistoryEntry {
         QByteArray before;
         QByteArray after;
+        qint64 cursorPosBefore = 0;
+        qint64 cursorPosAfter = 0;
     };
 
     mutable QMutex m_mutex;
@@ -141,6 +149,10 @@ private:
     bool m_historyGroupActive = false;
     QByteArray m_historyGroupBefore;
     QByteArray m_historyGroupAfter;
+    qint64 m_pendingCursorBefore = 0;
+    qint64 m_pendingCursorAfter = 0;
+    qint64 m_historyGroupCursorBefore = 0;
+    qint64 m_historyGroupCursorAfter = 0;
 };
 
 #endif // FILEDATABUFFER_H

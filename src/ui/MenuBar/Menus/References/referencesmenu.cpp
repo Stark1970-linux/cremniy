@@ -23,8 +23,11 @@ ReferencesMenu::ReferencesMenu() : BaseMenu(tr("References")) {
         for (const ModuleDescription<ReferenceBase>& desc : descRefModules){
             QAction* newAction = new QAction(desc.name(), this);
             groupMenu->addAction(newAction);
-            connect(newAction, &QAction::triggered, this, [this, desc](){
+            connect(newAction, &QAction::triggered, this, [desc](){
                 auto* module = desc.creator();
+                if (!module)
+                    return;
+                module->setAttribute(Qt::WA_DeleteOnClose);
                 module->showWindow();
             });
         }

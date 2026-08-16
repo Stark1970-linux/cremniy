@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <section name="Keyword">
+        <!-- Core -->
         <name>alignas</name>
         <name>alignof</name>
         <name>and</name>
         <name>and_eq</name>
         <name>asm</name>
-        <name>atomic_cancel</name>
-        <name>atomic_commit</name>
-        <name>atomic_noexcept</name>
         <name>auto</name>
         <name>bitand</name>
         <name>bitor</name>
@@ -17,14 +15,12 @@
         <name>catch</name>
         <name>class</name>
         <name>compl</name>
-        <name>concept</name>
         <name>const</name>
         <name>constexpr</name>
+        <name>consteval</name>
+        <name>constinit</name>
         <name>const_cast</name>
         <name>continue</name>
-        <name>co_await</name>
-        <name>co_return</name>
-        <name>co_yield</name>
         <name>decltype</name>
         <name>default</name>
         <name>delete</name>
@@ -40,9 +36,7 @@
         <name>friend</name>
         <name>goto</name>
         <name>if</name>
-        <name>import</name>
         <name>inline</name>
-        <name>module</name>
         <name>mutable</name>
         <name>namespace</name>
         <name>new</name>
@@ -56,18 +50,16 @@
         <name>private</name>
         <name>protected</name>
         <name>public</name>
-        <name>reflexpr</name>
-        <name>register(2)</name>
+        <name>register</name>
         <name>reinterpret_cast</name>
-        <name>requires</name>
         <name>return</name>
         <name>sizeof</name>
+        <name>sizeof...</name>
         <name>static</name>
         <name>static_assert</name>
         <name>static_cast</name>
         <name>struct</name>
         <name>switch</name>
-        <name>synchronized</name>
         <name>template</name>
         <name>this</name>
         <name>thread_local</name>
@@ -84,10 +76,27 @@
         <name>while</name>
         <name>xor</name>
         <name>xor_eq</name>
+        <!-- C++11 -->
+        <name>override</name>
+        <name>final</name>
+        <!-- C++20 -->
+        <name>concept</name>
+        <name>requires</name>
+        <name>co_await</name>
+        <name>co_return</name>
+        <name>co_yield</name>
+        <name>import</name>
+        <name>module</name>
+        <name>reflexpr</name>
+        <name>atomic_cancel</name>
+        <name>atomic_commit</name>
+        <name>atomic_noexcept</name>
+        <name>synchronized</name>
     </section>
     <section name="PrimitiveType">
         <name>bool</name>
         <name>char</name>
+        <name>char8_t</name>
         <name>char16_t</name>
         <name>char32_t</name>
         <name>double</name>
@@ -99,5 +108,172 @@
         <name>unsigned</name>
         <name>void</name>
         <name>wchar_t</name>
+        <name>size_t</name>
+        <name>ptrdiff_t</name>
+        <name>ssize_t</name>
+        <name>intptr_t</name>
+        <name>uintptr_t</name>
+        <name>int8_t</name>
+        <name>int16_t</name>
+        <name>int32_t</name>
+        <name>int64_t</name>
+        <name>uint8_t</name>
+        <name>uint16_t</name>
+        <name>uint32_t</name>
+        <name>uint64_t</name>
+        <name>nullptr_t</name>
+        <name>byte</name>
+    </section>
+    <section name="StdLibrary">
+        <!-- Smart pointers -->
+        <name>unique_ptr</name>
+        <name>shared_ptr</name>
+        <name>weak_ptr</name>
+        <name>make_unique</name>
+        <name>make_shared</name>
+        <!-- Containers -->
+        <name>vector</name>
+        <name>string</name>
+        <name>map</name>
+        <name>unordered_map</name>
+        <name>set</name>
+        <name>unordered_set</name>
+        <name>list</name>
+        <name>deque</name>
+        <name>array</name>
+        <name>tuple</name>
+        <name>pair</name>
+        <name>optional</name>
+        <name>variant</name>
+        <name>any</name>
+        <name>span</name>
+        <name>string_view</name>
+        <!-- I/O -->
+        <name>cin</name>
+        <name>cout</name>
+        <name>cerr</name>
+        <name>clog</name>
+        <name>ifstream</name>
+        <name>ofstream</name>
+        <name>fstream</name>
+        <name>istringstream</name>
+        <name>ostringstream</name>
+        <name>stringstream</name>
+        <name>istream</name>
+        <name>ostream</name>
+        <name>iostream</name>
+        <!-- Algorithms -->
+        <name>sort</name>
+        <name>stable_sort</name>
+        <name>partial_sort</name>
+        <name>find</name>
+        <name>find_if</name>
+        <name>transform</name>
+        <name>accumulate</name>
+        <name>for_each</name>
+        <name>remove_if</name>
+        <name>unique</name>
+        <name>copy</name>
+        <name>fill</name>
+        <name>generate</name>
+        <name>count</name>
+        <name>count_if</name>
+        <name>binary_search</name>
+        <name>lower_bound</name>
+        <name>upper_bound</name>
+        <name>equal</name>
+        <name>mismatch</name>
+        <name>reverse</name>
+        <name>rotate</name>
+        <name>shuffle</name>
+        <name>sample</name>
+        <name>clamp</name>
+        <!-- Math -->
+        <name>abs</name>
+        <name>sqrt</name>
+        <name>pow</name>
+        <name>sin</name>
+        <name>cos</name>
+        <name>tan</name>
+        <name>asin</name>
+        <name>acos</name>
+        <name>atan</name>
+        <name>atan2</name>
+        <name>log</name>
+        <name>log2</name>
+        <name>log10</name>
+        <name>exp</name>
+        <name>exp2</name>
+        <name>ceil</name>
+        <name>floor</name>
+        <name>round</name>
+        <name>trunc</name>
+        <name>fmod</name>
+        <name>hypot</name>
+        <name>fmin</name>
+        <name>fmax</name>
+        <!-- String conversion -->
+        <name>to_string</name>
+        <name>stoi</name>
+        <name>stol</name>
+        <name>stoll</name>
+        <name>stoul</name>
+        <name>stoull</name>
+        <name>stof</name>
+        <name>stod</name>
+        <name>stold</name>
+        <name>getline</name>
+        <!-- Memory -->
+        <name>allocator</name>
+        <name>uninitialized_fill</name>
+        <name>uninitialized_copy</name>
+        <name>construct</name>
+        <name>destroy</name>
+        <!-- Type traits -->
+        <name>is_same</name>
+        <name>is_base_of</name>
+        <name>is_convertible</name>
+        <name>is_integral</name>
+        <name>is_floating_point</name>
+        <name>is_pointer</name>
+        <name>is_reference</name>
+        <name>enable_if</name>
+        <name>conditional</name>
+        <name>decay</name>
+        <name>remove_const</name>
+        <name>remove_reference</name>
+        <name>remove_cv</name>
+        <name>add_const</name>
+        <name>add_lvalue_reference</name>
+        <name>add_rvalue_reference</name>
+        <name>underlying_type</name>
+        <name>type_identity</name>
+        <!-- Threads -->
+        <name>thread</name>
+        <name>mutex</name>
+        <name>lock_guard</name>
+        <name>unique_lock</name>
+        <name>condition_variable</name>
+        <name>future</name>
+        <name>promise</name>
+        <name>async</name>
+        <name>packaged_task</name>
+        <name>this_thread</name>
+        <!-- chrono -->
+        <name>chrono</name>
+        <name>seconds</name>
+        <name>milliseconds</name>
+        <name>microseconds</name>
+        <name>nanoseconds</name>
+        <name>steady_clock</name>
+        <name>system_clock</name>
+        <name>high_resolution_clock</name>
+        <!-- Functional -->
+        <name>function</name>
+        <name>bind</name>
+        <name>ref</name>
+        <name>cref</name>
+        <name>invoke</name>
+        <name>apply</name>
     </section>
 </root>

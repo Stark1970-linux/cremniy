@@ -66,15 +66,16 @@
 |---|---|
 | **CMake** | 3.16 |
 | **Qt** | 6.8.2 |
+| **[libgit2](https://libgit2.org/)** | 1.x |
 | **Компилятор C++** | Поддержка C++17 |
 
 <details>
 <summary><b>🪟 Windows</b></summary>
 
 1. Установить [MSYS2](https://www.msys2.org/)
-2. Установить MinGW, CMake, Qt6-base через **терминал MSYS2**:
+2. Установить MinGW, CMake, Qt6-base и libgit2 через **терминал MSYS2**:
 ```base
-pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-qt6-base
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-qt6-base mingw-w64-ucrt-x86_64-libgit2
 ```
 3. Добавить папку с пакетами MSYS2 в PATH  
    По умолчанию MSYS2 пакеты находятся в `C:\msys64\ucrt64\bin`
@@ -86,7 +87,7 @@ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86
 
 ```bash
 sudo apt update
-sudo apt install cmake g++ qt6-base-dev
+sudo apt install cmake g++ qt6-base-dev libgit2-dev
 ```
 
 > [!NOTE]
@@ -100,7 +101,7 @@ sudo apt install cmake g++ qt6-base-dev
 С помощью [Homebrew](https://brew.sh/):
 
 ```bash
-brew install cmake qt@6
+brew install cmake qt@6 libgit2
 ```
 
 </details>

@@ -34,12 +34,13 @@ QCXXHighlighter::QCXXHighlighter(QTextDocument* document) :
     auto keys = language.keys();
     for (auto&& key : keys)
     {
+        const QString formatName = (key == "StdLibrary") ? "Function" : key;
         auto names = language.names(key);
         for (auto&& name : names)
         {
             m_highlightRules.append({
                 QRegularExpression(QString(R"(\b%1\b)").arg(name)),
-                key
+                formatName
             });
         }
     }
@@ -53,6 +54,18 @@ QCXXHighlighter::QCXXHighlighter(QTextDocument* document) :
     // Strings
     m_highlightRules.append({
         QRegularExpression(R"("[^\n"]*")"),
+        "String"
+    });
+
+    // Char literals
+    m_highlightRules.append({
+        QRegularExpression(R"('(?:[^'\\]|\\.)')"),
+        "String"
+    });
+
+    // Raw strings
+    m_highlightRules.append({
+        QRegularExpression("R\"\\(([^)]*)\\)\""),
         "String"
     });
 

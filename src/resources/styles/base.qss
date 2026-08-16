@@ -41,7 +41,7 @@ QLineEdit, QTextEdit, QPlainTextEdit {
 
 #filesTabWidget QTabBar::tab {
     padding: 5px;
-    height: 10px;
+    height: 16px;
     min-width: 200px;
 }
 
@@ -79,7 +79,7 @@ QListWidget#hexTabsList::item:focus {
 }
 
 QTreeView {
-    qproperty-iconRedraw: true;
+
 }
 
 QMenu::item {
@@ -113,12 +113,42 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     width: 16px;
 }
 
-QWidget#searchWidget QLineEdit {
-    padding: 3px 6px;
+QWidget#searchPanel QLineEdit {
+    padding: 5px 7px;
+    min-height: 18px;
 }
 
-QWidget#searchWidget QPushButton {
-    padding: 4px 10px;
+QWidget#searchPanel QPushButton {
+    padding: 5px 10px;
+    min-height: 18px;
+}
+
+QWidget#searchPanel QComboBox {
+    padding: 5px 24px 5px 7px;
+    min-height: 18px;
+}
+
+QWidget#searchPanel QComboBox::drop-down {
+    width: 20px;
+}
+
+QWidget#searchPanel QComboBox::down-arrow {
+    image: url(:/icons/welcome-caret-down.svg);
+    width: 10px;
+    height: 10px;
+}
+
+QWidget#searchPanel QToolButton {
+    padding: 4px;
+}
+
+QWidget#searchPanel QLabel#searchEmptyTitle {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+QWidget#searchPanel QLabel#searchStatusLabel {
+    font-size: 11px;
 }
 
 QDialog#settingsDialog QLabel#settingsHintLabel {
