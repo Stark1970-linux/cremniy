@@ -23,7 +23,7 @@
 - [ ] 🟡 [Улучшить настройки](https://github.com/munirov/cremniy/issues/248)
 - [ ] 🟡 [Настройка модулей](https://github.com/munirov/cremniy/issues/245)
 - [ ] 🟡 [Авто проверка доступности новой версии Cremniy](https://github.com/munirov/cremniy/issues/242)
-- [ ] 🟡 [Запуск из терминала с передачей аргументов](https://github.com/munirov/cremniy/issues/247)
+- [x] 🟡 [Запуск из терминала с передачей аргументов](https://github.com/munirov/cremniy/issues/247)
 - [ ] 🟢 [Улучшить терминал](https://github.com/munirov/cremniy/issues/100)
 - [ ] 🟢 [Единое добавление поддержки синтаксиса новых языков в редактор кода](https://github.com/munirov/cremniy/issues/243)
 - [ ] 🟢 [При выделении в одном инструменте необходимо в остальных выделять желтым](https://github.com/munirov/cremniy/issues/244)
