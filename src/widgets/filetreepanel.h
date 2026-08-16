@@ -1,34 +1,35 @@
-#ifndef FILETREEPANEL_H
-#define FILETREEPANEL_H
+#pragma once
 
-#include <QTreeView>
 #include <QFileSystemModel>
 #include <QPointer>
 #include <QVBoxLayout>
 
-
+class QTreeView;
 class QSortFilterProxyModel;
+class QAction;
+class QPoint;
+class IconProvider;
 
 class FileTreePanel : public QWidget {
     Q_OBJECT
 
 public:
     explicit FileTreePanel(QWidget* parent, QFileSystemModel* model, QSortFilterProxyModel* proxy, const QString& rootPath);
+    ~FileTreePanel() override;
 
 signals:
     void openFileRequested(const QString& filePath, const QString& fileName);
 
 private slots:
-    void showMenu(const QPoint& point) const;
+    void showMenu(const QPoint& point);
 
 private:
-    void setupUi() const;
-    void setupModel() const;
+    void setupUi();
+    void setupModel();
     void setupContextMenu();
     void setupConnections();
-
     void open();
-    void remove() const;
+    void remove();
     [[nodiscard]] QString currentPath() const;
     [[nodiscard]] QModelIndex getSourceIndex() const;
 
@@ -36,6 +37,7 @@ private:
     QTreeView* m_treeView;
     QSortFilterProxyModel* m_proxy;
     QFileSystemModel* m_fileModel;
+    IconProvider* m_iconProvider;
 
     QAction* m_createFile{};
     QAction* m_createDir{};
@@ -43,6 +45,6 @@ private:
     QAction* m_rename{};
     QAction* m_delete{};
 
+    QString m_contextPath;
     const QString m_root_path;
 };
-#endif // FILETREEPANEL_H

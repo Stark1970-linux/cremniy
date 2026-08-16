@@ -28,6 +28,18 @@ add_library(CodeEditor STATIC
     src/widgets/EditorLanguageSupport.cpp
     src/widgets/EditorTypingBehaviors.cpp
     src/widgets/LineNumberArea.cpp
+    src/widgets/highlighters/AsmHighlighter.h
+    src/widgets/highlighters/AsmHighlighter.cpp
+    src/widgets/highlighters/HighlighterFactory.h
+    src/widgets/highlighters/HighlighterFactory.cpp
+    src/widgets/highlighters/MakefileHighlighter.h
+    src/widgets/highlighters/MakefileHighlighter.cpp
+    src/widgets/highlighters/MarkdownHighlighter.h
+    src/widgets/highlighters/MarkdownHighlighter.cpp
+    src/widgets/highlighters/RuleBasedHighlighter.h
+    src/widgets/highlighters/RuleBasedHighlighter.cpp
+    src/widgets/highlighters/XmlLanguageHighlighter.h
+    src/widgets/highlighters/XmlLanguageHighlighter.cpp
     third_party/QCodeEditor/include/QCECompleter.hpp
     third_party/QCodeEditor/include/QCXXHighlighter.hpp
     third_party/QCodeEditor/include/QCodeEditor.hpp
@@ -56,6 +68,7 @@ target_include_directories(CodeEditor PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/core
     ${CMAKE_CURRENT_SOURCE_DIR}/include/widgets
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/QCodeEditor/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core/file
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/QCodeEditor/src

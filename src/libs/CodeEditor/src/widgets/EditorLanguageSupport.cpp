@@ -32,6 +32,8 @@ QString lineCommentPrefix(const QString& syntaxKey)
         return QStringLiteral("#");
     if (syntaxKey == QStringLiteral("sql"))
         return QStringLiteral("--");
+    if (syntaxKey == QStringLiteral("asm") || syntaxKey == QStringLiteral("s"))
+        return QStringLiteral(";");
     if (syntaxKey == QStringLiteral("xml"))
         return {};
     return QStringLiteral("//");

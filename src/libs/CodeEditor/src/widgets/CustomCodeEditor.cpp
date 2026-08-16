@@ -4,9 +4,7 @@
 #include "widgets/EditorLanguageSupport.h"
 #include "widgets/EditorTypingBehaviors.h"
 #include "widgets/LineNumberArea.h"
-#include "QCXXHighlighter.hpp"
-#include "QJSONHighlighter.hpp"
-#include "QLanguage.hpp"
+#include "highlighters/HighlighterFactory.h"
 #include "QSyntaxStyle.hpp"
 #include "QStyleSyntaxHighlighter.hpp"
 #include "FileDataBuffer.h"
@@ -33,6 +31,8 @@
 #include <QTimer>
 #include <QTextBlock>
 #include <QTextDocument>
+#include <QToolTip>
+#include <QHelpEvent>
 #include <QTextLayout>
 
 #include <algorithm>
@@ -113,11 +113,6 @@ void logEditRange(const char* origin, qint64 start, qint64 length,
 
 namespace {
 
-struct RegexRule {
-    QRegularExpression pattern;
-    QString formatName;
-};
-
 struct WrappedSegment {
     int startColumn;
     int length;
@@ -134,6 +129,24 @@ struct DisplayTextLayout {
 static bool isWordCharacter(QChar ch)
 {
     return ch.isLetterOrNumber() || ch == QLatin1Char('_');
+}
+
+static bool parseNumberToken(const QString &s, qulonglong &value)
+{
+    if (s.isEmpty())
+        return false;
+    bool ok = false;
+    if (s.startsWith("0x") || s.startsWith("0X"))
+        value = s.mid(2).toULongLong(&ok, 16);
+    else if (s.startsWith("0b") || s.startsWith("0B"))
+        value = s.mid(2).toULongLong(&ok, 2);
+    else if ((s.endsWith('h') || s.endsWith('H')) && s.size() > 1)
+        value = s.left(s.size() - 1).toULongLong(&ok, 16);
+    else if ((s.endsWith('o') || s.endsWith('O')) && s.size() > 1)
+        value = s.left(s.size() - 1).toULongLong(&ok, 8);
+    else
+        value = s.toULongLong(&ok, 10);
+    return ok;
 }
 
 DisplayTextLayout buildDisplayTextLayout(const QString& text, int tabSize)
@@ -198,263 +211,6 @@ QVector<WrappedSegment> buildWrappedSegments(const QString& text, const QFont& f
     return segments;
 }
 
-class RuleBasedHighlighter : public QStyleSyntaxHighlighter {
-public:
-    RuleBasedHighlighter(QVector<RegexRule> rules,
-                         const QRegularExpression& commentPattern,
-                         QTextDocument* document = nullptr)
-        : QStyleSyntaxHighlighter(document)
-        , m_rules(rules)
-        , m_commentPattern(commentPattern)
-    {
-    }
-
-protected:
-    void highlightBlock(const QString& text) override
-    {
-        for (const auto& rule : m_rules) {
-            auto matches = rule.pattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(rule.formatName));
-            }
-        }
-
-        if (m_commentPattern.isValid()) {
-            auto matches = m_commentPattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(QStringLiteral("Comment")));
-            }
-        }
-    }
-
-private:
-    QVector<RegexRule> m_rules;
-    QRegularExpression m_commentPattern;
-};
-
-class XmlLanguageHighlighter : public QStyleSyntaxHighlighter {
-public:
-    XmlLanguageHighlighter(const QString& resourcePath,
-                           const QRegularExpression& singleLineComment,
-                           const QRegularExpression& stringPattern,
-                           const QRegularExpression& numberPattern,
-                           QTextDocument* document = nullptr)
-        : QStyleSyntaxHighlighter(document)
-        , m_singleLineComment(singleLineComment)
-        , m_stringPattern(stringPattern)
-        , m_numberPattern(numberPattern)
-    {
-        QFile file(resourcePath);
-        if (!file.open(QIODevice::ReadOnly))
-            return;
-
-        QLanguage language(&file);
-        if (!language.isLoaded())
-            return;
-
-        for (const QString& key : language.keys()) {
-            const QString formatName = key == "Directive" || key == "Command" || key == "Variable" || key == "BuiltinFunction"
-                                           ? QStringLiteral("Keyword")
-                                           : key;
-            for (const QString& name : language.names(key)) {
-                const QString escaped = QRegularExpression::escape(name);
-                m_rules.append({QRegularExpression(QStringLiteral("\\b%1\\b").arg(escaped)), formatName});
-            }
-        }
-    }
-
-protected:
-    void highlightBlock(const QString& text) override
-    {
-        if (m_numberPattern.isValid()) {
-            auto matches = m_numberPattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(QStringLiteral("Number")));
-            }
-        }
-
-        if (m_stringPattern.isValid()) {
-            auto matches = m_stringPattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(QStringLiteral("String")));
-            }
-        }
-
-        for (const auto& rule : m_rules) {
-            auto matches = rule.pattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(rule.formatName));
-            }
-        }
-
-        if (m_singleLineComment.isValid()) {
-            auto matches = m_singleLineComment.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(QStringLiteral("Comment")));
-            }
-        }
-    }
-
-private:
-    struct Rule {
-        QRegularExpression pattern;
-        QString formatName;
-    };
-
-    QVector<Rule> m_rules;
-    QRegularExpression m_singleLineComment;
-    QRegularExpression m_stringPattern;
-    QRegularExpression m_numberPattern;
-};
-
-class MarkdownHighlighter : public QStyleSyntaxHighlighter {
-public:
-    explicit MarkdownHighlighter(QTextDocument* document = nullptr)
-        : QStyleSyntaxHighlighter(document)
-    {
-    }
-
-protected:
-    void highlightBlock(const QString& text) override
-    {
-        static const QRegularExpression headingPattern(QStringLiteral("^\\s*#{1,6}\\s.*$"));
-        static const QRegularExpression listPattern(QStringLiteral("^\\s*([-*+]\\s|\\d+\\.\\s).*$"));
-        static const QRegularExpression codeFencePattern(QStringLiteral("^\\s*```.*$"));
-        static const QRegularExpression inlineCodePattern(QStringLiteral("`[^`]+`"));
-        static const QRegularExpression emphasisPattern(QStringLiteral("(\\*\\*[^*]+\\*\\*|__[^_]+__|\\*[^*]+\\*|_[^_]+_)") );
-        static const QRegularExpression linkPattern(QStringLiteral("\\[[^\\]]+\\]\\([^)]+\\)"));
-
-        auto applyAll = [this, &text](const QRegularExpression& pattern, const QString& styleName) {
-            auto matches = pattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                setFormat(match.capturedStart(), match.capturedLength(), syntaxStyle()->getFormat(styleName));
-            }
-        };
-
-        applyAll(headingPattern, QStringLiteral("Keyword"));
-        applyAll(listPattern, QStringLiteral("Preprocessor"));
-        applyAll(codeFencePattern, QStringLiteral("Comment"));
-        applyAll(inlineCodePattern, QStringLiteral("String"));
-        applyAll(emphasisPattern, QStringLiteral("Type"));
-        applyAll(linkPattern, QStringLiteral("Function"));
-    }
-};
-
-class MakefileHighlighter : public QStyleSyntaxHighlighter {
-public:
-    explicit MakefileHighlighter(QTextDocument* document = nullptr)
-        : QStyleSyntaxHighlighter(document)
-    {
-    }
-
-protected:
-    void highlightBlock(const QString& text) override
-    {
-        static const QRegularExpression commentPattern(QStringLiteral("#[^\\n]*"));
-        static const QRegularExpression stringPattern(QStringLiteral("\"[^\"\\n]*\"|'[^'\\n]*'"));
-        static const QRegularExpression variablePattern(QStringLiteral("\\$\\((?:[^()\\\\]|\\\\.)+\\)|\\$\\{(?:[^{}\\\\]|\\\\.)+\\}|\\$[@%<?^+*|]"));
-        static const QRegularExpression directivePattern(QStringLiteral("^\\s*(include|ifdef|ifndef|else|endif|ifeq|ifneq|define|endef|override|export|unexport)\\b"));
-        static const QRegularExpression assignmentPattern(QStringLiteral("^[^:#=\\s][^:=#]*\\s*(?:[:+?]?=)"));
-        static const QRegularExpression targetPattern(QStringLiteral("^(?:\\.[A-Z_][A-Z0-9_]*|[^:#=\\s][^:=#]*)\\s*:"));
-        static const QRegularExpression functionPattern(QStringLiteral("\\$\\((subst|patsubst|strip|findstring|filter|filter-out|sort|word|wordlist|words|firstword|lastword|dir|notdir|suffix|basename|addsuffix|addprefix|join|foreach|if|or|and|call|value|eval|file|shell|wildcard|error|warn|info)\\b"));
-
-        auto applyAll = [this, &text](const QRegularExpression& pattern, const QString& styleName, int captureGroup = 0) {
-            auto matches = pattern.globalMatch(text);
-            while (matches.hasNext()) {
-                const auto match = matches.next();
-                const int start = captureGroup == 0 ? match.capturedStart() : match.capturedStart(captureGroup);
-                const int length = captureGroup == 0 ? match.capturedLength() : match.capturedLength(captureGroup);
-                if (start >= 0 && length > 0)
-                    setFormat(start, length, syntaxStyle()->getFormat(styleName));
-            }
-        };
-
-        applyAll(stringPattern, QStringLiteral("String"));
-        applyAll(variablePattern, QStringLiteral("PrimitiveType"));
-        applyAll(directivePattern, QStringLiteral("Keyword"), 1);
-        applyAll(functionPattern, QStringLiteral("Function"), 1);
-
-        const auto assignmentMatch = assignmentPattern.match(text);
-        if (assignmentMatch.hasMatch())
-            setFormat(assignmentMatch.capturedStart(), assignmentMatch.capturedLength(), syntaxStyle()->getFormat(QStringLiteral("Function")));
-
-        const auto targetMatch = targetPattern.match(text);
-        if (targetMatch.hasMatch())
-            setFormat(targetMatch.capturedStart(), targetMatch.capturedLength(), syntaxStyle()->getFormat(QStringLiteral("Keyword")));
-
-        applyAll(commentPattern, QStringLiteral("Comment"));
-    }
-};
-
-QVector<RegexRule> buildWordRules(const QStringList& words, const QString& formatName)
-{
-    QVector<RegexRule> rules;
-    for (const QString& word : words)
-        rules.append({QRegularExpression(QStringLiteral("\\b%1\\b").arg(QRegularExpression::escape(word))), formatName});
-    return rules;
-}
-
-RuleBasedHighlighter* createCommonLanguageHighlighter(const QString& syntaxKey, QTextDocument* document)
-{
-    QVector<RegexRule> rules = {
-        {QRegularExpression(QStringLiteral("\"[^\"\\n]*\"|'[^'\\n]*'")), QStringLiteral("String")},
-        {QRegularExpression(QStringLiteral("\\b(0x[0-9A-Fa-f]+|\\d+(?:\\.\\d+)?)\\b")), QStringLiteral("Number")}
-    };
-    QRegularExpression commentPattern;
-
-    if (syntaxKey == QStringLiteral("js") || syntaxKey == QStringLiteral("ts")) {
-        rules += buildWordRules({QStringLiteral("break"), QStringLiteral("case"), QStringLiteral("catch"), QStringLiteral("class"), QStringLiteral("const"), QStringLiteral("continue"), QStringLiteral("default"), QStringLiteral("delete"), QStringLiteral("else"), QStringLiteral("export"), QStringLiteral("extends"), QStringLiteral("finally"), QStringLiteral("for"), QStringLiteral("from"), QStringLiteral("function"), QStringLiteral("if"), QStringLiteral("import"), QStringLiteral("in"), QStringLiteral("instanceof"), QStringLiteral("let"), QStringLiteral("new"), QStringLiteral("return"), QStringLiteral("super"), QStringLiteral("switch"), QStringLiteral("this"), QStringLiteral("throw"), QStringLiteral("try"), QStringLiteral("typeof"), QStringLiteral("var"), QStringLiteral("while"), QStringLiteral("yield"), QStringLiteral("async"), QStringLiteral("await")}, QStringLiteral("Keyword"));
-        rules += buildWordRules({QStringLiteral("string"), QStringLiteral("number"), QStringLiteral("boolean"), QStringLiteral("void"), QStringLiteral("null"), QStringLiteral("undefined"), QStringLiteral("any"), QStringLiteral("unknown"), QStringLiteral("never")}, QStringLiteral("PrimitiveType"));
-        commentPattern = QRegularExpression(QStringLiteral("//[^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("java") || syntaxKey == QStringLiteral("cs") || syntaxKey == QStringLiteral("go") || syntaxKey == QStringLiteral("php")) {
-        const QStringList keywords = syntaxKey == QStringLiteral("go")
-            ? QStringList{QStringLiteral("break"), QStringLiteral("case"), QStringLiteral("chan"), QStringLiteral("const"), QStringLiteral("continue"), QStringLiteral("default"), QStringLiteral("defer"), QStringLiteral("else"), QStringLiteral("fallthrough"), QStringLiteral("for"), QStringLiteral("func"), QStringLiteral("go"), QStringLiteral("goto"), QStringLiteral("if"), QStringLiteral("import"), QStringLiteral("interface"), QStringLiteral("map"), QStringLiteral("package"), QStringLiteral("range"), QStringLiteral("return"), QStringLiteral("select"), QStringLiteral("struct"), QStringLiteral("switch"), QStringLiteral("type"), QStringLiteral("var")}
-            : syntaxKey == QStringLiteral("php")
-                ? QStringList{QStringLiteral("class"), QStringLiteral("function"), QStringLiteral("public"), QStringLiteral("private"), QStringLiteral("protected"), QStringLiteral("if"), QStringLiteral("else"), QStringLiteral("elseif"), QStringLiteral("return"), QStringLiteral("foreach"), QStringLiteral("while"), QStringLiteral("namespace"), QStringLiteral("use"), QStringLiteral("extends"), QStringLiteral("implements"), QStringLiteral("trait"), QStringLiteral("static"), QStringLiteral("new")}
-                : QStringList{QStringLiteral("abstract"), QStringLiteral("break"), QStringLiteral("case"), QStringLiteral("catch"), QStringLiteral("class"), QStringLiteral("continue"), QStringLiteral("default"), QStringLiteral("else"), QStringLiteral("enum"), QStringLiteral("extends"), QStringLiteral("finally"), QStringLiteral("for"), QStringLiteral("if"), QStringLiteral("implements"), QStringLiteral("import"), QStringLiteral("interface"), QStringLiteral("namespace"), QStringLiteral("new"), QStringLiteral("package"), QStringLiteral("private"), QStringLiteral("protected"), QStringLiteral("public"), QStringLiteral("return"), QStringLiteral("static"), QStringLiteral("switch"), QStringLiteral("this"), QStringLiteral("throw"), QStringLiteral("try"), QStringLiteral("using"), QStringLiteral("while")};
-        rules += buildWordRules(keywords, QStringLiteral("Keyword"));
-        rules += buildWordRules({QStringLiteral("int"), QStringLiteral("long"), QStringLiteral("short"), QStringLiteral("float"), QStringLiteral("double"), QStringLiteral("bool"), QStringLiteral("boolean"), QStringLiteral("string"), QStringLiteral("char"), QStringLiteral("byte"), QStringLiteral("void")}, QStringLiteral("PrimitiveType"));
-        commentPattern = QRegularExpression(QStringLiteral("//[^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("sh")) {
-        rules += buildWordRules({QStringLiteral("if"), QStringLiteral("then"), QStringLiteral("else"), QStringLiteral("elif"), QStringLiteral("fi"), QStringLiteral("for"), QStringLiteral("do"), QStringLiteral("done"), QStringLiteral("while"), QStringLiteral("case"), QStringLiteral("esac"), QStringLiteral("function"), QStringLiteral("in"), QStringLiteral("export"), QStringLiteral("local"), QStringLiteral("readonly")}, QStringLiteral("Keyword"));
-        rules += buildWordRules({QStringLiteral("echo"), QStringLiteral("cd"), QStringLiteral("test"), QStringLiteral("printf"), QStringLiteral("source")}, QStringLiteral("Function"));
-        commentPattern = QRegularExpression(QStringLiteral("#[^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("yaml")) {
-        rules += buildWordRules({QStringLiteral("true"), QStringLiteral("false"), QStringLiteral("null"), QStringLiteral("yes"), QStringLiteral("no"), QStringLiteral("on"), QStringLiteral("off")}, QStringLiteral("Keyword"));
-        rules.append({QRegularExpression(QStringLiteral("^\\s*[^:#\\n]+:(?=\\s|$)")), QStringLiteral("Function")});
-        commentPattern = QRegularExpression(QStringLiteral("#[^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("toml")) {
-        rules += buildWordRules({QStringLiteral("true"), QStringLiteral("false")}, QStringLiteral("Keyword"));
-        rules.append({QRegularExpression(QStringLiteral("^\\s*\\[[^\\]]+\\]")), QStringLiteral("Type")});
-        rules.append({QRegularExpression(QStringLiteral("^\\s*[A-Za-z0-9_.-]+(?=\\s*=)")), QStringLiteral("Function")});
-        commentPattern = QRegularExpression(QStringLiteral("#[^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("ini")) {
-        rules.append({QRegularExpression(QStringLiteral("^\\s*\\[[^\\]]+\\]")), QStringLiteral("Type")});
-        rules.append({QRegularExpression(QStringLiteral("^\\s*[A-Za-z0-9_.-]+(?=\\s*=)")), QStringLiteral("Function")});
-        commentPattern = QRegularExpression(QStringLiteral("^[;#][^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("sql")) {
-        rules += buildWordRules({QStringLiteral("select"), QStringLiteral("from"), QStringLiteral("where"), QStringLiteral("insert"), QStringLiteral("into"), QStringLiteral("update"), QStringLiteral("delete"), QStringLiteral("join"), QStringLiteral("left"), QStringLiteral("right"), QStringLiteral("inner"), QStringLiteral("outer"), QStringLiteral("group"), QStringLiteral("by"), QStringLiteral("order"), QStringLiteral("limit"), QStringLiteral("create"), QStringLiteral("table"), QStringLiteral("alter"), QStringLiteral("drop"), QStringLiteral("index"), QStringLiteral("values"), QStringLiteral("set"), QStringLiteral("and"), QStringLiteral("or"), QStringLiteral("not"), QStringLiteral("null")}, QStringLiteral("Keyword"));
-        commentPattern = QRegularExpression(QStringLiteral("--[^\\n]*"));
-    } else if (syntaxKey == QStringLiteral("xml")) {
-        rules.append({QRegularExpression(QStringLiteral("</?[A-Za-z_:][A-Za-z0-9:._-]*")), QStringLiteral("Keyword")});
-        rules.append({QRegularExpression(QStringLiteral("\\b[A-Za-z_:][A-Za-z0-9:._-]*(?=\\=)")), QStringLiteral("Function")});
-        rules.append({QRegularExpression(QStringLiteral("<!DOCTYPE[^>]*>|<\\?xml[^?]*\\?>")), QStringLiteral("Preprocessor")});
-        commentPattern = QRegularExpression(QStringLiteral("<!--[^>]*-->"));
-    } else if (syntaxKey == QStringLiteral("sln")) {
-        rules += buildWordRules({QStringLiteral("Project"), QStringLiteral("EndProject"), QStringLiteral("Global"), QStringLiteral("EndGlobal"), QStringLiteral("GlobalSection"), QStringLiteral("EndGlobalSection")}, QStringLiteral("Keyword"));
-        rules.append({QRegularExpression(QStringLiteral("\"[^\"]+\"")), QStringLiteral("String")});
-        commentPattern = QRegularExpression(QStringLiteral("^#.*$"));
-    }
-
-    return new RuleBasedHighlighter(rules, commentPattern, document);
-}
 }
 
 CustomCodeEditor::CustomCodeEditor(QWidget* parent)
@@ -537,6 +293,52 @@ CustomCodeEditor::~CustomCodeEditor()
 
 bool CustomCodeEditor::event(QEvent* event)
 {
+    if (event && event->type() == QEvent::ToolTip) {
+        auto* helpEvent = static_cast<QHelpEvent*>(event);
+        if (m_buffer && m_lineIndex->lineCount() > 0) {
+            const qint64 bytePos = bytePosFromPoint(helpEvent->pos());
+            const qint64 lineNum = lineFromBytePos(bytePos);
+            const QString lineText = displayTextForLine(lineNum);
+            const qint64 lineStart = lineVisibleStart(lineNum);
+            const qint64 rawCol = static_cast<int>(bytePos - lineStart);
+
+            if (rawCol >= 0 && rawCol <= lineText.size()) {
+                int col = static_cast<int>(rawCol);
+                int start = col;
+                int end = col;
+
+                while (start > 0 && isWordCharacter(lineText.at(start - 1)))
+                    --start;
+                while (end < lineText.size() && isWordCharacter(lineText.at(end)))
+                    ++end;
+
+                if (end > start) {
+                    const QString token = lineText.mid(start, end - start);
+                    qulonglong value;
+                    if (parseNumberToken(token, value)) {
+                        QString tooltip = QStringLiteral(
+                            "<div style='font-family: monospace; font-size: 12px;'>"
+                            "<b>%1</b><br>"
+                            "Dec: %2<br>"
+                            "Hex: 0x%3<br>"
+                            "Oct: 0%4<br>"
+                            "Bin: %5"
+                            "</div>")
+                            .arg(token.toHtmlEscaped())
+                            .arg(QString::number(value, 10))
+                            .arg(QString::number(value, 16).toUpper())
+                            .arg(QString::number(value, 8))
+                            .arg(QString::number(value, 2));
+                        QToolTip::showText(helpEvent->globalPos(), tooltip, viewport());
+                        return true;
+                    }
+                }
+            }
+        }
+        QToolTip::hideText();
+        return true;
+    }
+
     if (event && (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress)) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
         logKeyEvent("event", event, keyEvent, m_cursorBytePos);
@@ -658,41 +460,7 @@ void CustomCodeEditor::rebuildHighlighterForCurrentExtension()
     const QString ext = normalizedFileExt(m_fileExt);
     const QString resource = EditorLanguageSupport::languageResourceForExtension(ext);
     m_languageResource = resource;
-
-    if (resource == QStringLiteral(":/languages/markdown")) {
-        setSyntaxHighlighter(new MarkdownHighlighter(m_highlightDocument));
-    } else if (resource == QStringLiteral(":/languages/json")) {
-        setSyntaxHighlighter(new QJSONHighlighter(m_highlightDocument));
-    } else if (resource == QStringLiteral(":/languages/c.xml") ||
-               resource == QStringLiteral(":/languages/cpp.xml") ||
-               resource == QStringLiteral(":/languages/asm.xml")) {
-        setSyntaxHighlighter(new QCXXHighlighter(m_highlightDocument));
-    } else if (resource == QStringLiteral(":/languages/gnumake.xml")) {
-        setSyntaxHighlighter(new MakefileHighlighter(m_highlightDocument));
-    } else if (resource == QStringLiteral(":/languages/cmake.xml") || resource == QStringLiteral(":/languages/python.xml")) {
-        setSyntaxHighlighter(new XmlLanguageHighlighter(resource,
-                                                        QRegularExpression(QStringLiteral("#[^\\n]*")),
-                                                        QRegularExpression(QStringLiteral("\"[^\"\\n]*\"|'[^'\\n]*'")),
-                                                        QRegularExpression(QStringLiteral("\\b(0x[0-9A-Fa-f]+|\\d+(?:\\.\\d+)?)\\b")),
-                                                        m_highlightDocument));
-    } else if (resource == QStringLiteral(":/languages/lua.xml")) {
-        setSyntaxHighlighter(new XmlLanguageHighlighter(resource,
-                                                        QRegularExpression(QStringLiteral("--[^\\n]*")),
-                                                        QRegularExpression(QStringLiteral("\"[^\"\\n]*\"|'[^'\\n]*'")),
-                                                        QRegularExpression(QStringLiteral("\\b(0x[0-9A-Fa-f]+|\\d+(?:\\.\\d+)?)\\b")),
-                                                        m_highlightDocument));
-    } else if (EditorLanguageSupport::isCommonRuleLanguageResource(resource)) {
-        setSyntaxHighlighter(createCommonLanguageHighlighter(ext, m_highlightDocument));
-    } else if (resource == QStringLiteral(":/languages/plain")) {
-        setSyntaxHighlighter(nullptr);
-    } else {
-        setSyntaxHighlighter(new XmlLanguageHighlighter(resource,
-                                                        QRegularExpression(QStringLiteral("//[^\\n]*")),
-                                                        QRegularExpression(QStringLiteral("\"[^\"\\n]*\"|'[^'\\n]*'")),
-                                                        QRegularExpression(QStringLiteral("\\b(0x[0-9A-Fa-f]+|\\d+(?:\\.\\d+)?)\\b")),
-                                                        m_highlightDocument));
-    }
-
+    setSyntaxHighlighter(HighlighterFactory::create(resource, ext, m_highlightDocument));
     applyEditorPalette();
 }
 
@@ -808,6 +576,14 @@ void CustomCodeEditor::setBuffer(FileDataBuffer* buffer)
     connect(m_buffer, &FileDataBuffer::bytesChanged, this, &CustomCodeEditor::onBufferBytesChanged);
     connect(m_buffer, &FileDataBuffer::dataChanged, this, &CustomCodeEditor::onBufferDataChanged);
     connect(m_buffer, &FileDataBuffer::selectionChanged, this, &CustomCodeEditor::onBufferSelectionChanged);
+    connect(m_buffer, &FileDataBuffer::cursorRestoreRequested, this, [this](qint64 pos) {
+        m_cursorBytePos = pos;
+        clampCursorToBuffer();
+        ensureCursorVisible();
+        emit cursorPositionChanged();
+        viewport()->update();
+        m_lineNumberArea->update();
+    });
 
     buildLineIndex();
     m_cursorBytePos = firstTextByte();
@@ -1034,6 +810,35 @@ bool CustomCodeEditor::goToLine(qint64 oneBasedLineNumber)
     m_cursorBytePos = lineVisibleStart(lineNum);
     clearSelection();
     ensureCursorVisible();
+    emit cursorPositionChanged();
+    viewport()->update();
+    return true;
+}
+
+bool CustomCodeEditor::selectTextRange(qint64 oneBasedLineNumber, int zeroBasedColumn, int utf16Length)
+{
+    if (!m_buffer || m_lineIndex->lineCount() == 0 || utf16Length <= 0)
+        return false;
+
+    const qint64 lineNum = qBound<qint64>(0, oneBasedLineNumber - 1, m_lineIndex->lineCount() - 1);
+    const QString lineText = displayTextForLine(lineNum);
+    const int boundedColumn = qBound(0, zeroBasedColumn, lineText.size());
+    const qint64 lineStart = lineVisibleStart(lineNum);
+    const QByteArray lineBytes = m_buffer->read(lineStart, lineVisibleEnd(lineNum) - lineStart);
+    const qint64 start = lineStart + m_utf8Decoder->charPosToByte(lineBytes, boundedColumn);
+    const QByteArray remainingBytes = m_buffer->read(start, m_buffer->size() - start);
+    const QString remainingText = QString::fromUtf8(remainingBytes);
+    const qint64 byteLength = remainingText.left(utf16Length).toUtf8().size();
+    if (byteLength <= 0)
+        return false;
+
+    m_selectionStart = start;
+    m_selectionLength = byteLength;
+    m_selectionAnchor = start;
+    m_cursorBytePos = start + byteLength;
+    syncSelectionToBuffer();
+    ensureCursorVisible();
+    setFocus(Qt::OtherFocusReason);
     emit cursorPositionChanged();
     viewport()->update();
     return true;
@@ -1410,7 +1215,7 @@ void CustomCodeEditor::keyPressEvent(QKeyEvent* event)
     }
     const QString text = event->text();
     if (text == QStringLiteral(" ") && !event->modifiers().testFlag(Qt::ControlModifier)) {
-        beginEditGrouping(EditGroupTyping);
+        endEditGrouping();
         if (kLogInputEvents)
             qDebug() << "[CustomCodeEditor][keyPressEvent] action=InsertSpaceByText";
         insertText(text);
@@ -1427,7 +1232,7 @@ void CustomCodeEditor::keyPressEvent(QKeyEvent* event)
         event->accept();
         return;
     case Qt::Key_Space:
-        beginEditGrouping(EditGroupTyping);
+        endEditGrouping();
         if (kLogInputEvents)
             qDebug() << "[CustomCodeEditor][keyPressEvent] action=InsertSpaceByKey";
         insertText(QStringLiteral(" "));
@@ -1486,7 +1291,7 @@ void CustomCodeEditor::keyPressEvent(QKeyEvent* event)
     }
 
     if (!text.isEmpty() && !event->modifiers().testFlag(Qt::ControlModifier) && text.front().isPrint()) {
-        beginEditGrouping(EditGroupTyping);
+        endEditGrouping();
         if (kLogInputEvents)
             qDebug().noquote() << QStringLiteral("[CustomCodeEditor][keyPressEvent] action=InsertPrintable text='%1'").arg(text);
         insertText(text);
@@ -1796,11 +1601,6 @@ void CustomCodeEditor::onBufferDataChanged()
 void CustomCodeEditor::onBufferSelectionChanged(qint64 pos, qint64 length)
 {
     if (m_updatingSelection)
-        return;
-
-    // Ignore zero-length selection echoes while this editor is actively
-    // applying its own edit; other views may still be catching up.
-    if (m_applyingBufferEdit && length == 0)
         return;
 
     updateSelection(pos, length);
@@ -3235,11 +3035,13 @@ void CustomCodeEditor::replaceRange(qint64 start, qint64 length, const QByteArra
 
     logEditRange("replaceRange", start, length, removedBytes, replacement);
 
+    const qint64 oldCursorBytePos = m_cursorBytePos;
     m_cursorBytePos = start + replacement.size();
     m_selectionStart = m_cursorBytePos;
     m_selectionLength = 0;
     m_selectionAnchor = -1;
 
+    m_buffer->setPendingCursorPos(oldCursorBytePos, m_cursorBytePos);
     m_applyingBufferEdit = true;
     if (length == 0) {
         m_buffer->insertBytes(start, replacement);

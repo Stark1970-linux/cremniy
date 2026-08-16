@@ -3,15 +3,22 @@
 
 #include <QTabWidget>
 #include "core/modules/ModuleManager.h"
+#include "core/search/searchengine.h"
 #include "widgets/filetab.h"
 
 class FilesTabWidget : public QTabWidget {
     Q_OBJECT
 public:
     FilesTabWidget(QWidget *parent = nullptr);
+    ~FilesTabWidget() override;
 
     void tabSelect(int index);
     void openFile(QString fullPath, QString fileName);
+    QVector<SearchDocument> searchDocuments(SearchScope scope) const;
+    QByteArray documentContents(const QString& filePath, bool* found) const;
+    bool replaceOpenDocument(const QString& filePath, const QByteArray& contents);
+    bool openSearchMatch(const SearchMatch& match);
+    QString selectedSearchText() const;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -35,6 +42,7 @@ private:
     bool m_adjustingTabMove = false;
 
 signals:
+    void searchDocumentsChanged();
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);
     void setTabWidthSignal(int width);

@@ -12,9 +12,6 @@
 
 int main(int argc, char *argv[])
 {
-    #ifdef Q_OS_LINUX
-    qputenv("QT_QPA_PLATFORMTHEME", "generic");
-    #endif
     QApplication a(argc, argv);
 
     QCoreApplication::setOrganizationName("Munirov");
@@ -28,7 +25,8 @@ int main(int argc, char *argv[])
     int jbFontBoldId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono-Bold.ttf");
     int jbFontItalId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono-Italic.ttf");
 
-    QString jbFontFamily = QFontDatabase::applicationFontFamilies(jbFontRegId).at(0);
+    QStringList fontFamilies = QFontDatabase::applicationFontFamilies(jbFontRegId);
+    QString jbFontFamily = !fontFamilies.isEmpty() ? fontFamilies.at(0) : "Sans Serif";
 
     qDebug() << jbFontFamily;
 

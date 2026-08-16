@@ -33,6 +33,7 @@ private:
     void updateDependencyStatus();
 
     QComboBox   *m_backendCombo = nullptr;
+    QComboBox   *m_languageCombo = nullptr;
     QLineEdit   *m_objdumpPath  = nullptr;
     QLineEdit   *m_radare2Path  = nullptr;
     QLabel      *m_objdumpStatus = nullptr;
@@ -58,4 +59,3 @@ private:
 };
 
 #endif // SETTINGSDIALOG_H
-
