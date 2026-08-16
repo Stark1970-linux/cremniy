@@ -10,7 +10,8 @@
 #include <qsplitter.h>
 #include <qstatusbar.h>
 #include <QLabel>
-#include "widgets/terminal/terminalwidget.h"
+
+class TerminalPanel;
 
 class SearchPanel;
 class QShortcut;
@@ -43,7 +44,7 @@ private:
     FileTreePanel* m_filesTreeView;
 
     // - - Terminal Widget - -
-    TerminalWidget *m_terminal;
+    TerminalPanel *m_terminalPanel;
     SearchPanel* m_searchPanel;
     QShortcut* m_closeSearchShortcut;
     QString m_projectPath;

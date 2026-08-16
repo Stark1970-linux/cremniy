@@ -10,6 +10,7 @@ class PtyProcess;
 }
 
 class QKeyEvent;
+class QFocusEvent;
 
 class TerminalWidget final : public TerminalSolution::TerminalView,
                              private TerminalSolution::SurfaceIntegration
@@ -29,9 +30,13 @@ public slots:
     void stopShell();
 
 signals:
+    void activated();
     void titleChanged(const QString &title);
     void processStarted(qint64 processId);
     void processFinished(int exitCode);
+    void newTerminalRequested();
+    void splitRequested(Qt::Orientation orientation);
+    void closeRequested();
 
 protected:
     qint64 writeToPty(const QByteArray &data) override;
@@ -40,6 +45,7 @@ protected:
     std::optional<Link> toLink(const QString &text) override;
     void linkActivated(const Link &link) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
 
 private:
     void startShell();

@@ -145,7 +145,11 @@ void TerminalWidget::contextMenuRequested(const QPoint &pos)
     menu.addSeparator();
     menu.addAction(tr("Clear"), this, &TerminalWidget::clearContents);
     menu.addAction(tr("Restart Terminal"), this, &TerminalWidget::restartShell);
-    QAction *stop = menu.addAction(tr("Kill Terminal"), this, &TerminalWidget::stopShell);
+    menu.addSeparator();
+    menu.addAction(tr("New Terminal"), this, [this] { emit newTerminalRequested(); });
+    menu.addAction(tr("Split Right"), this, [this] { emit splitRequested(Qt::Horizontal); });
+    menu.addAction(tr("Split Down"), this, [this] { emit splitRequested(Qt::Vertical); });
+    QAction *stop = menu.addAction(tr("Kill Terminal"), this, [this] { emit closeRequested(); });
     stop->setEnabled(isRunning());
     menu.exec(viewport()->mapToGlobal(pos));
 }
@@ -192,6 +196,12 @@ void TerminalWidget::keyPressEvent(QKeyEvent *event)
         return;
     }
     TerminalSolution::TerminalView::keyPressEvent(event);
+}
+
+void TerminalWidget::focusInEvent(QFocusEvent *event)
+{
+    TerminalSolution::TerminalView::focusInEvent(event);
+    emit activated();
 }
 
 void TerminalWidget::startShell()

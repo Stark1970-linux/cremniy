@@ -10,6 +10,7 @@
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/search/searchpanel.h"
+#include "widgets/terminal/terminalpanel.h"
 #include <QShortcut>
 
 IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
@@ -37,10 +38,7 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 
     m_verticalSplitter = new QSplitter(Qt::Vertical, m_mainWidget);
 
-    // Terminal is initialized lazily on demand (see on_Toggle_Terminal)
-    // m_terminal = new TerminalWidget(this, ProjectPath);
-    // m_terminal->setVisible(false);
-    m_terminal = nullptr;
+    m_terminalPanel = nullptr;
 
     m_leftSidebar = new QWidget(this);
     auto const leftLayout = new QVBoxLayout(m_leftSidebar);
@@ -147,21 +145,21 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 IDEWindow::~IDEWindow() = default;
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
-    if (checked && !m_terminal) {
-        m_terminal = new TerminalWidget(this, m_projectPath);
-        m_verticalSplitter->addWidget(m_terminal);
+    if (checked && !m_terminalPanel) {
+        m_terminalPanel = new TerminalPanel(m_projectPath, this);
+        m_verticalSplitter->addWidget(m_terminalPanel);
         m_verticalSplitter->setCollapsible(1, true);
         m_verticalSplitter->setSizes({800, 200});
     }
 
-    if (!m_terminal) {
+    if (!m_terminalPanel) {
         return;
     }
 
-    m_terminal->setVisible(checked);
+    m_terminalPanel->setVisible(checked);
 
     if (checked) {
-        m_terminal->setFocus();
+        m_terminalPanel->focusActiveTerminal();
     }
 }
 

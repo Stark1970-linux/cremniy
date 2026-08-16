@@ -110,6 +110,10 @@ qt_add_executable(${PROJECT_NAME}
     widgets/filetreepanel.h
     widgets/terminal/terminalwidget.cpp
     widgets/terminal/terminalwidget.h
+    widgets/terminal/terminalsession.cpp
+    widgets/terminal/terminalsession.h
+    widgets/terminal/terminalpanel.cpp
+    widgets/terminal/terminalpanel.h
     widgets/search/searchpanel.cpp
     widgets/search/searchpanel.h
 
