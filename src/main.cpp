@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     if (args.size() > 1) {
         const QString projectPath = args.at(1);
         if (QDir(projectPath).exists()) {
-            wf.OpenProject(projectPath);
+            wf.openProject(projectPath);
         } else {
             qWarning() << "Project path does not exist:" << projectPath;
             wf.show();
