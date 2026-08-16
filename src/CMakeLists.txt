@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(cremniy VERSION 0.2.0 LANGUAGES CXX)
+project(cremniy VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -133,9 +133,6 @@ qt_add_executable(${PROJECT_NAME}
     core/search/searchengine.cpp
     core/search/searchengine.h
 
-    core/project/projectshistorymanager.cpp
-    core/project/projectshistorymanager.h
-
     core/settings/appsettings.cpp
     core/settings/appsettings.h
 
@@ -200,6 +197,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE CodeEditor)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/HexEditor/ ${CMAKE_BINARY_DIR}/libs/HexEditor/)
 target_link_libraries(${PROJECT_NAME} PRIVATE HexEditor)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/Terminal/ ${CMAKE_BINARY_DIR}/libs/Terminal/)
 
 # - - Modules - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Modules/References/)
