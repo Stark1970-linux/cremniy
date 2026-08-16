@@ -18,6 +18,8 @@ public:
     explicit WelcomeForm(QWidget *parent = nullptr);
     ~WelcomeForm();
 
+    void OpenProject(QString path);
+
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
@@ -35,7 +37,6 @@ private:
     QListView *RecentProjectsList;
     void L2CreateProject(QString name, QString path, QString language);
     void SetProjectHistoryList();
-    void OpenProject(QString path);
 
 private slots:
     void SelectProjectInList();
