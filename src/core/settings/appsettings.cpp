@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QSettings>
 #include <QFileInfo>
+#include <QStandardPaths>
 
 #include "filecontext.h"
 #include "filemanager.h"
@@ -23,15 +24,9 @@ void AppSettings::updateSettingsJson(const QJsonObject &data) {
     FileManager::saveJson(fl, data);
 }
 
-
 QString AppSettings::getAppSettingsPath() {
-    QString settingsPath = QCoreApplication::applicationDirPath();
-
-#if defined(Q_OS_APPLE) || defined(Q_OS_MAC)
-    return settingsPath.append("/../data/settings.json");
-#else
-    return settingsPath.append("/data/settings.json");
-#endif
+    return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+           + "/settings.json";
 }
 
 QString AppSettings::keyDisasmBackend() { return "disasm/backend"; }
@@ -208,6 +203,7 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
         if (error) *error = QObject::tr("Failed to apply settings");
         return false;
     }
+    if (in.contains(keyExcludedPatterns()))
+        emit SettingsNotifier::instance()->excludedPatternsChanged();
     return true;
 }
-

@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <section name="Instruction">
+        <!-- Basic data movement -->
         <name>mov</name>
+        <name>movzx</name>
+        <name>movsx</name>
+        <name>movsxd</name>
+        <name>xchg</name>
+        <name>bswap</name>
+        <!-- Arithmetic -->
         <name>add</name>
         <name>sub</name>
         <name>mul</name>
@@ -10,24 +17,49 @@
         <name>idiv</name>
         <name>inc</name>
         <name>dec</name>
+        <name>neg</name>
+        <name>abs</name>
+        <!-- Bitwise -->
         <name>and</name>
         <name>or</name>
         <name>xor</name>
         <name>not</name>
-        <name>neg</name>
         <name>shl</name>
         <name>shr</name>
         <name>sal</name>
         <name>sar</name>
+        <name>rol</name>
+        <name>ror</name>
+        <name>rcl</name>
+        <name>rcr</name>
+        <!-- Bit test -->
+        <name>bt</name>
+        <name>bts</name>
+        <name>btr</name>
+        <name>btc</name>
+        <name>bsf</name>
+        <name>bsr</name>
+        <!-- Comparison / test -->
         <name>cmp</name>
         <name>test</name>
+        <!-- Stack -->
         <name>push</name>
         <name>pop</name>
+        <name>pusha</name>
+        <name>pushad</name>
+        <name>popa</name>
+        <name>popad</name>
+        <!-- Control flow -->
         <name>call</name>
         <name>ret</name>
+        <name>retn</name>
+        <name>enter</name>
+        <name>leave</name>
         <name>jmp</name>
         <name>je</name>
         <name>jne</name>
+        <name>jz</name>
+        <name>jnz</name>
         <name>jg</name>
         <name>jge</name>
         <name>jl</name>
@@ -36,12 +68,242 @@
         <name>jae</name>
         <name>jb</name>
         <name>jbe</name>
+        <name>jo</name>
+        <name>jno</name>
+        <name>js</name>
+        <name>jns</name>
+        <name>jp</name>
+        <name>jnp</name>
         <name>loop</name>
+        <name>loope</name>
+        <name>loopne</name>
+        <name>jecxz</name>
+        <name>jrcxz</name>
+        <name>rep</name>
+        <name>repe</name>
+        <name>repz</name>
+        <name>repne</name>
+        <name>repnz</name>
+        <!-- Conditional moves -->
+        <name>cmove</name>
+        <name>cmovne</name>
+        <name>cmovz</name>
+        <name>cmovnz</name>
+        <name>cmovg</name>
+        <name>cmovge</name>
+        <name>cmovl</name>
+        <name>cmovle</name>
+        <name>cmova</name>
+        <name>cmovae</name>
+        <name>cmovb</name>
+        <name>cmovbe</name>
+        <name>cmovo</name>
+        <name>cmovno</name>
+        <name>cmovs</name>
+        <name>cmovns</name>
+        <!-- SETcc -->
+        <name>sete</name>
+        <name>setne</name>
+        <name>setz</name>
+        <name>setnz</name>
+        <name>setg</name>
+        <name>setge</name>
+        <name>setl</name>
+        <name>setle</name>
+        <name>seta</name>
+        <name>setae</name>
+        <name>setb</name>
+        <name>setbe</name>
+        <name>seto</name>
+        <name>setno</name>
+        <name>sets</name>
+        <name>setns</name>
+        <!-- Conversion -->
+        <name>cbw</name>
+        <name>cwde</name>
+        <name>cdqe</name>
+        <name>cwd</name>
+        <name>cdq</name>
+        <name>cqo</name>
+        <!-- NOP -->
         <name>nop</name>
+        <name>ud2</name>
+        <!-- Lea -->
         <name>lea</name>
+        <!-- String operations -->
+        <name>movsb</name>
+        <name>movsw</name>
+        <name>movsd</name>
+        <name>movsq</name>
+        <name>stosb</name>
+        <name>stosw</name>
+        <name>stosd</name>
+        <name>stosq</name>
+        <name>lodsb</name>
+        <name>lodsw</name>
+        <name>lodsd</name>
+        <name>lodsq</name>
+        <name>scasb</name>
+        <name>scasw</name>
+        <name>scasd</name>
+        <name>scasq</name>
+        <name>cmpsb</name>
+        <name>cmpsw</name>
+        <name>cmpsd</name>
+        <name>cmpsq</name>
+        <!-- System -->
+        <name>syscall</name>
+        <name>sysenter</name>
+        <name>sysexit</name>
+        <name>sysret</name>
+        <name>int</name>
+        <name>int3</name>
+        <name>into</name>
+        <name>hlt</name>
+        <name>cli</name>
+        <name>sti</name>
+        <name>cpuid</name>
+        <name>rdtsc</name>
+        <name>rdtscp</name>
+        <name>rdmsr</name>
+        <name>wrmsr</name>
+        <name>lfence</name>
+        <name>mfence</name>
+        <name>sfence</name>
+        <name>invd</name>
+        <name>wbinvd</name>
+        <name>invlpg</name>
+        <name>lgdt</name>
+        <name>sgdt</name>
+        <name>lidt</name>
+        <name>sidt</name>
+        <name>lldt</name>
+        <name>sldt</name>
+        <name>ltr</name>
+        <name>str</name>
+        <name>lmsw</name>
+        <name>smsw</name>
+        <name>clts</name>
+        <name>lock</name>
+        <name>wait</name>
+        <name>fwait</name>
+        <name>prefetch</name>
+        <name>prefetchnta</name>
+        <name>prefetcht0</name>
+        <name>prefetcht1</name>
+        <name>prefetcht2</name>
+        <!-- SSE data movement -->
+        <name>movaps</name>
+        <name>movups</name>
+        <name>movapd</name>
+        <name>movupd</name>
+        <name>movss</name>
+        <name>movdqa</name>
+        <name>movdqu</name>
+        <name>movq</name>
+        <name>movdq2q</name>
+        <name>movq2dq</name>
+        <!-- SSE arithmetic -->
+        <name>addss</name>
+        <name>addsd</name>
+        <name>addps</name>
+        <name>addpd</name>
+        <name>subss</name>
+        <name>subsd</name>
+        <name>subps</name>
+        <name>subpd</name>
+        <name>mulss</name>
+        <name>mulsd</name>
+        <name>mulps</name>
+        <name>mulpd</name>
+        <name>divss</name>
+        <name>divsd</name>
+        <name>divps</name>
+        <name>divpd</name>
+        <name>sqrtss</name>
+        <name>sqrtsd</name>
+        <name>minss</name>
+        <name>minsd</name>
+        <name>maxss</name>
+        <name>maxsd</name>
+        <!-- SSE compare -->
+        <name>comiss</name>
+        <name>comisd</name>
+        <name>ucomiss</name>
+        <name>ucomisd</name>
+        <!-- SSE convert -->
+        <name>cvtss2sd</name>
+        <name>cvtsd2ss</name>
+        <name>cvtss2si</name>
+        <name>cvtsd2si</name>
+        <name>cvtsi2ss</name>
+        <name>cvtsi2sd</name>
+        <name>cvtps2pd</name>
+        <name>cvtpd2ps</name>
+        <name>cvtdq2ps</name>
+        <name>cvtdq2pd</name>
+        <!-- SSE logical -->
+        <name>andps</name>
+        <name>andpd</name>
+        <name>andnps</name>
+        <name>andnpd</name>
+        <name>orps</name>
+        <name>orpd</name>
+        <name>xorps</name>
+        <name>xorpd</name>
+        <!-- SSE shuffle / pack -->
+        <name>shufps</name>
+        <name>shufpd</name>
+        <name>unpcklps</name>
+        <name>unpckhps</name>
+        <name>unpcklpd</name>
+        <name>unpckhpd</name>
+        <name>punpcklbw</name>
+        <name>punpcklwd</name>
+        <name>punpckldq</name>
+        <name>punpckhbw</name>
+        <name>punpckhwd</name>
+        <name>punpckhdq</name>
+        <name>packsswb</name>
+        <name>packssdw</name>
+        <name>packuswb</name>
+        <!-- SSE integer -->
+        <name>paddd</name>
+        <name>paddw</name>
+        <name>paddb</name>
+        <name>psubd</name>
+        <name>psubw</name>
+        <name>psubb</name>
+        <name>pmullw</name>
+        <name>pmulhw</name>
+        <name>pmulld</name>
+        <name>pand</name>
+        <name>por</name>
+        <name>pxor</name>
+        <name>pcmpeqb</name>
+        <name>pcmpeqw</name>
+        <name>pcmpeqd</name>
+        <name>pcmpgtb</name>
+        <name>pcmpgtw</name>
+        <name>pcmpgtd</name>
+        <name>pslld</name>
+        <name>psllw</name>
+        <name>psrld</name>
+        <name>psrlw</name>
+        <name>psrad</name>
+        <name>psraw</name>
+        <!-- Bit manipulation (BMI) -->
+        <name>andn</name>
+        <name>bextr</name>
+        <name>blsi</name>
+        <name>blsmsk</name>
+        <name>blsr</name>
+        <name>tzcnt</name>
+        <name>lzcnt</name>
+        <name>popcnt</name>
     </section>
     <section name="Register">
-        <!-- Intel-style -->
+        <!-- General purpose — 64-bit -->
         <name>rax</name>
         <name>rbx</name>
         <name>rcx</name>
@@ -58,6 +320,7 @@
         <name>r13</name>
         <name>r14</name>
         <name>r15</name>
+        <!-- General purpose — 32-bit -->
         <name>eax</name>
         <name>ebx</name>
         <name>ecx</name>
@@ -66,6 +329,7 @@
         <name>edi</name>
         <name>ebp</name>
         <name>esp</name>
+        <!-- General purpose — 16-bit -->
         <name>ax</name>
         <name>bx</name>
         <name>cx</name>
@@ -74,6 +338,7 @@
         <name>di</name>
         <name>bp</name>
         <name>sp</name>
+        <!-- General purpose — 8-bit -->
         <name>al</name>
         <name>ah</name>
         <name>bl</name>
@@ -82,7 +347,118 @@
         <name>ch</name>
         <name>dl</name>
         <name>dh</name>
-        <!-- AT&T-style -->
+        <!-- 8-bit extensions (REX) -->
+        <name>r8b</name>
+        <name>r9b</name>
+        <name>r10b</name>
+        <name>r11b</name>
+        <name>r12b</name>
+        <name>r13b</name>
+        <name>r14b</name>
+        <name>r15b</name>
+        <!-- 16-bit extensions (REX) -->
+        <name>r8w</name>
+        <name>r9w</name>
+        <name>r10w</name>
+        <name>r11w</name>
+        <name>r12w</name>
+        <name>r13w</name>
+        <name>r14w</name>
+        <name>r15w</name>
+        <!-- 32-bit extensions (REX) -->
+        <name>r8d</name>
+        <name>r9d</name>
+        <name>r10d</name>
+        <name>r11d</name>
+        <name>r12d</name>
+        <name>r13d</name>
+        <name>r14d</name>
+        <name>r15d</name>
+        <!-- Segment registers -->
+        <name>cs</name>
+        <name>ds</name>
+        <name>es</name>
+        <name>fs</name>
+        <name>gs</name>
+        <name>ss</name>
+        <!-- Instruction pointer -->
+        <name>rip</name>
+        <name>eip</name>
+        <name>ip</name>
+        <!-- FPU registers -->
+        <name>st0</name>
+        <name>st1</name>
+        <name>st2</name>
+        <name>st3</name>
+        <name>st4</name>
+        <name>st5</name>
+        <name>st6</name>
+        <name>st7</name>
+        <!-- XMM registers (128-bit) -->
+        <name>xmm0</name>
+        <name>xmm1</name>
+        <name>xmm2</name>
+        <name>xmm3</name>
+        <name>xmm4</name>
+        <name>xmm5</name>
+        <name>xmm6</name>
+        <name>xmm7</name>
+        <name>xmm8</name>
+        <name>xmm9</name>
+        <name>xmm10</name>
+        <name>xmm11</name>
+        <name>xmm12</name>
+        <name>xmm13</name>
+        <name>xmm14</name>
+        <name>xmm15</name>
+        <!-- YMM registers (256-bit) -->
+        <name>ymm0</name>
+        <name>ymm1</name>
+        <name>ymm2</name>
+        <name>ymm3</name>
+        <name>ymm4</name>
+        <name>ymm5</name>
+        <name>ymm6</name>
+        <name>ymm7</name>
+        <name>ymm8</name>
+        <name>ymm9</name>
+        <name>ymm10</name>
+        <name>ymm11</name>
+        <name>ymm12</name>
+        <name>ymm13</name>
+        <name>ymm14</name>
+        <name>ymm15</name>
+        <!-- ZMM registers (512-bit) -->
+        <name>zmm0</name>
+        <name>zmm1</name>
+        <name>zmm2</name>
+        <name>zmm3</name>
+        <name>zmm4</name>
+        <name>zmm5</name>
+        <name>zmm6</name>
+        <name>zmm7</name>
+        <name>zmm8</name>
+        <name>zmm9</name>
+        <name>zmm10</name>
+        <name>zmm11</name>
+        <name>zmm12</name>
+        <name>zmm13</name>
+        <name>zmm14</name>
+        <name>zmm15</name>
+        <!-- Control registers -->
+        <name>cr0</name>
+        <name>cr2</name>
+        <name>cr3</name>
+        <name>cr4</name>
+        <name>cr8</name>
+        <!-- Debug registers -->
+        <name>dr0</name>
+        <name>dr1</name>
+        <name>dr2</name>
+        <name>dr3</name>
+        <name>dr6</name>
+        <name>dr7</name>
+        <!-- AT&T-style general purpose -->
         <name>%rax</name>
         <name>%rbx</name>
         <name>%rcx</name>
@@ -138,15 +514,90 @@
         <name>dw</name>
         <name>dd</name>
         <name>dq</name>
+        <name>dt</name>
+        <name>ddq</name>
+        <name>resb</name>
+        <name>resw</name>
+        <name>resd</name>
+        <name>resq</name>
+        <name>rest</name>
+        <name>equ</name>
+        <name>times</name>
+        <name>incbin</name>
+        <name>bits</name>
+        <name>org</name>
+        <name>end</name>
+        <name>cpu</name>
+        <name>default</name>
+        <name>absolute</name>
+        <name>struc</name>
+        <name>endstruc</name>
+        <name>istruc</name>
+        <name>iend</name>
+        <name>at</name>
+        <name>pushsection</name>
+        <name>popsection</name>
+        <name>section</name>
+        <name>group</name>
         <!-- AT&T / GAS-like -->
         <name>.section</name>
         <name>.globl</name>
+        <name>.global</name>
         <name>.extern</name>
+        <name>.weak</name>
+        <name>.hidden</name>
+        <name>.protected</name>
         <name>.align</name>
+        <name>.p2align</name>
+        <name>.balign</name>
         <name>.byte</name>
         <name>.word</name>
         <name>.long</name>
         <name>.quad</name>
+        <name>.octa</name>
+        <name>.ascii</name>
+        <name>.asciz</name>
+        <name>.string</name>
+        <name>.zero</name>
+        <name>.fill</name>
+        <name>.skip</name>
+        <name>.space</name>
+        <name>.comm</name>
+        <name>.lcomm</name>
+        <name>.equ</name>
+        <name>.set</name>
+        <name>.equiv</name>
+        <name>.intel_syntax</name>
+        <name>.att_syntax</name>
+        <name>.code16</name>
+        <name>.code32</name>
+        <name>.code64</name>
+        <name>.type</name>
+        <name>.size</name>
+        <name>.file</name>
+        <name>.loc</name>
+        <name>.ident</name>
+        <name>.macro</name>
+        <name>.endm</name>
+        <name>.altmacro</name>
+        <name>.rept</name>
+        <name>.endr</name>
+        <name>.irp</name>
+        <name>.irpc</name>
+        <name>.exitm</name>
+        <name>.if</name>
+        <name>.else</name>
+        <name>.elseif</name>
+        <name>.endif</name>
+        <name>.ifdef</name>
+        <name>.ifndef</name>
+        <name>.ifb</name>
+        <name>.ifnb</name>
+        <name>.ifeqs</name>
+        <name>.ifnes</name>
+        <name>.warning</name>
+        <name>.error</name>
+        <name>.include</name>
+        <name>.incbin</name>
     </section>
 </root>
-

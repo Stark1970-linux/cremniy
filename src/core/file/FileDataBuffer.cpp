@@ -79,7 +79,7 @@ void FileDataBuffer::loadData(const QByteArray& data)
     resetOverlayLocked();
     m_undoStack.clear();
     m_redoStack.clear();
-    m_originalHash = qHash(data, 0);
+    m_originalHash = qHash(m_data, 0);
     locker.unlock();
     emit dataChanged();
 }
@@ -87,7 +87,6 @@ void FileDataBuffer::loadData(const QByteArray& data)
 void FileDataBuffer::replaceData(const QByteArray& data)
 {
     QMutexLocker locker(&m_mutex);
-    endHistoryGroupLocked();
     const QByteArray before = materializeLocked();
     if (before == data)
         return;
@@ -143,8 +142,10 @@ void FileDataBuffer::undo()
     const HistoryEntry entry = m_undoStack.takeLast();
     m_redoStack.append(entry);
     applyDataSnapshotLocked(entry.before);
+    const qint64 cursorPos = entry.cursorPosBefore;
     locker.unlock();
     emit dataChanged();
+    emit cursorRestoreRequested(cursorPos);
 }
 
 void FileDataBuffer::redo()
@@ -157,8 +158,10 @@ void FileDataBuffer::redo()
     const HistoryEntry entry = m_redoStack.takeLast();
     m_undoStack.append(entry);
     applyDataSnapshotLocked(entry.after);
+    const qint64 cursorPos = entry.cursorPosAfter;
     locker.unlock();
     emit dataChanged();
+    emit cursorRestoreRequested(cursorPos);
 }
 
 bool FileDataBuffer::canUndo() const
@@ -182,6 +185,15 @@ void FileDataBuffer::beginHistoryGroup()
     m_historyGroupActive = true;
     m_historyGroupBefore.clear();
     m_historyGroupAfter.clear();
+    m_historyGroupCursorBefore = 0;
+    m_historyGroupCursorAfter = 0;
+}
+
+void FileDataBuffer::setPendingCursorPos(qint64 cursorBefore, qint64 cursorAfter)
+{
+    QMutexLocker locker(&m_mutex);
+    m_pendingCursorBefore = cursorBefore;
+    m_pendingCursorAfter = cursorAfter;
 }
 
 void FileDataBuffer::endHistoryGroup()
@@ -196,7 +208,8 @@ void FileDataBuffer::endHistoryGroupLocked()
         return;
 
     if (!m_historyGroupBefore.isEmpty() || !m_historyGroupAfter.isEmpty()) {
-        m_undoStack.append({m_historyGroupBefore, m_historyGroupAfter});
+        m_undoStack.append({m_historyGroupBefore, m_historyGroupAfter,
+                            m_historyGroupCursorBefore, m_historyGroupCursorAfter});
         if (m_undoStack.size() > m_maxHistoryEntries)
             m_undoStack.remove(0, m_undoStack.size() - m_maxHistoryEntries);
         m_redoStack.clear();
@@ -205,12 +218,13 @@ void FileDataBuffer::endHistoryGroupLocked()
     m_historyGroupActive = false;
     m_historyGroupBefore.clear();
     m_historyGroupAfter.clear();
+    m_historyGroupCursorBefore = 0;
+    m_historyGroupCursorAfter = 0;
 }
 
 void FileDataBuffer::setByte(qint64 pos, char byte)
 {
     QMutexLocker locker(&m_mutex);
-    endHistoryGroupLocked();
     const QByteArray before = materializeLocked();
     const qint64 totalSize = before.size();
     if (pos < 0 || pos >= totalSize)
@@ -241,7 +255,6 @@ void FileDataBuffer::setBytes(qint64 pos, const QByteArray& bytes)
         return;
 
     QMutexLocker locker(&m_mutex);
-    endHistoryGroupLocked();
     const QByteArray before = materializeLocked();
     const qint64 totalSize = before.size();
     if (pos < 0 || pos >= totalSize)
@@ -322,81 +335,73 @@ void FileDataBuffer::markSaved()
 
 bool FileDataBuffer::saveToFile(const QString& filePath)
 {
-    QString targetPath;
-    QByteArray payload;
-    bool keepFileBacked = false;
-    bool sourceWasOpen = false;
-    {
-        QMutexLocker locker(&m_mutex);
-        targetPath = filePath.isEmpty() ? m_filePath : filePath;
-        payload = materializeLocked();
-        keepFileBacked = m_fileBacked;
-        sourceWasOpen = m_file.isOpen();
-        if (sourceWasOpen)
-            m_file.close();
-    }
-
+    QMutexLocker locker(&m_mutex);
+    const QString targetPath = filePath.isEmpty() ? m_filePath : filePath;
     if (targetPath.isEmpty())
         return false;
 
+    const QByteArray payload = materializeLocked();
+    const bool keepFileBacked = m_fileBacked;
+    const bool sourceWasOpen = m_file.isOpen();
+    if (sourceWasOpen)
+        m_file.close();
+
+    const auto reopenSource = [this, sourceWasOpen, &payload]() {
+        if (!sourceWasOpen)
+            return;
+
+        m_file.setFileName(m_filePath);
+        if (m_file.open(QIODevice::ReadOnly))
+            return;
+
+        m_data = payload;
+        m_baseSize = payload.size();
+        m_fileBacked = false;
+        m_materialized = true;
+        m_chunkCache.clear();
+        m_chunkLru.clear();
+        resetOverlayLocked();
+    };
+
     QSaveFile out(targetPath);
     if (!out.open(QIODevice::WriteOnly)) {
-        if (sourceWasOpen) {
-            QMutexLocker locker(&m_mutex);
-            m_file.setFileName(m_filePath);
-            const bool reopened = m_file.open(QIODevice::ReadOnly);
-            Q_UNUSED(reopened);
-        }
+        reopenSource();
         return false;
     }
 
     if (out.write(payload) != payload.size()) {
-        if (sourceWasOpen) {
-            QMutexLocker locker(&m_mutex);
-            m_file.setFileName(m_filePath);
-            const bool reopened = m_file.open(QIODevice::ReadOnly);
-            Q_UNUSED(reopened);
-        }
+        reopenSource();
         return false;
     }
 
     if (!out.commit()) {
-        if (sourceWasOpen) {
-            QMutexLocker locker(&m_mutex);
-            m_file.setFileName(m_filePath);
-            const bool reopened = m_file.open(QIODevice::ReadOnly);
-            Q_UNUSED(reopened);
-        }
+        reopenSource();
         return false;
     }
 
-    {
-        QMutexLocker locker(&m_mutex);
-        closeFileLocked();
-        m_filePath = targetPath;
-        m_baseSize = payload.size();
-        resetOverlayLocked();
+    closeFileLocked();
+    m_filePath = targetPath;
+    m_baseSize = payload.size();
+    resetOverlayLocked();
 
-        if (keepFileBacked || payload.size() >= kLargeFileThreshold) {
-            m_file.setFileName(targetPath);
-            if (m_file.open(QIODevice::ReadOnly)) {
-                m_data.clear();
-                m_fileBacked = true;
-                m_materialized = false;
-            } else {
-                m_data = payload;
-                m_fileBacked = false;
-                m_materialized = true;
-            }
+    if (keepFileBacked || payload.size() >= kLargeFileThreshold) {
+        m_file.setFileName(targetPath);
+        if (m_file.open(QIODevice::ReadOnly)) {
+            m_data.clear();
+            m_fileBacked = true;
+            m_materialized = false;
         } else {
             m_data = payload;
             m_fileBacked = false;
             m_materialized = true;
         }
-
-        m_originalHash = computeCurrentHashLocked();
+    } else {
+        m_data = payload;
+        m_fileBacked = false;
+        m_materialized = true;
     }
 
+    m_originalHash = computeCurrentHashLocked();
     return true;
 }
 
@@ -579,14 +584,21 @@ void FileDataBuffer::applyDataSnapshotLocked(const QByteArray& data)
 void FileDataBuffer::pushHistoryLocked(const QByteArray& before, const QByteArray& after)
 {
     if (m_historyGroupActive) {
-        if (m_historyGroupBefore.isEmpty() && m_historyGroupAfter.isEmpty())
+        if (m_historyGroupBefore.isEmpty() && m_historyGroupAfter.isEmpty()) {
             m_historyGroupBefore = before;
+            m_historyGroupCursorBefore = m_pendingCursorBefore;
+        }
         m_historyGroupAfter = after;
+        m_historyGroupCursorAfter = m_pendingCursorAfter;
+        m_pendingCursorBefore = 0;
+        m_pendingCursorAfter = 0;
         m_redoStack.clear();
         return;
     }
 
-    m_undoStack.append({before, after});
+    m_undoStack.append({before, after, m_pendingCursorBefore, m_pendingCursorAfter});
+    m_pendingCursorBefore = 0;
+    m_pendingCursorAfter = 0;
     if (m_undoStack.size() > m_maxHistoryEntries)
         m_undoStack.remove(0, m_undoStack.size() - m_maxHistoryEntries);
     m_redoStack.clear();

@@ -14,6 +14,7 @@
 #include <QPlainTextEdit>
 #include <QProcess>
 #include <QPushButton>
+#include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStandardPaths>
 
@@ -150,14 +151,14 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
 
     // LANGUAGE
-    auto * languageSwitcherBox = new QComboBox(this);
+    m_languageCombo = new QComboBox(this);
 
-    languageSwitcherBox->setPlaceholderText(tr("Choose:"));
+    m_languageCombo->setPlaceholderText(tr("Choose:"));
     for (auto const & locale : LanguageManager::supportedLanguages())
-        languageSwitcherBox->addItem(QLocale(locale).nativeLanguageName(), QVariant::fromValue(locale));
+        m_languageCombo->addItem(QLocale(locale).nativeLanguageName(), QVariant::fromValue(locale));
 
-    languageSwitcherBox->setMinimumWidth(250);
-    form->addRow(tr("Language"), languageSwitcherBox);
+    m_languageCombo->setMinimumWidth(250);
+    form->addRow(tr("Language"), m_languageCombo);
 
     root->addLayout(form);
 
@@ -210,8 +211,8 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(m_syntaxCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsDialog::updateDependencyStatus);
     connect(m_r2AnalysisCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsDialog::updateDependencyStatus);
     connect(m_r2PreCommands, &QPlainTextEdit::textChanged, this, &SettingsDialog::updateDependencyStatus);
-    connect(languageSwitcherBox, &QComboBox::currentTextChanged, this, [languageSwitcherBox, this] {
-        onLanguageSwitched(languageSwitcherBox->currentData().value<QString>());
+    connect(m_languageCombo, &QComboBox::currentTextChanged, this, [this] {
+        onLanguageSwitched(m_languageCombo->currentData().toString());
     });
 
     loadFromSettings();
@@ -286,6 +287,11 @@ void SettingsDialog::loadFromSettings()
     m_r2PreCommands->setPlainText(AppSettings::radare2PreCommands().replace(';', '\n'));
 
     m_excludedPatterns->setPlainText(AppSettings::excludedPatterns().join('\n'));
+
+    const QString locale = AppSettings::getSettingsJson().value("language").toString();
+    const int languageIndex = m_languageCombo->findData(locale);
+    const QSignalBlocker blocker(m_languageCombo);
+    m_languageCombo->setCurrentIndex(languageIndex >= 0 ? languageIndex : 0);
 }
 
 void SettingsDialog::updateUiEnabledState()

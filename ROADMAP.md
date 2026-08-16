@@ -13,15 +13,23 @@ Create a **unified tool for system programming** that eliminates the need for sc
 
 ### 🐞 Bugs
 
+*empty*
+
 ### ✨ Improvements and New Tasks
 
-- [ ] 🟡 [Display numbers in different numeral systems on hover](https://github.com/Cremniy-Project/cremniy/issues/28)
-- [ ] 🟡 [Improve Terminal](https://github.com/munirov/cremniy/issues/100)
-- [ ] 🟢 [Search string across all project files](https://github.com/Cremniy-Project/cremniy/issues/76)
-- [ ] 🟢 [Git integration](https://github.com/Cremniy-Project/cremniy/issues/42)
+- [ ] 🔴 [Build current user project](https://github.com/munirov/cremniy/issues/239)
+- [ ] 🔴 [Insert bytes between existing ones in HEX Editor](https://github.com/munirov/cremniy/issues/241)
+- [ ] 🟡 [Hide identical bytes in HEX Editor](https://github.com/munirov/cremniy/issues/240)
+- [ ] 🟡 [Improve settings](https://github.com/munirov/cremniy/issues/248)
+- [ ] 🟡 [Module configuration](https://github.com/munirov/cremniy/issues/245)
+- [ ] 🟡 [Auto-check for new Cremniy versions](https://github.com/munirov/cremniy/issues/242)
+- [x] 🟡 [Launch from terminal with command-line arguments](https://github.com/munirov/cremniy/issues/247)
+- [ ] 🟢 [Improve terminal](https://github.com/munirov/cremniy/issues/100)
+- [ ] 🟢 [Unified support for adding new language syntax to code editor](https://github.com/munirov/cremniy/issues/243)
+- [ ] 🟢 [Highlight in yellow across other tools when selecting in one tool](https://github.com/munirov/cremniy/issues/244)
+- [ ] 🟢 [Configure and customize app themes](https://github.com/munirov/cremniy/issues/246)
 
 ## 🔮 Future Plans
 
-- Build user projects
-- Debugger for running programs
-- Memory viewer for running programs
+- Debugger for running project
+- Debugging modules for running project

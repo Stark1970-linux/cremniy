@@ -74,11 +74,7 @@ void QHexView::PaintContext::drawText(const QString& s,
 }
 
 void QHexView::PaintContext::drawText(const QString& s, bool pad) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
     qreal w = this->fontmetrics->horizontalAdvance(s);
-#else
-    qreal w = this->fontmetrics->width(s);
-#endif
 
     QRectF r = {this->x, this->y, w, this->hexview->lineHeight()};
 
@@ -600,11 +596,14 @@ void QHexView::selectAll() {
 }
 
 void QHexView::removeSelection() {
-    if(!m_hexcursor->hasSelection())
+    if(!m_hexcursor->hasSelection()) {
         return;
-    if(!m_readonly)
-        m_hexdocument->remove(m_hexcursor->selectionStartOffset(),
-                              m_hexcursor->selectionLength() - 1);
+    }
+    if(!m_readonly){
+        m_hexdocument->remove(
+            m_hexcursor->selectionStartOffset(),
+            m_hexcursor->selectionLength());
+    }
     m_hexcursor->clearSelection();
 }
 
@@ -1205,11 +1204,7 @@ qreal QHexView::endColumnX() const {
 qreal QHexView::getNCellsWidth(int n) const { return n * this->cellWidth(); }
 
 qreal QHexView::cellWidth() const {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
     return m_fontmetrics.horizontalAdvance(" ");
-#else
-    return m_fontmetrics.width(" ");
-#endif
 }
 
 qreal QHexView::lineWidth() const {

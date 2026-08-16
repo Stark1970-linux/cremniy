@@ -3,10 +3,6 @@
 
 #include "libs/CodeEditor/include/widgets/CustomCodeEditor.h"
 #include "core/modules/TabBase.h"
-#include <QCheckBox>
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
 #include <QShortcut>
 #include <QWidget>
 
@@ -24,16 +20,6 @@ private:
      * @brief Главный виджет страницы "Binary File Detected"
     */
     QWidget* m_overlayWidget;
-    QWidget* m_searchBar = nullptr;
-    QLineEdit* m_searchEdit = nullptr;
-    QLineEdit* m_replaceEdit = nullptr;
-    QLabel* m_searchStatusLabel = nullptr;
-    QPushButton* m_searchPrevButton = nullptr;
-    QPushButton* m_searchNextButton = nullptr;
-    QPushButton* m_replaceButton = nullptr;
-    QPushButton* m_replaceAllButton = nullptr;
-    QPushButton* m_searchCloseButton = nullptr;
-    QCheckBox* m_matchCaseCheckBox = nullptr;
 
     /**
      * @brief Флаг принудительной установки данных
@@ -43,30 +29,18 @@ private:
     bool forceSetData = false;
     bool m_largeFileMode = false;
     bool m_updatingSelection = false;
-    QString m_lastSearchText;
-    QShortcut* m_findShortcut = nullptr;
-    QShortcut* m_findNextShortcut = nullptr;
-    QShortcut* m_findPreviousShortcut = nullptr;
     QShortcut* m_goToLineShortcut = nullptr;
-    QShortcut* m_replaceShortcut = nullptr;
-    bool m_replaceMode = false;
     QString m_currentLang = "Plain Text";
 
     static QString detectLanguage(const QString& filePath);
-    void openFindDialog();
-    void openReplaceDialog();
-    void findNext(bool forward = true);
     void openGoToLineDialog();
-    void updateSearchUi();
-    void setReplaceMode(bool enabled);
-    void replaceCurrent();
-    void replaceAll();
-    void closeSearchBar();
 
 public:
     explicit CodeEditorTab(QWidget *parent = nullptr);
 
     QIcon icon() const override { return QIcon(":/icons/code.svg"); };
+    QString selectedSearchText() const;
+    bool revealSearchMatch(int oneBasedLine, int zeroBasedColumn, int length);
 
     void setFileDataBuffer(FileDataBuffer* newFileDataBuffer) override;
 

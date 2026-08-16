@@ -29,7 +29,7 @@ QByteArray FileManager::openFile(FileContext* fc){
     file.close();
     fc->m_bytesCount = data.size();
     fc->m_startOffset = 0;
-    fc->m_endOffset = data.size() - 1;
+    fc->m_endOffset = data.isEmpty() ? 0 : static_cast<uint64_t>(data.size() - 1);
     return data;
 }
 
@@ -37,11 +37,12 @@ void FileManager::saveJson(FileContext &fc, const QJsonObject &json) {
     QFile f(fc.filePath());
 
     if (!f.exists()) QDir().mkpath(QFileInfo(fc.filePath()).absolutePath());
-
+    qDebug() << fc.filePath();
     if (!f.open(QFile::WriteOnly)) return;
-    
+    qDebug() << "file open";
     const QJsonDocument doc(json);
     f.write(doc.toJson());
+    qDebug() << doc.toJson();
     f.close();
 }
 

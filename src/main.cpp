@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QImageReader>
 #include <QDirIterator>
+#include <QDir>
 #include <QDebug>
 #include <QResource>
 #include <QFontDatabase>
@@ -11,23 +12,21 @@
 
 int main(int argc, char *argv[])
 {
-    #ifdef Q_OS_LINUX
-    qputenv("QT_QPA_PLATFORMTHEME", "generic");
-    #endif
     QApplication a(argc, argv);
-    LanguageManager::instance().loadUserDefaultLocale();
 
     QCoreApplication::setOrganizationName("Munirov");
     QCoreApplication::setApplicationName("Cremniy");
     a.setWindowIcon(QIcon(":/icons/icon.svg"));
 
     // - - Fonts - -
+    LanguageManager::instance().loadUserDefaultLocale();
 
     int jbFontRegId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono-Regular.ttf");
     int jbFontBoldId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono-Bold.ttf");
     int jbFontItalId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono-Italic.ttf");
 
-    QString jbFontFamily = QFontDatabase::applicationFontFamilies(jbFontRegId).at(0);
+    QStringList fontFamilies = QFontDatabase::applicationFontFamilies(jbFontRegId);
+    QString jbFontFamily = !fontFamilies.isEmpty() ? fontFamilies.at(0) : "Sans Serif";
 
     qDebug() << jbFontFamily;
 
@@ -80,6 +79,19 @@ int main(int argc, char *argv[])
     a.setStyleSheet(baseStyle + "\n" + themeData);
 
     WelcomeForm wf;
-    wf.show();
+
+    //cli path selector
+    const QStringList args = QCoreApplication::arguments();
+    if (args.size() > 1) {
+        const QString projectPath = args.at(1);
+        if (QDir(projectPath).exists()) {
+            wf.OpenProject(projectPath);
+        } else {
+            qWarning() << "Project path does not exist:" << projectPath;
+            wf.show();
+        }
+    } else {
+        wf.show();
+    }
     return QCoreApplication::exec();
 }

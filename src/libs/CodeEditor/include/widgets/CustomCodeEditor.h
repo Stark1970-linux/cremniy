@@ -67,6 +67,7 @@ public:
     QString syntaxKey() const;
     bool findText(const QString& text, bool forward = true, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
     bool goToLine(qint64 oneBasedLineNumber);
+    bool selectTextRange(qint64 oneBasedLineNumber, int zeroBasedColumn, int utf16Length);
     int countMatches(const QString& text, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive) const;
     int currentMatchIndex(const QString& text, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive) const;
     bool replaceCurrentSelection(const QString& text, const QString& replacement, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
