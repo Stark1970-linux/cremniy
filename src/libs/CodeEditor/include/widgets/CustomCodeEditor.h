@@ -142,6 +142,7 @@ private:
     qint64 m_selectionLength;
     bool m_updatingSelection;
     bool m_applyingBufferEdit;
+    bool m_externalSelection;
     
     // Rendering state
     qint64 m_firstVisibleLine;
