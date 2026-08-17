@@ -1,14 +1,19 @@
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDesktopServices>
 #include <QImageReader>
 #include <QDirIterator>
 #include <QDir>
 #include <QDebug>
+#include <QMessageBox>
+#include <QPushButton>
 #include <QResource>
 #include <QFontDatabase>
+#include <QUrl>
 
 #include "app/WelcomeWindow/WelcomeForm/welcome_form.h"
 #include "core/locale/LanguageManager.h"
+#include "core/update/updatechecker.h"
 
 int main(int argc, char *argv[])
 {
@@ -93,5 +98,53 @@ int main(int argc, char *argv[])
     } else {
         wf.show();
     }
+
+    /* Update check */
+    auto* updateChecker = new core::UpdateChecker(&wf);
+
+    QObject::connect(
+        updateChecker,
+        &core::UpdateChecker::updateAvailable,
+        &wf,
+        [&wf](const QString& latestVersion) {
+            QMessageBox updateDialog(
+                QMessageBox::Information,
+                QObject::tr("Update available"),
+                QObject::tr("A new version of Cremniy is available: %1.").arg(latestVersion),
+                QMessageBox::NoButton,
+                &wf
+            );
+
+            auto* openRelease = updateDialog.addButton(
+                QObject::tr("Open release page"),
+                QMessageBox::AcceptRole
+            );
+            auto* later = updateDialog.addButton(
+                QObject::tr("Later"),
+                QMessageBox::RejectRole
+            );
+            Q_UNUSED(later);
+
+            updateDialog.exec();
+
+            if (updateDialog.clickedButton() == openRelease) {
+                QDesktopServices::openUrl(
+                    QUrl(QStringLiteral("https://github.com/munirov/cremniy/releases/latest"))
+                );
+            }
+        }
+    );
+
+    QObject::connect(
+        updateChecker,
+        &core::UpdateChecker::checkFailed,
+        &wf,
+        [](const QString& reason) {
+            qWarning() << "Update check failed:" << reason;
+        }
+    );
+
+    updateChecker->checkForUpdate();
+
     return QCoreApplication::exec();
 }

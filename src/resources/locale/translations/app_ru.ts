@@ -117,7 +117,7 @@
 <context>
     <name>ClickableLineEdit</name>
     <message>
-        <location filename="../../../widgets/clickablelineedit.h" line="17"/>
+        <location filename="../../../widgets/clickablelineedit.h" line="25"/>
         <source>Choose Directory</source>
         <translation>Выбрать директорию</translation>
     </message>
@@ -125,105 +125,160 @@
 <context>
     <name>CodeEditorTab</name>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="41"/>
         <source>Find:</source>
-        <translation>Поиск:</translation>
+        <translation type="vanished">Поиск:</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="43"/>
         <source>Search in file</source>
-        <translation>Искать в файле</translation>
+        <translation type="vanished">Искать в файле</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="45"/>
         <source>Replace with</source>
-        <translation>Заменить на</translation>
+        <translation type="vanished">Заменить на</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="46"/>
         <source>Prev</source>
-        <translation>Предыдущий</translation>
+        <translation type="vanished">Предыдущий</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="47"/>
         <source>Next</source>
-        <translation>Следующий</translation>
+        <translation type="vanished">Следующий</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="48"/>
         <source>Replace</source>
-        <translation>Заменить</translation>
+        <translation type="vanished">Заменить</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="49"/>
         <source>Replace All</source>
-        <translation>Заменить все</translation>
+        <translation type="vanished">Заменить все</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="50"/>
         <source>Match case</source>
-        <translation>Учитывать регистр</translation>
+        <translation type="vanished">Учитывать регистр</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="77"/>
+        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="38"/>
         <source>Binary file detected</source>
         <translation>Обнаружен исполняемый файл.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="86"/>
+        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="47"/>
         <source>Open anyway</source>
         <translation>Открыть в любом случае</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="207"/>
+        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="111"/>
         <source>Go to line</source>
         <translation>Перейти к строке</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="208"/>
+        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="112"/>
         <source>Line number:</source>
         <translation>Номер строки:</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="18"/>
+        <location filename="../../../Modules/Tabs/CodeEditor/codeeditortab.cpp" line="16"/>
         <source>Code</source>
         <translation>Редактор кода</translation>
     </message>
 </context>
 <context>
+    <name>CreateProjectPage</name>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="33"/>
+        <source>New Project</source>
+        <translation type="unfinished">Создать проект</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="43"/>
+        <source>Project Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="53"/>
+        <source>Language</source>
+        <translation type="unfinished">Язык</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="59"/>
+        <source>Location</source>
+        <translation type="unfinished">Расположение</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="62"/>
+        <source>Click to choose directory...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="65"/>
+        <source>Choose Location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="88"/>
+        <source>Back</source>
+        <translation type="unfinished">Назад</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="89"/>
+        <source>Create Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="106"/>
+        <source>Please enter a project name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="111"/>
+        <source>Please choose a valid directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="119"/>
+        <source>A folder with this name already exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/CreateProjectPage/create_project_page.cpp" line="124"/>
+        <source>Failed to create project directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CustomCodeEditor</name>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1422"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1451"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1423"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1452"/>
         <source>Redo</source>
         <translation>Вернуть</translation>
     </message>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1425"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1454"/>
         <source>Cut</source>
         <translation>Вырезать</translation>
     </message>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1426"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1455"/>
         <source>Copy</source>
         <translation>Скопировать</translation>
     </message>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1427"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1456"/>
         <source>Paste</source>
         <translation>Вставить</translation>
     </message>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1428"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1457"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1430"/>
+        <location filename="../../../libs/CodeEditor/src/widgets/CustomCodeEditor.cpp" line="1459"/>
         <source>Select All</source>
         <translation>Выделить все</translation>
     </message>
@@ -446,7 +501,7 @@
     <message>
         <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="577"/>
         <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="612"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="661"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="663"/>
         <source>Invalid hex bytes.</source>
         <translation>Недопустимые HEX байты.</translation>
     </message>
@@ -476,63 +531,63 @@
         <translation>Длина в байтах должна совпадать (%1 байт).</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="647"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="649"/>
         <source>Hex patch string…</source>
         <translation>Строка патча в шестнадцатеричном формате…</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="651"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="653"/>
         <source>Hex patch string</source>
         <translation>Строка патча в шестнадцатеричном формате</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="652"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="654"/>
         <source>Hex bytes to write at string addr 0x%1:</source>
         <translation>Шестнадцатеричные байты для записи по строковому адресу 0x%1:</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="661"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="667"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="671"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="677"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="663"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="669"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="673"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="679"/>
         <source>String patch</source>
         <translation>Текстовый патч</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="667"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="669"/>
         <source>Failed to open file for writing.</source>
         <translation>Не удалось открыть файл для записи.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="671"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="699"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="673"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="701"/>
         <source>Failed to seek to 0x%1.</source>
         <translation>Не удалось выполнить поиск по адресу 0x%1.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="677"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="679"/>
         <source>Failed to write all bytes.</source>
         <translation>Не удалось записать все байты.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="688"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="690"/>
         <source>Show string bytes…</source>
         <translation>Показать байты строки…</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="695"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="699"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="720"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="697"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="701"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="722"/>
         <source>String bytes</source>
         <translation>Строка байтов</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="695"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="697"/>
         <source>Failed to open file.</source>
         <translation>Не удалось открыть файл.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="721"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="723"/>
         <source>addr: 0x%1
 len: %2 (+1 null)
 
@@ -550,7 +605,7 @@ hex:
 ascii:</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1286"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1288"/>
         <source>%1 lines shown</source>
         <translation>%1 строк показано</translation>
     </message>
@@ -581,80 +636,80 @@ Check the Log panel for details.</source>
 Подробности см. в панели журнала.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="752"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="754"/>
         <source>Diagnostic Log</source>
         <translation>Журнал диагностики</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="755"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="757"/>
         <source>Clear</source>
         <translation>Очистить</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="779"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="781"/>
         <source>Press &quot;Disassemble&quot; to analyse the file</source>
         <translation>Нажмите &quot;Дизасемблер&quot; чтобы проанализировать файл</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="780"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="868"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="782"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="870"/>
         <source>Backend: %1</source>
         <translation>Бэкенд: %1</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="781"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="867"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="783"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="869"/>
         <source>radare2</source>
         <translation>radare2</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="781"/>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="867"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="783"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="869"/>
         <source>objdump</source>
         <translation>objdump</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="882"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="884"/>
         <source>No file path set</source>
         <translation>Путь к файлу не указан</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="893"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="895"/>
         <source>Select radare2 (r2) executable</source>
         <translation>Выберите исполняемый файл radare2 (r2).</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="897"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="899"/>
         <source>radare2 is not configured — set it in Settings</source>
         <translation>radare2 не настроен — установите его в настройках.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="923"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="925"/>
         <source>Running radare2…</source>
         <translation>Запуск radare2…</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="924"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="926"/>
         <source>Running objdump…</source>
         <translation>Запуск objdump…</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="937"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="939"/>
         <source>Disassembling…</source>
         <translation>Дизасемблирование…</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1000"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1002"/>
         <source>%1 section(s) · %2 instructions loaded…</source>
         <translation>%1 раздел(ы) · %2 инструкции загружены…</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1110"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1112"/>
         <source>Address %1 is not visible in current view</source>
         <translation>Адрес %1 не отображается в текущем представлении.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1123"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1125"/>
         <source>No disassemblable sections found.
 Make sure the file is a supported binary (ELF, PE, Mach-O…)
 Check the Log panel for details.</source>
@@ -663,27 +718,27 @@ Check the Log panel for details.</source>
 Подробности см. в панели журнала.</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1133"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1135"/>
         <source>%1 section(s) · %2 instructions</source>
         <translation>%1 раздел(ы) · %2 инструкций</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1148"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1150"/>
         <source>objdump error — see Log panel for details</source>
         <translation>objdump ошибка — Подробности см. в панели «Журнал».</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1149"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1151"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1176"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1178"/>
         <source>All sections</source>
         <translation>Все разделы</translation>
     </message>
     <message>
-        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1281"/>
+        <location filename="../../../Modules/Tabs/Disassembler/disassemblertab.cpp" line="1283"/>
         <source>No results for &quot;%1&quot;</source>
         <translation>Результаты поиска по &quot;%1&quot; отсутствуют.</translation>
     </message>
@@ -714,23 +769,27 @@ Check the Log panel for details.</source>
         <translation>Редактировать</translation>
     </message>
     <message>
-        <location filename="../../../ui/MenuBar/Menus/Edit/editmenu.cpp" line="12"/>
+        <location filename="../../../ui/MenuBar/Menus/Edit/editmenu.cpp" line="20"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
+        <location filename="../../../ui/MenuBar/Menus/Edit/editmenu.cpp" line="12"/>
         <source>Find</source>
         <translation>Найти</translation>
     </message>
     <message>
+        <location filename="../../../ui/MenuBar/Menus/Edit/editmenu.cpp" line="14"/>
         <source>Replace</source>
         <translation>Заменить</translation>
     </message>
     <message>
+        <location filename="../../../ui/MenuBar/Menus/Edit/editmenu.cpp" line="16"/>
         <source>Find in Open Files</source>
         <translation>Найти в открытых файлах</translation>
     </message>
     <message>
+        <location filename="../../../ui/MenuBar/Menus/Edit/editmenu.cpp" line="18"/>
         <source>Find in Project</source>
         <translation>Найти в проекте</translation>
     </message>
@@ -861,43 +920,43 @@ Check the Log panel for details.</source>
 <context>
     <name>FileTreePanel</name>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="79"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="82"/>
         <source>Create File</source>
         <translation>Создать файл</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="80"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="83"/>
         <source>Create Folder</source>
         <translation>Создать папку</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="81"/>
-        <location filename="../../../widgets/filetreepanel.cpp" line="131"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="84"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="134"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="82"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="85"/>
         <source>Rename</source>
         <translation>Переименовать</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="83"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="86"/>
         <source>Open</source>
         <translation>Открыть</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="129"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="132"/>
         <source>Are you sure you want to delete the file &quot;%1&quot;?</source>
         <translation>Вы действительно хотите удалить файл &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="132"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="135"/>
         <source>Yes</source>
         <translation>Да</translation>
     </message>
     <message>
-        <location filename="../../../widgets/filetreepanel.cpp" line="133"/>
+        <location filename="../../../widgets/filetreepanel.cpp" line="136"/>
         <source>No</source>
         <translation>Нет</translation>
     </message>
@@ -948,37 +1007,37 @@ Check the Log panel for details.</source>
 <context>
     <name>FilesTabWidget</name>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="181"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="272"/>
         <source>Unpin</source>
         <translation>Открепить</translation>
     </message>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="181"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="272"/>
         <source>Pin</source>
         <translation>Закрепить</translation>
     </message>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="210"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="301"/>
         <source>Save File</source>
         <translation>Сохранить файл</translation>
     </message>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="210"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="301"/>
         <source>Do you want to save this file?</source>
         <translation>Вы хотите сохранить этот файл?</translation>
     </message>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="211"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="302"/>
         <source>Yes</source>
         <translation>Да</translation>
     </message>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="212"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="303"/>
         <source>No</source>
         <translation>Нет</translation>
     </message>
     <message>
-        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="213"/>
+        <location filename="../../../ui/FilesTabWidget/filestabwidget.cpp" line="304"/>
         <source>Cancel</source>
         <translation>Отменить</translation>
     </message>
@@ -2694,6 +2753,19 @@ Check the Log panel for details.</source>
     </message>
 </context>
 <context>
+    <name>ProjectCard</name>
+    <message>
+        <location filename="../../../app/WelcomeWindow/ProjectCard/project_card.cpp" line="69"/>
+        <source>Open</source>
+        <translation type="unfinished">Открыть</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/ProjectCard/project_card.cpp" line="74"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QHexView</name>
     <message>
         <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="374"/>
@@ -2718,17 +2790,17 @@ Check the Log panel for details.</source>
         <translation>Цель находится за пределами текущего документа.</translation>
     </message>
     <message>
-        <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="1905"/>
+        <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="1908"/>
         <source>Select All</source>
         <translation>Выделить все</translation>
     </message>
     <message>
-        <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="1906"/>
+        <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="1909"/>
         <source>Copy</source>
         <translation>Скопировать</translation>
     </message>
     <message>
-        <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="1907"/>
+        <location filename="../../../libs/HexEditor/src/qhexview.cpp" line="1910"/>
         <source>Paste</source>
         <translation>Вставить</translation>
     </message>
@@ -2762,27 +2834,27 @@ Check the Log panel for details.</source>
         <translation>Не удалось разобрать radare2 JSON (iSj): %1</translation>
     </message>
     <message>
-        <location filename="../../../core/settings/appsettings.cpp" line="161"/>
+        <location filename="../../../core/settings/appsettings.cpp" line="156"/>
         <source>Empty file path</source>
         <translation>Пустой путь файла</translation>
     </message>
     <message>
-        <location filename="../../../core/settings/appsettings.cpp" line="170"/>
+        <location filename="../../../core/settings/appsettings.cpp" line="165"/>
         <source>Failed to write INI file</source>
         <translation>Не удалось записать INI-файл.</translation>
     </message>
     <message>
-        <location filename="../../../core/settings/appsettings.cpp" line="180"/>
+        <location filename="../../../core/settings/appsettings.cpp" line="175"/>
         <source>File does not exist</source>
         <translation>Файл не существует</translation>
     </message>
     <message>
-        <location filename="../../../core/settings/appsettings.cpp" line="186"/>
+        <location filename="../../../core/settings/appsettings.cpp" line="181"/>
         <source>Failed to read INI file</source>
         <translation>Не удалось прочитать INI-файл.</translation>
     </message>
     <message>
-        <location filename="../../../core/settings/appsettings.cpp" line="208"/>
+        <location filename="../../../core/settings/appsettings.cpp" line="203"/>
         <source>Failed to apply settings</source>
         <translation>Не удалось применить настройки</translation>
     </message>
@@ -2794,11 +2866,6 @@ Check the Log panel for details.</source>
     <message>
         <source>unnamed</source>
         <translation type="vanished">Без названия</translation>
-    </message>
-    <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="73"/>
-        <source>Untitled</source>
-        <translation></translation>
     </message>
     <message>
         <location filename="../../../Modules/Windows/ShellCodeGenerator/shellcodeengine.cpp" line="64"/>
@@ -2828,6 +2895,26 @@ Check the Log panel for details.</source>
 </source>
         <translation type="unfinished">std::array&lt;std::uint8_t, %1&gt; shellcode = {  // %1 bytes
 </translation>
+    </message>
+    <message>
+        <location filename="../../../main.cpp" line="111"/>
+        <source>Update available</source>
+        <translation>Доступно обновление</translation>
+    </message>
+    <message>
+        <location filename="../../../main.cpp" line="112"/>
+        <source>A new version of Cremniy is available: %1.</source>
+        <translation>Доступна новая версия Cremniy: %1.</translation>
+    </message>
+    <message>
+        <location filename="../../../main.cpp" line="118"/>
+        <source>Open release page</source>
+        <translation>Открыть страницу релиза</translation>
+    </message>
+    <message>
+        <location filename="../../../main.cpp" line="122"/>
+        <source>Later</source>
+        <translation>Позже</translation>
     </message>
 </context>
 <context>
@@ -2859,6 +2946,24 @@ Check the Log panel for details.</source>
     <message>
         <source>Select All</source>
         <translation type="vanished">Выбрать всё</translation>
+    </message>
+</context>
+<context>
+    <name>RecentProjectsPage</name>
+    <message>
+        <location filename="../../../app/WelcomeWindow/RecentProjectsPage/recent_projects_page.cpp" line="53"/>
+        <source>Open...</source>
+        <translation type="unfinished">Обзор...</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/RecentProjectsPage/recent_projects_page.cpp" line="54"/>
+        <source>New Project</source>
+        <translation type="unfinished">Создать проект</translation>
+    </message>
+    <message>
+        <location filename="../../../app/WelcomeWindow/RecentProjectsPage/recent_projects_page.cpp" line="61"/>
+        <source>Open Project</source>
+        <translation type="unfinished">Открыть проект</translation>
     </message>
 </context>
 <context>
@@ -2989,105 +3094,477 @@ Check the Log panel for details.</source>
     </message>
 </context>
 <context>
+    <name>SearchEngine</name>
+    <message>
+        <source>Invalid regular expression: %1</source>
+        <translation type="vanished">Некорректное регулярное выражение: %1</translation>
+    </message>
+    <message>
+        <source>The expression must not match empty text.</source>
+        <translation type="vanished">Выражение не должно совпадать с пустым текстом.</translation>
+    </message>
+    <message>
+        <source>The file is not valid UTF-8 text.</source>
+        <translation type="vanished">Файл не является корректным текстом UTF-8.</translation>
+    </message>
+    <message>
+        <source>The result changed. Search again before replacing it.</source>
+        <translation type="vanished">Результат изменился. Повторите поиск перед заменой.</translation>
+    </message>
+</context>
+<context>
+    <name>SearchPanel</name>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="38"/>
+        <source>Current file</source>
+        <translation>Текущий файл</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="40"/>
+        <source>Open files</source>
+        <translation>Открытые файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="42"/>
+        <source>Entire project</source>
+        <translation>Весь проект</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="106"/>
+        <source>Search this project</source>
+        <translation>Поиск по проекту</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="106"/>
+        <source>Enter text above to find matches.</source>
+        <translation>Введите текст выше, чтобы найти совпадения.</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="121"/>
+        <source>Show replace controls (Ctrl+H)</source>
+        <translation>Показать элементы замены (Ctrl+H)</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="122"/>
+        <source>Show replace controls</source>
+        <translation>Показать элементы замены</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="125"/>
+        <source>&amp;Search</source>
+        <translation>&amp;Поиск</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="130"/>
+        <source>Text or regular expression</source>
+        <translation>Текст или регулярное выражение</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="131"/>
+        <source>Search text</source>
+        <translation>Текст для поиска</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="139"/>
+        <source>Search scope</source>
+        <translation>Область поиска</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="151"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="151"/>
+        <source>Match case</source>
+        <translation>Учитывать регистр</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="152"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="152"/>
+        <source>Match whole word</source>
+        <translation>Слово целиком</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="153"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="153"/>
+        <source>Use regular expression</source>
+        <translation>Использовать регулярное выражение</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="155"/>
+        <source>Previous</source>
+        <translation>Предыдущий</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="156"/>
+        <source>Previous result (Shift+F3)</source>
+        <translation>Предыдущий результат (Shift+F3)</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="157"/>
+        <source>Next</source>
+        <translation>Следующий</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="158"/>
+        <source>Next result (F3)</source>
+        <translation>Следующий результат (F3)</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="162"/>
+        <source>Close search (Esc)</source>
+        <translation>Закрыть поиск (Esc)</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="163"/>
+        <source>Close search</source>
+        <translation>Закрыть поиск</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="196"/>
+        <source>&amp;Replace</source>
+        <translation>&amp;Заменить</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="200"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="201"/>
+        <source>Replacement text</source>
+        <translation>Текст замены</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="203"/>
+        <source>Replace result</source>
+        <translation>Заменить результат</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="204"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="610"/>
+        <source>Replace all</source>
+        <translation>Заменить все</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="221"/>
+        <source>&amp;Include</source>
+        <translation>&amp;Включить</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="224"/>
+        <source>For example: *.cpp, src/*</source>
+        <translation>Например: *.cpp, src/*</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="225"/>
+        <source>Files to include</source>
+        <translation>Включаемые файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="227"/>
+        <source>E&amp;xclude</source>
+        <translation>И&amp;сключить</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="230"/>
+        <source>For example: build, *.min.js</source>
+        <translation>Например: build, *.min.js</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="231"/>
+        <source>Files to exclude</source>
+        <translation>Исключаемые файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="241"/>
+        <source>Result</source>
+        <translation>Результат</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="241"/>
+        <source>Location</source>
+        <translation>Расположение</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="246"/>
+        <source>Search results</source>
+        <translation>Результаты поиска</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="270"/>
+        <source>Search status</source>
+        <translation>Состояние поиска</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="345"/>
+        <source>Enter text to search</source>
+        <translation>Введите текст для поиска</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="345"/>
+        <source>Results appear as you type.</source>
+        <translation>Результаты появятся по мере ввода.</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="392"/>
+        <source>Searching…</source>
+        <translation>Поиск…</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="408"/>
+        <source>Unable to search</source>
+        <translation>Не удалось выполнить поиск</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="420"/>
+        <source>Open a text file or choose another scope.</source>
+        <translation>Откройте текстовый файл или выберите другую область поиска.</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="421"/>
+        <source>Try another query or adjust the file filters.</source>
+        <translation>Измените запрос или фильтры файлов.</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="422"/>
+        <source>No matches found</source>
+        <translation>Совпадений не найдено</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="441"/>
+        <source>Empty line</source>
+        <translation>Пустая строка</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="442"/>
+        <source>Line %1, column %2</source>
+        <translation>Строка %1, столбец %2</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="447"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="458"/>
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n совпадение</numerusform>
+            <numerusform>%n совпадения</numerusform>
+            <numerusform>%n совпадений</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="459"/>
+        <source> in %n file(s)</source>
+        <translation>
+            <numerusform> в %n файле</numerusform>
+            <numerusform> в %n файлах</numerusform>
+            <numerusform> в %n файлах</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="461"/>
+        <source> · %n binary, unreadable, or large file(s) skipped</source>
+        <translation>
+            <numerusform> · пропущен %n бинарный, нечитаемый или большой файл</numerusform>
+            <numerusform> · пропущено %n бинарных, нечитаемых или больших файла</numerusform>
+            <numerusform> · пропущено %n бинарных, нечитаемых или больших файлов</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="463"/>
+        <source> · Result limit reached</source>
+        <translation> · Достигнут лимит результатов</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="575"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="581"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="588"/>
+        <source>Unable to replace</source>
+        <translation>Не удалось заменить</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="575"/>
+        <source>Unable to read %1.</source>
+        <translation>Не удалось прочитать %1.</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="588"/>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="637"/>
+        <source>Unable to write %1: %2</source>
+        <translation>Не удалось записать %1: %2</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="591"/>
+        <source>Replaced one match in %1.</source>
+        <translation>Одно совпадение заменено в %1.</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="605"/>
+        <source>Replace all matches</source>
+        <translation>Заменить все совпадения</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="606"/>
+        <source>Replace %n match(es)</source>
+        <translation>
+            <numerusform>Заменить %n совпадение</numerusform>
+            <numerusform>Заменить %n совпадения</numerusform>
+            <numerusform>Заменить %n совпадений</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="607"/>
+        <source> in %n file(s)?</source>
+        <translation>
+            <numerusform> в %n файле?</numerusform>
+            <numerusform> в %n файлах?</numerusform>
+            <numerusform> в %n файлах?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="611"/>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="623"/>
+        <source>Unable to read %1</source>
+        <translation>Не удалось прочитать %1</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="629"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="645"/>
+        <source>Some files were not changed</source>
+        <translation>Некоторые файлы не изменены</translation>
+    </message>
+    <message>
+        <location filename="../../../widgets/search/searchpanel.cpp" line="473"/>
+        <source>Refine the search before replacing all matches.</source>
+        <translation>Уточните поиск перед заменой всех совпадений.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="646"/>
+        <source>Replaced %n match(es).
+
+%1</source>
+        <translation>
+            <numerusform>Заменено %n совпадение.
+
+%1</numerusform>
+            <numerusform>Заменено %n совпадения.
+
+%1</numerusform>
+            <numerusform>Заменено %n совпадений.
+
+%1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../widgets/search/searchpanel.cpp" line="648"/>
+        <source>Replaced %n match(es).</source>
+        <translation>
+            <numerusform>Заменено %n совпадение.</numerusform>
+            <numerusform>Заменено %n совпадения.</numerusform>
+            <numerusform>Заменено %n совпадений.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>SettingsDialog</name>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="52"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="53"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="63"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="64"/>
         <source>objdump</source>
         <translation>objdump</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="64"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="65"/>
         <source>radare2</source>
         <translation>radare2</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="65"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="66"/>
         <source>Disassembler backend</source>
         <translation>Модуль дизассеблера</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="72"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="73"/>
         <source>Maximum number of instructions per section (keeps UI responsive)</source>
         <translation>Максимальное количество инструкций на секцию (для поддержания отзывчивости интерфейса)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="73"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="74"/>
         <source>Instruction limit/section</source>
         <translation>Лимит инструкций на секцию</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="76"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="77"/>
         <source>Intel</source>
         <translation>Intel</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="77"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="78"/>
         <source>AT&amp;T</source>
         <translation>AT&amp;T</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="78"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="79"/>
         <source>Assembly syntax</source>
         <translation>Синтаксис ассемблера</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="87"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="88"/>
         <source>Leave empty to use PATH lookup</source>
         <translation>Оставьте поле пустым, чтобы использовать поиск по пути PATH.</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="92"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="113"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="93"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="114"/>
         <source>Browse…</source>
         <translation>Обзор…</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="97"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="98"/>
         <source>objdump path</source>
         <translation>objdump путь</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="108"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="109"/>
         <source>Path to r2 (radare2) executable</source>
         <translation>Путь к исполняемому файлу r2 (radare2).</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="118"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="119"/>
         <source>radare2 path</source>
         <translation>radare2 путь</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="132"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="133"/>
         <source>Dependency: file(1)</source>
         <translation>Зависимость: файл(1)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="138"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="139"/>
         <source>None (fast)</source>
         <translation>Без (быстро)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="139"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="140"/>
         <source>aa (basic)</source>
         <translation>aa (основная)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="140"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="141"/>
         <source>aaa (full)</source>
         <translation>aaa (полная)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="141"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="142"/>
         <source>radare2 analysis</source>
         <translation>radare2 анализ</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="144"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="145"/>
         <source>Optional r2 commands before JSON queries (one per line). Example:
 e asm.syntax=intel
 e asm.bits=64</source>
@@ -3096,27 +3573,27 @@ e asm.syntax=intel
 e asm.bits=64</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="155"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="156"/>
         <source>Choose:</source>
         <translation>Выберите</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="160"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="161"/>
         <source>Language</source>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="171"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="172"/>
         <source>Excluded Files / Folders</source>
         <translation>Исключить файлы / директории</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="175"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="176"/>
         <source>One pattern per line. Examples: node_modules, .git, *.log, dist/</source>
         <translation>Один шаблон на строку. Примеры: node_modules, .git, *.log, dist/</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="181"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="182"/>
         <source>node_modules
 .git
 *.log</source>
@@ -3125,82 +3602,82 @@ e asm.bits=64</translation>
 *.log</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="437"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="443"/>
         <source>Information</source>
         <translation>Информация</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="437"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="443"/>
         <source>Please restart IDE to apply the settings.</source>
         <translation>Для применения настроек перезапустите IDE.</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="236"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="237"/>
         <source>Settings exported to:
 %1</source>
         <translation>Настройки экспортированы в:
 %1</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="258"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="259"/>
         <source>Settings imported from:
 %1</source>
         <translation>Настройки импортированы из
 %1</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="148"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="149"/>
         <source>radare2 pre-commands</source>
         <translation>radare2 предварительные команды</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="188"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="189"/>
         <source>Test</source>
         <translation>Тест</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="190"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="191"/>
         <source>Import…</source>
         <translation>Импорт…</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="191"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="192"/>
         <source>Export…</source>
         <translation>Экспорт…</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="195"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="196"/>
         <source>OK</source>
         <translation>Ок</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="196"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="197"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="226"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="227"/>
         <source>Export settings</source>
         <translation>Экспорт настроек</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="228"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="245"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="229"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="246"/>
         <source>INI files (*.ini)</source>
         <translation>INI файлы (*.ini)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="233"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="234"/>
         <source>Export failed</source>
         <translation>Экспорт не удался</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="233"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="234"/>
         <source>Failed to export settings</source>
         <translation>Не удалось экспортировать настройки.</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="236"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="237"/>
         <source>Export</source>
         <translation>Экспорт</translation>
     </message>
@@ -3211,100 +3688,100 @@ e asm.bits=64</translation>
     %1</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="243"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="244"/>
         <source>Import settings</source>
         <translation>Импортировать настройки</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="250"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="251"/>
         <source>Import failed</source>
         <translation>Импорт не удался</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="250"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="251"/>
         <source>Failed to import settings</source>
         <translation>Не удалось импортировать настройки.</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="258"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="259"/>
         <source>Import</source>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="300"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="301"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="306"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="307"/>
         <source>Active backend</source>
         <translation>Активный бэкенд</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="300"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="301"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="306"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="307"/>
         <source>Inactive backend (still configurable)</source>
         <translation>Неактивный бэкенд (можно настроить)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="311"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="317"/>
         <source>Select objdump executable</source>
         <translation>Выберите исполняемый файл objdump</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="319"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="325"/>
         <source>Select radare2 (r2) executable</source>
         <translation>Укажите путь к исполняемому файлу radare2 (r2)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="348"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="354"/>
         <source>objdump: OK (%1)</source>
         <translation>objdump: Ок (%1)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="349"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="355"/>
         <source>objdump: FAIL (%1)</source>
         <translation>objdump: Ошибка (%1)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="349"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="359"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="355"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="365"/>
         <source>not found</source>
         <translation>Не найден</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="358"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="364"/>
         <source>radare2: OK (%1)</source>
         <translation>radare2: Ок (%1)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="359"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="365"/>
         <source>radare2: FAIL (%1)</source>
         <translation>radare2: Ошибка (%1)</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="366"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="372"/>
         <source>Tool check</source>
         <translation>Проверка инструмента</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="413"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="421"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="429"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="419"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="427"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="435"/>
         <source>found</source>
         <translation>Найден</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="413"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="421"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="429"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="419"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="427"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="435"/>
         <source>missing</source>
         <translation>Отсутсвует</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="414"/>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="422"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="420"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="428"/>
         <source>Not found in PATH and no valid path set</source>
         <translation>Не найдено в PATH, и не указан действительный путь.</translation>
     </message>
     <message>
-        <location filename="../../../dialogs/settingsdialog.cpp" line="430"/>
+        <location filename="../../../dialogs/settingsdialog.cpp" line="436"/>
         <source>The objdump backend uses &apos;file -b &lt;path&gt;&apos; for arch detection</source>
         <translation>В бэкенде objdump для определения архитектуры используется команда `&apos;file -b &lt;path&gt;`.</translation>
     </message>
@@ -3520,53 +3997,32 @@ Download: https://www.nasm.us/pub/nasm/releasebuilds/</source>
 <context>
     <name>WelcomeForm</name>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="199"/>
         <source>Open</source>
-        <translation>Открыть</translation>
+        <translation type="vanished">Открыть</translation>
     </message>
     <message>
         <source>Open...</source>
         <translation type="vanished">Обзор...</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="314"/>
         <source>Create</source>
-        <translation>Создать</translation>
+        <translation type="vanished">Создать</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="257"/>
         <source>Project Name:</source>
-        <translation>Имя проекта:</translation>
+        <translation type="vanished">Имя проекта:</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="172"/>
-        <source>Projects</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="173"/>
         <source>Settings</source>
-        <translation>Настройки</translation>
+        <translation type="vanished">Настройки</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="174"/>
-        <source>Docs</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="198"/>
         <source>New Project</source>
-        <translation>Создать проект</translation>
+        <translation type="vanished">Создать проект</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="269"/>
         <source>Language:</source>
-        <translation>Язык:</translation>
-    </message>
-    <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="279"/>
-        <source>Location:</source>
-        <translation></translation>
+        <translation type="vanished">Язык:</translation>
     </message>
     <message>
         <source>Path:</source>
@@ -3577,35 +4033,24 @@ Download: https://www.nasm.us/pub/nasm/releasebuilds/</source>
         <translation type="vanished">Назад</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="288"/>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="542"/>
         <source>Choose Directory</source>
-        <translation>Выбрать директорию</translation>
+        <translation type="vanished">Выбрать директорию</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="315"/>
-        <source>Cancel</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="597"/>
         <source>Please enter project name</source>
-        <translation>Пожалуйста введите имя проекта</translation>
+        <translation type="vanished">Пожалуйста введите имя проекта</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="606"/>
         <source>Directory is invalid</source>
-        <translation>Каталог недействителен</translation>
+        <translation type="vanished">Каталог недействителен</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="617"/>
         <source>Directory is exists!</source>
-        <translation>Каталог существует.!</translation>
+        <translation type="vanished">Каталог существует.!</translation>
     </message>
     <message>
-        <location filename="../../../app/WelcomeWindow/welcomeform.cpp" line="623"/>
         <source>Failed to create project directory!</source>
-        <translation>Не удалось создать каталог проекта!</translation>
+        <translation type="vanished">Не удалось создать каталог проекта!</translation>
     </message>
 </context>
 <context>
@@ -3627,118 +4072,6 @@ Download: https://www.nasm.us/pub/nasm/releasebuilds/</source>
     <message>
         <source>Disassembler</source>
         <translation type="vanished">Дизассемблер</translation>
-    </message>
-</context>
-<context>
-    <name>SearchEngine</name>
-    <message>
-        <source>Invalid regular expression: %1</source>
-        <translation>Некорректное регулярное выражение: %1</translation>
-    </message>
-    <message>
-        <source>The expression must not match empty text.</source>
-        <translation>Выражение не должно совпадать с пустым текстом.</translation>
-    </message>
-    <message>
-        <source>The file is not valid UTF-8 text.</source>
-        <translation>Файл не является корректным текстом UTF-8.</translation>
-    </message>
-    <message>
-        <source>The result changed. Search again before replacing it.</source>
-        <translation>Результат изменился. Повторите поиск перед заменой.</translation>
-    </message>
-</context>
-<context>
-    <name>SearchPanel</name>
-    <message><source>Current file</source><translation>Текущий файл</translation></message>
-    <message><source>Open files</source><translation>Открытые файлы</translation></message>
-    <message><source>Entire project</source><translation>Весь проект</translation></message>
-    <message><source>Search this project</source><translation>Поиск по проекту</translation></message>
-    <message><source>Enter text above to find matches.</source><translation>Введите текст выше, чтобы найти совпадения.</translation></message>
-    <message><source>Show replace controls (Ctrl+H)</source><translation>Показать элементы замены (Ctrl+H)</translation></message>
-    <message><source>Show replace controls</source><translation>Показать элементы замены</translation></message>
-    <message><source>&amp;Search</source><translation>&amp;Поиск</translation></message>
-    <message><source>Text or regular expression</source><translation>Текст или регулярное выражение</translation></message>
-    <message><source>Search text</source><translation>Текст для поиска</translation></message>
-    <message><source>Search scope</source><translation>Область поиска</translation></message>
-    <message><source>Match case</source><translation>Учитывать регистр</translation></message>
-    <message><source>Match whole word</source><translation>Слово целиком</translation></message>
-    <message><source>Use regular expression</source><translation>Использовать регулярное выражение</translation></message>
-    <message><source>Previous</source><translation>Предыдущий</translation></message>
-    <message><source>Previous result (Shift+F3)</source><translation>Предыдущий результат (Shift+F3)</translation></message>
-    <message><source>Next</source><translation>Следующий</translation></message>
-    <message><source>Next result (F3)</source><translation>Следующий результат (F3)</translation></message>
-    <message><source>Close search (Esc)</source><translation>Закрыть поиск (Esc)</translation></message>
-    <message><source>Close search</source><translation>Закрыть поиск</translation></message>
-    <message><source>&amp;Replace</source><translation>&amp;Заменить</translation></message>
-    <message><source>Replacement text</source><translation>Текст замены</translation></message>
-    <message><source>Replace result</source><translation>Заменить результат</translation></message>
-    <message><source>Replace all</source><translation>Заменить все</translation></message>
-    <message><source>&amp;Include</source><translation>&amp;Включить</translation></message>
-    <message><source>For example: *.cpp, src/*</source><translation>Например: *.cpp, src/*</translation></message>
-    <message><source>Files to include</source><translation>Включаемые файлы</translation></message>
-    <message><source>E&amp;xclude</source><translation>И&amp;сключить</translation></message>
-    <message><source>For example: build, *.min.js</source><translation>Например: build, *.min.js</translation></message>
-    <message><source>Files to exclude</source><translation>Исключаемые файлы</translation></message>
-    <message><source>Result</source><translation>Результат</translation></message>
-    <message><source>Location</source><translation>Расположение</translation></message>
-    <message><source>Search results</source><translation>Результаты поиска</translation></message>
-    <message><source>Search status</source><translation>Состояние поиска</translation></message>
-    <message><source>Enter text to search</source><translation>Введите текст для поиска</translation></message>
-    <message><source>Results appear as you type.</source><translation>Результаты появятся по мере ввода.</translation></message>
-    <message><source>Searching…</source><translation>Поиск…</translation></message>
-    <message><source>Unable to search</source><translation>Не удалось выполнить поиск</translation></message>
-    <message><source>Open a text file or choose another scope.</source><translation>Откройте текстовый файл или выберите другую область поиска.</translation></message>
-    <message><source>Try another query or adjust the file filters.</source><translation>Измените запрос или фильтры файлов.</translation></message>
-    <message><source>No matches found</source><translation>Совпадений не найдено</translation></message>
-    <message><source>Empty line</source><translation>Пустая строка</translation></message>
-    <message><source>Line %1, column %2</source><translation>Строка %1, столбец %2</translation></message>
-    <message numerus="yes">
-        <source>%n match(es)</source>
-        <translation><numerusform>%n совпадение</numerusform><numerusform>%n совпадения</numerusform><numerusform>%n совпадений</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source xml:space="preserve"> in %n file(s)</source>
-        <translation><numerusform xml:space="preserve"> в %n файле</numerusform><numerusform xml:space="preserve"> в %n файлах</numerusform><numerusform xml:space="preserve"> в %n файлах</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source xml:space="preserve"> · %n binary, unreadable, or large file(s) skipped</source>
-        <translation><numerusform xml:space="preserve"> · пропущен %n бинарный, нечитаемый или большой файл</numerusform><numerusform xml:space="preserve"> · пропущено %n бинарных, нечитаемых или больших файла</numerusform><numerusform xml:space="preserve"> · пропущено %n бинарных, нечитаемых или больших файлов</numerusform></translation>
-    </message>
-    <message><source xml:space="preserve"> · Result limit reached</source><translation xml:space="preserve"> · Достигнут лимит результатов</translation></message>
-    <message><source>Unable to replace</source><translation>Не удалось заменить</translation></message>
-    <message><source>Unable to read %1.</source><translation>Не удалось прочитать %1.</translation></message>
-    <message><source>Unable to write %1: %2</source><translation>Не удалось записать %1: %2</translation></message>
-    <message><source>Replaced one match in %1.</source><translation>Одно совпадение заменено в %1.</translation></message>
-    <message><source>Replace all matches</source><translation>Заменить все совпадения</translation></message>
-    <message numerus="yes">
-        <source>Replace %n match(es)</source>
-        <translation><numerusform>Заменить %n совпадение</numerusform><numerusform>Заменить %n совпадения</numerusform><numerusform>Заменить %n совпадений</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source xml:space="preserve"> in %n file(s)?</source>
-        <translation><numerusform xml:space="preserve"> в %n файле?</numerusform><numerusform xml:space="preserve"> в %n файлах?</numerusform><numerusform xml:space="preserve"> в %n файлах?</numerusform></translation>
-    </message>
-    <message><source>Cancel</source><translation>Отмена</translation></message>
-    <message><source>Unable to read %1</source><translation>Не удалось прочитать %1</translation></message>
-    <message><source>%1: %2</source><translation>%1: %2</translation></message>
-    <message><source>Some files were not changed</source><translation>Некоторые файлы не изменены</translation></message>
-    <message><source>Refine the search before replacing all matches.</source><translation>Уточните поиск перед заменой всех совпадений.</translation></message>
-    <message numerus="yes">
-        <source>Replaced %n match(es).
-
-%1</source>
-        <translation><numerusform>Заменено %n совпадение.
-
-%1</numerusform><numerusform>Заменено %n совпадения.
-
-%1</numerusform><numerusform>Заменено %n совпадений.
-
-%1</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>Replaced %n match(es).</source>
-        <translation><numerusform>Заменено %n совпадение.</numerusform><numerusform>Заменено %n совпадения.</numerusform><numerusform>Заменено %n совпадений.</numerusform></translation>
     </message>
 </context>
 </TS>
