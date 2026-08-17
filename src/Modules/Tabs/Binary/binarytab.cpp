@@ -76,8 +76,20 @@ void BinaryTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer) {
         return;
 
     TabBase::setFileDataBuffer(newFileDataBuffer);
-    if (m_dataBuffer && pageView->count() == 0)
+    if (!m_dataBuffer)
+        return;
+
+    if (pageView->count() == 0) {
         createPages();
+        return;
+    }
+
+    // The buffer has changed and pages already exist, so refresh them all
+    for (int pageIndex = 0; pageIndex < pageView->count(); ++pageIndex) {
+        auto* fpage = dynamic_cast<FormatPage*>(pageView->widget(pageIndex));
+        if (fpage)
+            fpage->setSharedBuffer(m_dataBuffer);
+    }
 }
 
 void BinaryTab::createPages(){
@@ -171,8 +183,12 @@ void BinaryTab::onDataChanged()
     if (m_syncingBufferData)
         return;
 
+    // Guard against re-entrancy: setTabData() may trigger a new dataChanged
+    // signal while refreshing pages, which would otherwise cause recursion.
     m_pageDataDirty = true;
+    m_syncingBufferData = true;
     setTabData();
+    m_syncingBufferData = false;
 }
 
 void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
