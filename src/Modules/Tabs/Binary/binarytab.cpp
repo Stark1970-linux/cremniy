@@ -87,50 +87,50 @@ void BinaryTab::createPages(){
     qDebug() << "FormatPageFactory constr: for id in avPages";
     for (const QString& toolID : formatFactory.availablePages()){
         FormatPage* fpage = formatFactory.create(toolID);
+        if (!fpage)
+            continue;
+
         qDebug() << "availablePage: " << fpage->pageName();
+        pageView->addWidget(fpage);
+        m_pageList->addItem(fpage->pageName());
 
-        if (fpage) {
-            pageView->addWidget(fpage);
-            m_pageList->addItem(fpage->pageName());
+        connect(fpage, &FormatPage::modifyData, this, &BinaryTab::pageModifyDataSlot);
+        connect(fpage, &FormatPage::dataEqual, this, &TabBase::dataEqual);
+        connect(fpage,
+                &FormatPage::pageDataChanged,
+                this,
+                [this](const QByteArray& data) {
+                    if (m_syncingBufferData)
+                        return;
 
-            connect(fpage, &FormatPage::modifyData, this, &BinaryTab::pageModifyDataSlot);
-            connect(fpage, &FormatPage::dataEqual, this, &TabBase::dataEqual);
-            connect(fpage,
-                    &FormatPage::pageDataChanged,
-                    this,
-                    [this](const QByteArray& data) {
-                        if (m_syncingBufferData)
-                            return;
+                    m_syncingBufferData = true;
+                    m_dataBuffer->replaceData(data);
+                    m_syncingBufferData = false;
 
-                        m_syncingBufferData = true;
-                        m_dataBuffer->replaceData(data);
-                        m_syncingBufferData = false;
+                    if (m_dataBuffer->isModified()) {
+                        setModifyIndicator(true);
+                        emit modifyData();
+                    } else {
+                        setModifyIndicator(false);
+                        emit dataEqual();
+                    }
+                });
 
-                        if (m_dataBuffer->isModified()) {
-                            setModifyIndicator(true);
-                            emit modifyData();
-                        } else {
-                            setModifyIndicator(false);
-                            emit dataEqual();
-                        }
-                    });
+        // Forward status bar info from format page
+        connect(fpage, &FormatPage::statusBarInfoChanged,
+                this, &BinaryTab::statusBarInfoChanged);
 
-            // Forward status bar info from format page
-            connect(fpage, &FormatPage::statusBarInfoChanged,
-                    this, &BinaryTab::statusBarInfoChanged);
+        // Forward selection changes from the page to the buffer
+        connect(fpage,
+                &FormatPage::selectionChanged,
+                this,
+                [this](qint64 pos, qint64 length){
+                    if (m_updatingSelection) return; // Prevent recursion
 
-            // Подключаем сигнал выделения от страницы к буферу
-            connect(fpage,
-                    &FormatPage::selectionChanged,
-                    this,
-                    [this](qint64 pos, qint64 length){
-                        if (m_updatingSelection) return; // Предотвращаем рекурсию
-
-                        m_updatingSelection = true;
-                        m_dataBuffer->setSelection(pos, length);
-                        m_updatingSelection = false;
-                    });
-        }
+                    m_updatingSelection = true;
+                    m_dataBuffer->setSelection(pos, length);
+                    m_updatingSelection = false;
+                });
     }
     m_pageList->setCurrentRow(0);
 }
@@ -177,11 +177,11 @@ void BinaryTab::onDataChanged()
 
 void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
 {
-    if (m_updatingSelection) return; // Предотвращаем рекурсию
+    if (m_updatingSelection) return; // Prevent recursion
     
     m_updatingSelection = true;
     
-    // Устанавливаем выделение на всех страницах
+    // Set selection on all pages
     for (int pageIndex = 0; pageIndex < pageView->count(); pageIndex++){
         FormatPage* fpage = dynamic_cast<FormatPage*>(pageView->widget(pageIndex));
         if (fpage) {
