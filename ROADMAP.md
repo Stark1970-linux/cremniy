@@ -30,6 +30,9 @@ Create a **unified tool for system programming** that eliminates the need for sc
 - [ ] 🟢 [Highlight in yellow across other tools when selecting in one tool](https://github.com/munirov/cremniy/issues/244)
 - [ ] 🟢 [Configure and customize app themes](https://github.com/munirov/cremniy/issues/246)
 
+> [!WARNING]
+> If you'd like to work on an issue, please leave a comment on it first to avoid duplicate effort.
+
 ## 🔮 Future Plans
 
 - Debugger for running project
