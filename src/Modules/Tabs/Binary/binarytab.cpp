@@ -76,8 +76,20 @@ void BinaryTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer) {
         return;
 
     TabBase::setFileDataBuffer(newFileDataBuffer);
-    if (m_dataBuffer && pageView->count() == 0)
+    if (!m_dataBuffer)
+        return;
+
+    if (pageView->count() == 0) {
         createPages();
+        return;
+    }
+
+    // The buffer has changed and pages already exist, so refresh them all
+    for (int pageIndex = 0; pageIndex < pageView->count(); ++pageIndex) {
+        auto* fpage = dynamic_cast<FormatPage*>(pageView->widget(pageIndex));
+        if (fpage)
+            fpage->setSharedBuffer(m_dataBuffer);
+    }
 }
 
 void BinaryTab::createPages(){
@@ -87,50 +99,50 @@ void BinaryTab::createPages(){
     qDebug() << "FormatPageFactory constr: for id in avPages";
     for (const QString& toolID : formatFactory.availablePages()){
         FormatPage* fpage = formatFactory.create(toolID);
+        if (!fpage)
+            continue;
+
         qDebug() << "availablePage: " << fpage->pageName();
+        pageView->addWidget(fpage);
+        m_pageList->addItem(fpage->pageName());
 
-        if (fpage) {
-            pageView->addWidget(fpage);
-            m_pageList->addItem(fpage->pageName());
+        connect(fpage, &FormatPage::modifyData, this, &BinaryTab::pageModifyDataSlot);
+        connect(fpage, &FormatPage::dataEqual, this, &TabBase::dataEqual);
+        connect(fpage,
+                &FormatPage::pageDataChanged,
+                this,
+                [this](const QByteArray& data) {
+                    if (m_syncingBufferData)
+                        return;
 
-            connect(fpage, &FormatPage::modifyData, this, &BinaryTab::pageModifyDataSlot);
-            connect(fpage, &FormatPage::dataEqual, this, &TabBase::dataEqual);
-            connect(fpage,
-                    &FormatPage::pageDataChanged,
-                    this,
-                    [this](const QByteArray& data) {
-                        if (m_syncingBufferData)
-                            return;
+                    m_syncingBufferData = true;
+                    m_dataBuffer->replaceData(data);
+                    m_syncingBufferData = false;
 
-                        m_syncingBufferData = true;
-                        m_dataBuffer->replaceData(data);
-                        m_syncingBufferData = false;
+                    if (m_dataBuffer->isModified()) {
+                        setModifyIndicator(true);
+                        emit modifyData();
+                    } else {
+                        setModifyIndicator(false);
+                        emit dataEqual();
+                    }
+                });
 
-                        if (m_dataBuffer->isModified()) {
-                            setModifyIndicator(true);
-                            emit modifyData();
-                        } else {
-                            setModifyIndicator(false);
-                            emit dataEqual();
-                        }
-                    });
+        // Forward status bar info from format page
+        connect(fpage, &FormatPage::statusBarInfoChanged,
+                this, &BinaryTab::statusBarInfoChanged);
 
-            // Forward status bar info from format page
-            connect(fpage, &FormatPage::statusBarInfoChanged,
-                    this, &BinaryTab::statusBarInfoChanged);
+        // Forward selection changes from the page to the buffer
+        connect(fpage,
+                &FormatPage::selectionChanged,
+                this,
+                [this](qint64 pos, qint64 length){
+                    if (m_updatingSelection) return; // Prevent recursion
 
-            // Подключаем сигнал выделения от страницы к буферу
-            connect(fpage,
-                    &FormatPage::selectionChanged,
-                    this,
-                    [this](qint64 pos, qint64 length){
-                        if (m_updatingSelection) return; // Предотвращаем рекурсию
-
-                        m_updatingSelection = true;
-                        m_dataBuffer->setSelection(pos, length);
-                        m_updatingSelection = false;
-                    });
-        }
+                    m_updatingSelection = true;
+                    m_dataBuffer->setSelection(pos, length);
+                    m_updatingSelection = false;
+                });
     }
     m_pageList->setCurrentRow(0);
 }
@@ -171,17 +183,21 @@ void BinaryTab::onDataChanged()
     if (m_syncingBufferData)
         return;
 
+    // Guard against re-entrancy: setTabData() may trigger a new dataChanged
+    // signal while refreshing pages, which would otherwise cause recursion.
     m_pageDataDirty = true;
+    m_syncingBufferData = true;
     setTabData();
+    m_syncingBufferData = false;
 }
 
 void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
 {
-    if (m_updatingSelection) return; // Предотвращаем рекурсию
+    if (m_updatingSelection) return; // Prevent recursion
     
     m_updatingSelection = true;
     
-    // Устанавливаем выделение на всех страницах
+    // Set selection on all pages
     for (int pageIndex = 0; pageIndex < pageView->count(); pageIndex++){
         FormatPage* fpage = dynamic_cast<FormatPage*>(pageView->widget(pageIndex));
         if (fpage) {
