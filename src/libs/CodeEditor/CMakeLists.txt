@@ -20,6 +20,8 @@ add_library(CodeEditor STATIC
     include/widgets/EditorLanguageSupport.h
     include/widgets/EditorTypingBehaviors.h
     include/widgets/LineNumberArea.h
+    include/widgets/BlameTooltip.h
+    include/widgets/BlameLineInfo.h
     src/core/LineCache.cpp
     src/core/LineIndex.cpp
     src/core/UTF8Decoder.cpp
@@ -28,6 +30,7 @@ add_library(CodeEditor STATIC
     src/widgets/EditorLanguageSupport.cpp
     src/widgets/EditorTypingBehaviors.cpp
     src/widgets/LineNumberArea.cpp
+    src/widgets/BlameTooltip.cpp
     src/widgets/highlighters/AsmHighlighter.h
     src/widgets/highlighters/AsmHighlighter.cpp
     src/widgets/highlighters/HighlighterFactory.h

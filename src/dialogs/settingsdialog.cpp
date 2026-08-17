@@ -2,6 +2,9 @@
 
 #include "core/settings/appsettings.h"
 
+#include <QBoxLayout>
+#include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -14,6 +17,7 @@
 #include <QPlainTextEdit>
 #include <QProcess>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStandardPaths>
@@ -52,10 +56,17 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     setObjectName("settingsDialog");
     setWindowTitle(tr("Settings"));
     setModal(true);
-    setMinimumSize(760, 520);
+    setMinimumSize(760, 600);
     setSizeGripEnabled(true);
 
     auto *root = new QVBoxLayout(this);
+
+    auto *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+
+    auto *scrollContent = new QWidget(scrollArea);
+    auto *scrollLayout = new QVBoxLayout(scrollContent);
 
     auto *form = new QFormLayout();
     form->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -160,29 +171,98 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     m_languageCombo->setMinimumWidth(250);
     form->addRow(tr("Language"), m_languageCombo);
 
-    root->addLayout(form);
+    scrollLayout->addLayout(form);
+
+    // ── Code Editor section ──
+    {
+        auto *separator = new QFrame(this);
+        separator->setFrameShape(QFrame::HLine);
+        separator->setFrameShadow(QFrame::Sunken);
+        scrollLayout->addWidget(separator);
+
+        auto *lbl = new QLabel(tr("Code Editor"), this);
+        lbl->setObjectName("settingsSectionTitle");
+        scrollLayout->addWidget(lbl);
+
+        m_gitBlameEnabled = new QCheckBox(tr("Enable Git Blame"), this);
+        scrollLayout->addWidget(m_gitBlameEnabled);
+
+        auto *options = new QWidget(this);
+        auto *optLayout = new QFormLayout(options);
+        optLayout->setContentsMargins(20, 0, 0, 0);
+
+        m_gitBlameColor = new QComboBox(options);
+        m_gitBlameColor->addItem(tr("Default (Gray)"), "#6D6552");
+        m_gitBlameColor->addItem(tr("Red"), "#FF0000");
+        m_gitBlameColor->addItem(tr("Green"), "#00FF00");
+        m_gitBlameColor->addItem(tr("Blue"), "#0000FF");
+        m_gitBlameColor->addItem(tr("Custom..."), "custom");
+
+        auto *resetColorBtn = new QPushButton(tr("Reset"), options);
+        resetColorBtn->setFixedWidth(85);
+
+        auto *colorLayout = new QHBoxLayout();
+        colorLayout->addWidget(m_gitBlameColor, 1);
+        colorLayout->addWidget(resetColorBtn);
+        optLayout->addRow(tr("Blame Color"), colorLayout);
+
+        m_gitBlamePadding = new QSpinBox(options);
+        m_gitBlamePadding->setRange(0, 50);
+        m_gitBlamePadding->setSuffix(tr(" chars"));
+
+        auto *resetPaddingBtn = new QPushButton(tr("Reset"), options);
+        resetPaddingBtn->setFixedWidth(85);
+
+        auto *paddingLayout = new QHBoxLayout();
+        paddingLayout->addWidget(m_gitBlamePadding, 1);
+        paddingLayout->addWidget(resetPaddingBtn);
+        optLayout->addRow(tr("Blame Padding"), paddingLayout);
+
+        scrollLayout->addWidget(options);
+
+        connect(resetColorBtn, &QPushButton::clicked, this, [this]() {
+            int idx = m_gitBlameColor->findData("#6D6552");
+            if (idx >= 0) m_gitBlameColor->setCurrentIndex(idx);
+        });
+
+        connect(resetPaddingBtn, &QPushButton::clicked, this, [this]() {
+            m_gitBlamePadding->setValue(6);
+        });
+
+        connect(m_gitBlameEnabled, &QCheckBox::toggled, options, &QWidget::setEnabled);
+        options->setEnabled(AppSettings::gitBlameEnabled());
+
+        auto *hint = new QLabel(tr("Show the author and relative date for the current line at the end of the code."), this);
+        hint->setObjectName("settingsHintLabel");
+        hint->setWordWrap(true);
+        scrollLayout->addWidget(hint);
+    }
 
     // ── Excluded Files section ──
     {
         auto *separator = new QFrame(this);
         separator->setFrameShape(QFrame::HLine);
         separator->setFrameShadow(QFrame::Sunken);
-        root->addWidget(separator);
+        scrollLayout->addWidget(separator);
 
         auto *lbl = new QLabel(tr("Excluded Files / Folders"), this);
         lbl->setObjectName("settingsSectionTitle");
-        root->addWidget(lbl);
+        scrollLayout->addWidget(lbl);
 
         auto *hint = new QLabel(tr("One pattern per line. Examples: node_modules, .git, *.log, dist/"), this);
         hint->setObjectName("settingsHintLabel");
         hint->setWordWrap(true);
-        root->addWidget(hint);
+        scrollLayout->addWidget(hint);
 
         m_excludedPatterns = new QPlainTextEdit(this);
         m_excludedPatterns->setPlaceholderText(tr("node_modules\n.git\n*.log"));
         m_excludedPatterns->setFixedHeight(90);
-        root->addWidget(m_excludedPatterns);
+        scrollLayout->addWidget(m_excludedPatterns);
     }
+
+    scrollLayout->addStretch(1);
+    scrollArea->setWidget(scrollContent);
+    root->addWidget(scrollArea);
 
     // buttons
     auto *btnRow = new QHBoxLayout();
@@ -210,6 +290,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(m_insnLimit, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDialog::updateDependencyStatus);
     connect(m_syntaxCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsDialog::updateDependencyStatus);
     connect(m_r2AnalysisCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsDialog::updateDependencyStatus);
+    connect(m_gitBlameColor, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsDialog::onGitBlameColorChanged);
     connect(m_r2PreCommands, &QPlainTextEdit::textChanged, this, &SettingsDialog::updateDependencyStatus);
     connect(m_languageCombo, &QComboBox::currentTextChanged, this, [this] {
         onLanguageSwitched(m_languageCombo->currentData().toString());
@@ -261,6 +342,15 @@ void SettingsDialog::onImportIni()
 
 void SettingsDialog::loadFromSettings()
 {
+    QSignalBlocker blocker1(m_backendCombo);
+    QSignalBlocker blocker2(m_insnLimit);
+    QSignalBlocker blocker3(m_syntaxCombo);
+    QSignalBlocker blocker4(m_r2AnalysisCombo);
+    QSignalBlocker blocker5(m_languageCombo);
+    QSignalBlocker blocker6(m_gitBlameEnabled);
+    QSignalBlocker blocker7(m_gitBlameColor);
+    QSignalBlocker blocker8(m_gitBlamePadding);
+
     const auto backend = AppSettings::disasmBackend();
     const int want = static_cast<int>(backend);
     int idx = m_backendCombo->findData(want);
@@ -288,9 +378,29 @@ void SettingsDialog::loadFromSettings()
 
     m_excludedPatterns->setPlainText(AppSettings::excludedPatterns().join('\n'));
 
+    m_gitBlameEnabled->setChecked(AppSettings::gitBlameEnabled());
+
+    {
+        QSignalBlocker blocker(m_gitBlameColor);
+        QString currentColor = AppSettings::gitBlameColor();
+        int colorIdx = m_gitBlameColor->findData(currentColor);
+        if (colorIdx >= 0) {
+            m_gitBlameColor->setCurrentIndex(colorIdx);
+        } else {
+            /* If it's a custom hex not in our presets, we need to show it */
+            int customIdx = m_gitBlameColor->findData("custom");
+            if (customIdx >= 0) {
+                m_gitBlameColor->setItemData(customIdx, currentColor);
+                m_gitBlameColor->setCurrentIndex(customIdx);
+                m_gitBlameColor->setItemText(customIdx, tr("Custom (%1)").arg(currentColor));
+            }
+        }
+    }
+
+    m_gitBlamePadding->setValue(AppSettings::gitBlamePadding());
+
     const QString locale = AppSettings::getSettingsJson().value("language").toString();
     const int languageIndex = m_languageCombo->findData(locale);
-    const QSignalBlocker blocker(m_languageCombo);
     m_languageCombo->setCurrentIndex(languageIndex >= 0 ? languageIndex : 0);
 }
 
@@ -388,6 +498,10 @@ void SettingsDialog::onAccept()
     AppSettings::setAsmSyntax(static_cast<AppSettings::AsmSyntax>(m_syntaxCombo->currentData().toInt()));
     AppSettings::setRadare2AnalysisLevel(static_cast<AppSettings::Radare2AnalysisLevel>(m_r2AnalysisCombo->currentData().toInt()));
 
+    AppSettings::setGitBlameEnabled(m_gitBlameEnabled->isChecked());
+    AppSettings::setGitBlameColor(m_gitBlameColor->currentData().toString());
+    AppSettings::setGitBlamePadding(m_gitBlamePadding->value());
+
     const QString pre = m_r2PreCommands->toPlainText()
                             .split('\n', Qt::SkipEmptyParts)
                             .join(';');
@@ -434,6 +548,23 @@ void SettingsDialog::updateDependencyStatus()
         const bool ok = isRunnableExecutable(fileExe);
         setStatusLabel(m_fileStatus, ok, ok ? tr("found") : tr("missing"));
         m_fileStatus->setToolTip(ok ? fileExe : tr("The objdump backend uses 'file -b <path>' for arch detection"));
+    }
+}
+
+void SettingsDialog::onGitBlameColorChanged(int index)
+{
+    if (m_gitBlameColor->itemData(index).toString() == "custom") {
+        QColor color = QColorDialog::getColor(QColor(AppSettings::gitBlameColor()), this, tr("Select Blame Color"));
+        if (color.isValid()) {
+            QString hex = color.name().toUpper();
+            m_gitBlameColor->setItemData(index, hex);
+            m_gitBlameColor->setItemText(index, tr("Custom (%1)").arg(hex));
+        } else {
+            /* User cancelled, revert to previous setting in UI */
+            QString prev = AppSettings::gitBlameColor();
+            int prevIdx = m_gitBlameColor->findData(prev);
+            if (prevIdx >= 0) m_gitBlameColor->setCurrentIndex(prevIdx);
+        }
     }
 }
 

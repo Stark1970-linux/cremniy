@@ -4,6 +4,7 @@
 #include <QDialog>
 
 class QComboBox;
+class QCheckBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
@@ -26,6 +27,7 @@ private slots:
     void onAccept();
     void onBackendChanged(int index);
     void onLanguageSwitched(const QString &locale);
+    void onGitBlameColorChanged(int index);
 
 private:
     void loadFromSettings();
@@ -50,6 +52,11 @@ private:
 
     // File-tree exclusion
     QPlainTextEdit *m_excludedPatterns = nullptr;
+
+    // Code Editor options
+    QCheckBox *m_gitBlameEnabled = nullptr;
+    QComboBox *m_gitBlameColor   = nullptr;
+    QSpinBox  *m_gitBlamePadding = nullptr;
 
     QPushButton *m_testBtn      = nullptr;
     QPushButton *m_exportBtn    = nullptr;

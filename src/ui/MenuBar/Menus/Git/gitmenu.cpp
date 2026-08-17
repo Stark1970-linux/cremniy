@@ -1,4 +1,5 @@
 #include "gitmenu.h"
+#include "core/settings/appsettings.h"
 #include "ui/MenuBar/menufactory.h"
 #include <QApplication>
 #include <QFileDialog>
@@ -83,6 +84,11 @@ GitMenu::GitMenu() : BaseMenu(tr("Git"))
     m_stashList = m_extraMenu->addAction(tr("Stash List"));
     m_extraMenu->addSeparator();
     m_showLogGraph = m_extraMenu->addAction(tr("Log Graph"));
+
+    addSeparator();
+    m_toggleBlame = addAction(tr("Inline Git Blame"));
+    m_toggleBlame->setCheckable(true);
+    m_toggleBlame->setChecked(AppSettings::gitBlameEnabled());
 }
 
 void GitMenu::setupConnections(IDEWindow* ideWind)
@@ -146,6 +152,13 @@ void GitMenu::setupConnections(IDEWindow* ideWind)
     connect(m_stashDrop, &QAction::triggered, this, &GitMenu::onStashDrop);
     connect(m_stashList, &QAction::triggered, this, &GitMenu::onStashList);
     connect(m_showLogGraph, &QAction::triggered, this, &GitMenu::onShowLogGraph);
+
+    connect(m_toggleBlame, &QAction::toggled, this, [](bool checked) {
+        AppSettings::setGitBlameEnabled(checked);
+    });
+
+    connect(SettingsNotifier::instance(), &SettingsNotifier::gitBlameEnabledChanged,
+            m_toggleBlame, &QAction::setChecked);
 }
 
 // Вспомогательные методы
@@ -786,21 +799,7 @@ void GitMenu::onShowLogGraph()
 
 QString GitMenu::findGitRepositoryRoot(const QString &path)
 {
-    QDir dir(path);
-    
-    // Ищем гит директорию, поднимаясь по иерархии
-    while (!dir.isRoot()) {
-        if (dir.exists(".git")) {
-            QDir gitDir(dir.filePath(".git"));
-            // Проверяем, что это директория (а не файл, как в случае worktrees)
-            if (gitDir.exists() || QFileInfo(dir.filePath(".git")).isDir()) {
-                return dir.absolutePath();
-            }
-        }
-        if (!dir.cdUp()) break;
-    }
-    
-    return {};
+    return GitManager::findGitRepositoryRoot(path);
 }
 
 bool GitMenu::isGitRepository(const QString &path)
