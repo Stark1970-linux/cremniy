@@ -226,6 +226,7 @@ CustomCodeEditor::CustomCodeEditor(QWidget* parent)
     , m_selectionLength(0)
     , m_updatingSelection(false)
     , m_applyingBufferEdit(false)
+    , m_externalSelection(false)
     , m_firstVisibleLine(0)
     , m_visibleLineCount(0)
     , m_scaleFactor(1.0)
@@ -591,6 +592,7 @@ void CustomCodeEditor::setBuffer(FileDataBuffer* buffer)
     qint64 selectionPos = 0;
     qint64 selectionLength = 0;
     m_buffer->getSelection(selectionPos, selectionLength);
+    m_externalSelection = true;
     updateSelection(selectionPos, selectionLength);
     clampCursorToBuffer();
     updateScrollbars();
@@ -1603,11 +1605,13 @@ void CustomCodeEditor::onBufferSelectionChanged(qint64 pos, qint64 length)
     if (m_updatingSelection)
         return;
 
+    /* Selection originated in a sibling tool (e.g. Hex Editor): render it yellow */
+    m_externalSelection = true;
     updateSelection(pos, length);
 
-    // A zero-length external selection should only clear the selection state.
-    // Moving the caret to that position causes the first local edit to jump to
-    // the start of the file when another view echoes back an empty selection.
+    /* A zero-length external selection should only clear the selection state.
+     * Moving the caret to that position causes the first local edit to jump to
+     * the start of the file when another view echoes back an empty selection. */
     if (length > 0)
         m_cursorBytePos = clampToUtf8Boundary(pos + length);
 
@@ -3066,6 +3070,8 @@ void CustomCodeEditor::syncSelectionToBuffer()
     if (!m_buffer)
         return;
 
+    /* Local user-driven selection: clear the external flag before propagating */
+    m_externalSelection = false;
     m_updatingSelection = true;
     m_buffer->setSelection(hasSelection() ? m_selectionStart : m_cursorBytePos,
                            hasSelection() ? m_selectionLength : 0);
@@ -3560,7 +3566,11 @@ void CustomCodeEditor::renderSelection(QPainter* painter)
     const int scrollY = verticalScrollBar()->value();
     const int scrollX = horizontalScrollBar()->value();
 
-    QColor selectionColor = palette().highlight().color();
+    /* External selections (originating in a sibling tool like the Hex Editor)
+     * are rendered in yellow to distinguish them from local selections. */
+    QColor selectionColor = m_externalSelection
+        ? QColor(255, 175, 50)
+        : palette().highlight().color();
     selectionColor.setAlpha(110);
 
     for (qint64 lineNum = startLine; lineNum <= endLine; ++lineNum) {
