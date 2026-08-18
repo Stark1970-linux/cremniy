@@ -1,41 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-# получение текущей версии cremniy из тегов git
-
-find_package(Git QUIET)
-
-set(PROJECT_VERSION_CLEAN "0.0.2")
-
-if(GIT_FOUND)
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} rev-parse --show-toplevel
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        OUTPUT_VARIABLE GIT_ROOT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-
-    if(GIT_ROOT)
-        execute_process(
-            COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
-            WORKING_DIRECTORY "${GIT_ROOT}"
-            OUTPUT_VARIABLE GIT_VERSION_RAW
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_QUIET
-        )
-
-        message(STATUS "Git root = ${GIT_ROOT}")
-        message(STATUS "Git version = ${GIT_VERSION_RAW}")
-
-        if(GIT_VERSION_RAW MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)")
-            set(PROJECT_VERSION_CLEAN "${CMAKE_MATCH_1}")
-        endif()
-    endif()
-endif()
-
-message(STATUS "Project version = ${PROJECT_VERSION_CLEAN}")
-
-project(cremniy VERSION ${PROJECT_VERSION_CLEAN} LANGUAGES CXX)
+project(cremniy VERSION 0.4.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
