@@ -4,26 +4,37 @@ cmake_minimum_required(VERSION 3.16)
 
 find_package(Git QUIET)
 
-if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+set(PROJECT_VERSION_CLEAN "0.0.2")
+
+if(GIT_FOUND)
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+        COMMAND ${GIT_EXECUTABLE} rev-parse --show-toplevel
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        OUTPUT_VARIABLE GIT_VERSION_RAW
+        OUTPUT_VARIABLE GIT_ROOT
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
     )
 
-    # извлечение чистой версии (X.Y.Z без v)
-    if(GIT_VERSION_RAW MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)")
-        set(PROJECT_VERSION_CLEAN "${CMAKE_MATCH_1}")
-    else()
-        set(PROJECT_VERSION_CLEAN "0.0.1") # тегов нет
+    if(GIT_ROOT)
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+            WORKING_DIRECTORY "${GIT_ROOT}"
+            OUTPUT_VARIABLE GIT_VERSION_RAW
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+
+        message(STATUS "Git root = ${GIT_ROOT}")
+        message(STATUS "Git version = ${GIT_VERSION_RAW}")
+
+        if(GIT_VERSION_RAW MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)")
+            set(PROJECT_VERSION_CLEAN "${CMAKE_MATCH_1}")
+        endif()
     endif()
-else()
-    set(PROJECT_VERSION_CLEAN "0.0.1") # если собираем вне git
 endif()
 
-# вычисленную версию подставлякм в определитель проекта
+message(STATUS "Project version = ${PROJECT_VERSION_CLEAN}")
+
 project(cremniy VERSION ${PROJECT_VERSION_CLEAN} LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
