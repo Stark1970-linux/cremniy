@@ -163,6 +163,11 @@ public slots:
      */
     virtual void setTabWidthSlot(int width) = 0;
 
+    /**
+     * @brief Включение или отключение Git Blame в зависимости от checked
+     */
+    virtual void setGitBlameSlot(bool checked) { Q_UNUSED(checked); }
+
 signals:
     /**
      * @brief Status bar information changed

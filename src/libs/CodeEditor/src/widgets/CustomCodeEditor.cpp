@@ -4,6 +4,7 @@
 #include "widgets/EditorLanguageSupport.h"
 #include "widgets/EditorTypingBehaviors.h"
 #include "widgets/LineNumberArea.h"
+#include "widgets/BlameTooltip.h"
 #include "highlighters/HighlighterFactory.h"
 #include "QSyntaxStyle.hpp"
 #include "QStyleSyntaxHighlighter.hpp"
@@ -23,6 +24,7 @@
 #include <QMimeData>
 #include <QMenu>
 #include <QKeyEvent>
+#include <QLocale>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPaintEvent>
@@ -221,6 +223,7 @@ CustomCodeEditor::CustomCodeEditor(QWidget* parent)
     , m_utf8Decoder(new UTF8Decoder())
     , m_highlighter(nullptr)
     , m_lineNumberArea(new LineNumberArea(this))
+    , m_blameTooltip(new BlameTooltip(this))
     , m_cursorBytePos(0)
     , m_selectionStart(0)
     , m_selectionLength(0)
@@ -249,6 +252,9 @@ CustomCodeEditor::CustomCodeEditor(QWidget* parent)
     , m_savedCursorBytePos(0)
     , m_restoreViewStatePending(false)
     , m_wordWrapEnabled(true)
+    , m_gitBlameEnabled(false)
+    , m_gitBlameColor("#6D6552")
+    , m_gitBlamePadding(6)
     , m_wrapCacheWidth(-1)
     , m_layoutCacheValid(false)
     , m_layoutCacheComputedLines(0)
@@ -265,6 +271,7 @@ CustomCodeEditor::CustomCodeEditor(QWidget* parent)
     setFocusPolicy(Qt::StrongFocus);
     viewport()->setCursor(Qt::IBeamCursor);
     viewport()->setAutoFillBackground(true);
+    viewport()->setMouseTracking(true);
     m_editGroupTimer->setSingleShot(true);
     connect(m_editGroupTimer, &QTimer::timeout, this, [this]() { endEditGrouping(); });
     m_lineNumberArea->setFont(m_font);
@@ -296,6 +303,25 @@ bool CustomCodeEditor::event(QEvent* event)
 {
     if (event && event->type() == QEvent::ToolTip) {
         auto* helpEvent = static_cast<QHelpEvent*>(event);
+
+        if (m_gitBlameEnabled && !m_lastBlameRect.isNull() && m_lastBlameRect.contains(helpEvent->pos())) {
+            const qint64 cursorLine = lineFromBytePos(m_cursorBytePos);
+            if (cursorLine >= 0 && cursorLine < (qint64)m_blameData.size()) {
+                const BlameLineInfo& info = m_blameData.at(static_cast<int>(cursorLine));
+                if (!info.authorName.isEmpty()) {
+                    if (m_blameTooltip->currentCommitHash() != info.fullOid || !m_blameTooltip->isVisible()) {
+                        m_blameTooltip->setBlameInfo(info);
+                        /* Position it statically above the blame area */
+                        QPoint p = viewport()->mapToGlobal(m_lastBlameRect.topLeft());
+                        m_blameTooltip->showAt(p);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        m_blameTooltip->hide();
+
         if (m_buffer && m_lineIndex->lineCount() > 0) {
             const qint64 bytePos = bytePosFromPoint(helpEvent->pos());
             const qint64 lineNum = lineFromBytePos(bytePos);
@@ -976,6 +1002,38 @@ int CustomCodeEditor::lineNumberAreaWidth() const
     return m_lineNumberArea->calculateWidth();
 }
 
+bool CustomCodeEditor::isGitBlameEnabled() const
+{
+    return m_gitBlameEnabled;
+}
+
+void CustomCodeEditor::setGitBlameEnabled(bool enabled)
+{
+    if (m_gitBlameEnabled == enabled) return;
+    m_gitBlameEnabled = enabled;
+    updateLineNumberAreaWidth();
+    updateScrollbars();
+    viewport()->update();
+}
+
+void CustomCodeEditor::setGitBlameColor(const QString &color)
+{
+    m_gitBlameColor = color;
+    viewport()->update();
+}
+
+void CustomCodeEditor::setGitBlamePadding(int padding)
+{
+    m_gitBlamePadding = padding;
+    viewport()->update();
+}
+
+void CustomCodeEditor::setBlameData(const QVector<BlameLineInfo>& blameData)
+{
+    m_blameData = blameData;
+    viewport()->update();
+}
+
 void CustomCodeEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
 {
     QPainter painter(m_lineNumberArea);
@@ -1022,6 +1080,8 @@ void CustomCodeEditor::paintEvent(QPaintEvent* event)
         renderSelection(&painter);
     if (hasFocus())
         renderCursor(&painter);
+
+    renderInlineBlame(&painter);
 }
 
 void CustomCodeEditor::resizeEvent(QResizeEvent* event)
@@ -1356,6 +1416,12 @@ void CustomCodeEditor::mousePressEvent(QMouseEvent* event)
 
 void CustomCodeEditor::mouseMoveEvent(QMouseEvent* event)
 {
+    if (m_blameTooltip->isVisible()) {
+        if (m_lastBlameRect.isNull() || !m_lastBlameRect.contains(event->pos())) {
+            m_blameTooltip->hide();
+        }
+    }
+
     if (!m_buffer || !m_mouseSelecting || !(event->buttons() & Qt::LeftButton)) {
         QAbstractScrollArea::mouseMoveEvent(event);
         return;
@@ -1519,6 +1585,12 @@ void CustomCodeEditor::focusOutEvent(QFocusEvent* event)
 {
     QAbstractScrollArea::focusOutEvent(event);
     viewport()->update();
+}
+
+void CustomCodeEditor::leaveEvent(QEvent* event)
+{
+    m_blameTooltip->hide();
+    QAbstractScrollArea::leaveEvent(event);
 }
 
 void CustomCodeEditor::hideEvent(QHideEvent* event)
@@ -2072,6 +2144,8 @@ void CustomCodeEditor::renderVisibleLines(QPainter* painter)
 
         visualIndex += segments.size();
     }
+
+    renderInlineBlame(painter);
 }
 
 void CustomCodeEditor::renderLineNumber(QPainter* painter, qint64 lineNum, const QRectF& rect)
@@ -3551,6 +3625,88 @@ void CustomCodeEditor::renderCursor(QPainter* painter)
     const int y = static_cast<int>(visualLineIndexForLogicalLine(cursorLine) + segmentIndex) * lineHeight - scrollY;
     painter->setPen(QPen(palette().text().color(), 2));
     painter->drawLine(x, y, x, y + lineHeight);
+}
+
+void CustomCodeEditor::renderInlineBlame(QPainter* painter)
+{
+    if (!m_gitBlameEnabled || !m_buffer || m_lineIndex->lineCount() == 0) {
+        m_lastBlameRect = QRect();
+        return;
+    }
+
+    const qint64 cursorLine = lineFromBytePos(m_cursorBytePos);
+    if (cursorLine < 0 || cursorLine >= (qint64)m_blameData.size()) {
+        m_lastBlameRect = QRect();
+        return;
+    }
+
+    const BlameLineInfo& info = m_blameData.at(static_cast<int>(cursorLine));
+    if (info.authorName.isEmpty()) {
+        m_lastBlameRect = QRect();
+        return;
+    }
+
+    const auto& layout = cachedLineLayout(cursorLine);
+    const auto& segments = layout.segments;
+
+    int segmentIndex = segments.size() - 1;
+    const int lineHeight = qRound(m_fontMetrics.height());
+    const int scrollY = verticalScrollBar()->value();
+    const int scrollX = horizontalScrollBar()->value();
+
+    const int xEndOfText = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(cursorLine, segments[segmentIndex].startColumn, segments[segmentIndex].length)) - (m_wordWrapEnabled ? 0 : scrollX);
+    const int y = static_cast<int>(visualLineIndexForLogicalLine(cursorLine) + segmentIndex) * lineHeight - scrollY;
+
+    if (y < 0 || y > viewport()->height()) {
+        m_lastBlameRect = QRect();
+        return;
+    }
+
+    QString timeStr;
+    if (info.isUncommitted) {
+        timeStr = tr("Uncommitted changes");
+    } else {
+        qint64 secs = info.commitDate.secsTo(QDateTime::currentDateTime());
+        if (secs < 86400) timeStr = tr("today");
+        else if (secs < 86400 * 7) timeStr = tr("%1 days ago").arg(secs / 86400);
+        else if (secs < 86400 * 30) timeStr = tr("%1 weeks ago").arg(secs / (86400 * 7));
+        else if (secs < 86400 * 365) timeStr = tr("%1 months ago").arg(secs / (86400 * 30));
+        else timeStr = tr("%1 years ago").arg(secs / (86400 * 365));
+    }
+
+    QString text = info.isUncommitted ? timeStr : QString("%1, %2").arg(info.authorName).arg(timeStr);
+
+    painter->save();
+    painter->setFont(m_font);
+
+    // indent for git blame
+    const int padding = qRound(m_fontMetrics.horizontalAdvance(QLatin1Char(' '))) * m_gitBlamePadding;
+    int xStart = xEndOfText + padding;
+
+    // color for git blame
+    painter->setPen(QColor(m_gitBlameColor));
+    painter->setRenderHint(QPainter::Antialiasing);
+    const qreal iconSize = m_fontMetrics.ascent() * 0.8;
+    const qreal iconY = y + (lineHeight - iconSize) / 2.0;
+
+    painter->drawEllipse(QRectF(xStart, iconY + iconSize * 0.6, iconSize * 0.3, iconSize * 0.3));
+    painter->drawLine(QLineF(xStart + iconSize * 0.15, iconY + iconSize * 0.2, xStart + iconSize * 0.15, iconY + iconSize * 0.6));
+    painter->drawLine(QLineF(xStart + iconSize * 0.15, iconY + iconSize * 0.4, xStart + iconSize * 0.4, iconY + iconSize * 0.2));
+    painter->drawEllipse(QRectF(xStart + iconSize * 0.3, iconY + iconSize * 0.1, iconSize * 0.3, iconSize * 0.3));
+
+    xStart += qRound(iconSize * 0.8);
+
+    const int textWidth = painter->fontMetrics().horizontalAdvance(text);
+    const QRect textRect(xStart, y, textWidth, lineHeight);
+
+    if (xStart + textWidth < viewport()->width()) {
+        painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
+        m_lastBlameRect = QRect(xEndOfText + padding, y, (xStart + textWidth) - (xEndOfText + padding), lineHeight);
+    } else {
+        m_lastBlameRect = QRect();
+    }
+
+    painter->restore();
 }
 
 void CustomCodeEditor::renderSelection(QPainter* painter)

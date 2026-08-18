@@ -154,6 +154,8 @@ qt_add_executable(${PROJECT_NAME}
     # Git
     core/git/gitmanager.cpp
     core/git/gitmanager.h
+    core/git/gitblameworker.cpp
+    core/git/gitblameworker.h
 
     # UI
     ui/FilesTabWidget/filestabwidget.cpp

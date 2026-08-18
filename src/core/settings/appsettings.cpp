@@ -37,6 +37,9 @@ QString AppSettings::keyRadare2AnalysisLevel() { return "radare2/analysisLevel";
 QString AppSettings::keyAsmSyntax() { return "disasm/asmSyntax"; }
 QString AppSettings::keyRadare2PreCommands() { return "radare2/preCommands"; }
 QString AppSettings::keyExcludedPatterns() { return "filetree/excludedPatterns"; }
+QString AppSettings::keyGitBlameEnabled() { return "editor/gitBlameEnabled"; }
+QString AppSettings::keyGitBlameColor() { return "editor/gitBlameColor"; }
+QString AppSettings::keyGitBlamePadding() { return "editor/gitBlamePadding"; }
 
 AppSettings::DisasmBackend AppSettings::disasmBackend()
 {
@@ -136,6 +139,39 @@ void AppSettings::setExcludedPatterns(const QStringList &patterns)
     emit SettingsNotifier::instance()->excludedPatternsChanged();
 }
 
+bool AppSettings::gitBlameEnabled()
+{
+    return settings().value(keyGitBlameEnabled(), false).toBool();
+}
+
+void AppSettings::setGitBlameEnabled(bool enabled)
+{
+    settings().setValue(keyGitBlameEnabled(), enabled);
+    emit SettingsNotifier::instance()->gitBlameEnabledChanged(enabled);
+}
+
+QString AppSettings::gitBlameColor()
+{
+    return settings().value(keyGitBlameColor(), "#6D6552").toString();
+}
+
+void AppSettings::setGitBlameColor(const QString &color)
+{
+    settings().setValue(keyGitBlameColor(), color);
+    emit SettingsNotifier::instance()->gitBlameColorChanged(color);
+}
+
+int AppSettings::gitBlamePadding()
+{
+    return settings().value(keyGitBlamePadding(), 6).toInt();
+}
+
+void AppSettings::setGitBlamePadding(int padding)
+{
+    settings().setValue(keyGitBlamePadding(), padding);
+    emit SettingsNotifier::instance()->gitBlamePaddingChanged(padding);
+}
+
 SettingsNotifier *SettingsNotifier::instance()
 {
     static SettingsNotifier s;
@@ -192,6 +228,9 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
         keyAsmSyntax(),
         keyRadare2PreCommands(),
         keyExcludedPatterns(),
+        keyGitBlameEnabled(),
+        keyGitBlameColor(),
+        keyGitBlamePadding(),
     };
 
     for (const QString &k : allowed) {

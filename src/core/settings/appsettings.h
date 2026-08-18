@@ -55,6 +55,14 @@ public:
     static QStringList excludedPatterns();
     static void setExcludedPatterns(const QStringList &patterns);
 
+    // Git Blame
+    static bool gitBlameEnabled();
+    static void setGitBlameEnabled(bool enabled);
+    static QString gitBlameColor();
+    static void setGitBlameColor(const QString &color);
+    static int gitBlamePadding();
+    static void setGitBlamePadding(int padding);
+
     // Import/export settings to share with others (INI file).
     static bool exportToIni(const QString &filePath, QString *error = nullptr);
     static bool importFromIni(const QString &filePath, QString *error = nullptr);
@@ -69,6 +77,9 @@ private:
     static QString keyAsmSyntax();
     static QString keyRadare2PreCommands();
     static QString keyExcludedPatterns();
+    static QString keyGitBlameEnabled();
+    static QString keyGitBlameColor();
+    static QString keyGitBlamePadding();
 };
 
 class SettingsNotifier : public QObject
@@ -78,6 +89,9 @@ public:
     static SettingsNotifier *instance();
 signals:
     void excludedPatternsChanged();
+    void gitBlameEnabledChanged(bool enabled);
+    void gitBlameColorChanged(const QString &color);
+    void gitBlamePaddingChanged(int padding);
 private:
     explicit SettingsNotifier(QObject *parent = nullptr) : QObject(parent) {}
 };

@@ -3,8 +3,10 @@
 
 #include "libs/CodeEditor/include/widgets/CustomCodeEditor.h"
 #include "core/modules/TabBase.h"
+#include "core/git/gitblameworker.h"
 #include <QShortcut>
 #include <QWidget>
+#include <QThread>
 
 class CodeEditorTab : public TabBase
 {
@@ -15,6 +17,10 @@ private:
      * @brief Виджет редактора кода
     */
     CustomCodeEditor* m_codeEditorWidget;
+
+    QThread* m_blameThread = nullptr;
+    GitBlameWorker* m_blameWorker = nullptr;
+    QString m_repoRoot;
 
     /**
      * @brief Главный виджет страницы "Binary File Detected"
@@ -68,7 +74,11 @@ public slots:
     void setWordWrapSlot(bool checked) override;
     void setTabReplaceSlot(bool checked) override;
     void setTabWidthSlot(int width) override;
+    void setGitBlameSlot(bool checked);
 
+private slots:
+    void requestBlameUpdate();
+    void onBlameFinished(const QVector<BlameLineInfo> &result);
 };
 
 #endif // CODEEDITORTAB_H
