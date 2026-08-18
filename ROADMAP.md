@@ -27,8 +27,11 @@ Create a **unified tool for system programming** that eliminates the need for sc
 - [ ] 🟢 [Git Blame: Display author and date for lines](https://github.com/munirov/cremniy/issues/256)
 - [ ] 🟢 [Improve terminal](https://github.com/munirov/cremniy/issues/100)
 - [ ] 🟢 [Unified support for adding new language syntax to code editor](https://github.com/munirov/cremniy/issues/243)
-- [ ] 🟢 [Highlight in yellow across other tools when selecting in one tool](https://github.com/munirov/cremniy/issues/244)
+- [x] 🟢 [Highlight in yellow across other tools when selecting in one tool](https://github.com/munirov/cremniy/issues/244)
 - [ ] 🟢 [Configure and customize app themes](https://github.com/munirov/cremniy/issues/246)
+
+> [!WARNING]
+> If you'd like to work on an issue, please leave a comment on it first to avoid duplicate effort.
 
 ## 🔮 Future Plans
 
