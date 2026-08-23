@@ -1,7 +1,6 @@
 #ifndef APPSETTINGS_H
 #define APPSETTINGS_H
 
-#include <QJsonObject>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -15,8 +14,8 @@ public:
     };
 
     //
-    static QJsonObject getSettingsJson();
-    static void updateSettingsJson(const QJsonObject& data);
+    static QString language();
+    static void setLanguage(const QString& locale);
 
     static DisasmBackend disasmBackend();
     static void setDisasmBackend(DisasmBackend backend);
@@ -68,8 +67,8 @@ public:
     static bool importFromIni(const QString &filePath, QString *error = nullptr);
 
 private:
-    static QString getAppSettingsPath();
     static QString keyDisasmBackend();
+    static QString keyLanguage();
     static QString keyObjdumpPath();
     static QString keyRadare2Path();
     static QString keyInsnLimitPerSection();
@@ -92,9 +91,9 @@ signals:
     void gitBlameEnabledChanged(bool enabled);
     void gitBlameColorChanged(const QString &color);
     void gitBlamePaddingChanged(int padding);
+    void disassemblerSettingsChanged();
 private:
     explicit SettingsNotifier(QObject *parent = nullptr) : QObject(parent) {}
 };
 
 #endif // APPSETTINGS_H
-

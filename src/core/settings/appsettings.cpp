@@ -1,12 +1,7 @@
 #include "appsettings.h"
 
-#include <QApplication>
 #include <QSettings>
 #include <QFileInfo>
-#include <QStandardPaths>
-
-#include "filecontext.h"
-#include "filemanager.h"
 
 static QSettings &settings()
 {
@@ -14,32 +9,29 @@ static QSettings &settings()
     return s;
 }
 
-QJsonObject AppSettings::getSettingsJson() {
-    FileContext fl(getAppSettingsPath());
-    return FileManager::loadJson(fl);
+QString AppSettings::keyLanguage() { return "application/language"; }
+QString AppSettings::keyDisasmBackend() { return "modules/disassembler/backend"; }
+QString AppSettings::keyObjdumpPath()   { return "modules/disassembler/objdumpPath"; }
+QString AppSettings::keyRadare2Path()   { return "modules/disassembler/radare2Path"; }
+QString AppSettings::keyInsnLimitPerSection() { return "modules/disassembler/insnLimitPerSection"; }
+QString AppSettings::keyRadare2AnalysisLevel() { return "modules/disassembler/radare2/analysisLevel"; }
+QString AppSettings::keyAsmSyntax() { return "modules/disassembler/asmSyntax"; }
+QString AppSettings::keyRadare2PreCommands() { return "modules/disassembler/radare2/preCommands"; }
+QString AppSettings::keyExcludedPatterns() { return "workspace/files/excludedPatterns"; }
+QString AppSettings::keyGitBlameEnabled() { return "modules/codeEditor/gitBlameEnabled"; }
+QString AppSettings::keyGitBlameColor() { return "modules/codeEditor/gitBlameColor"; }
+QString AppSettings::keyGitBlamePadding() { return "modules/codeEditor/gitBlamePadding"; }
+
+QString AppSettings::language()
+{
+    const QString stored = settings().value(keyLanguage()).toString().trimmed();
+    return stored.isEmpty() ? QStringLiteral("en") : stored;
 }
 
-void AppSettings::updateSettingsJson(const QJsonObject &data) {
-    FileContext fl(getAppSettingsPath());
-    FileManager::saveJson(fl, data);
+void AppSettings::setLanguage(const QString& locale)
+{
+    settings().setValue(keyLanguage(), locale.trimmed());
 }
-
-QString AppSettings::getAppSettingsPath() {
-    return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
-           + "/settings.json";
-}
-
-QString AppSettings::keyDisasmBackend() { return "disasm/backend"; }
-QString AppSettings::keyObjdumpPath()   { return "tools/objdumpPath"; }
-QString AppSettings::keyRadare2Path()   { return "tools/radare2Path"; }
-QString AppSettings::keyInsnLimitPerSection() { return "disasm/insnLimitPerSection"; }
-QString AppSettings::keyRadare2AnalysisLevel() { return "radare2/analysisLevel"; }
-QString AppSettings::keyAsmSyntax() { return "disasm/asmSyntax"; }
-QString AppSettings::keyRadare2PreCommands() { return "radare2/preCommands"; }
-QString AppSettings::keyExcludedPatterns() { return "filetree/excludedPatterns"; }
-QString AppSettings::keyGitBlameEnabled() { return "editor/gitBlameEnabled"; }
-QString AppSettings::keyGitBlameColor() { return "editor/gitBlameColor"; }
-QString AppSettings::keyGitBlamePadding() { return "editor/gitBlamePadding"; }
 
 AppSettings::DisasmBackend AppSettings::disasmBackend()
 {
@@ -178,13 +170,6 @@ SettingsNotifier *SettingsNotifier::instance()
     return &s;
 }
 
-static void copyKeys(QSettings &dst, QSettings &src)
-{
-    const QStringList keys = src.allKeys();
-    for (const QString &k : keys)
-        dst.setValue(k, src.value(k));
-}
-
 bool AppSettings::exportToIni(const QString &filePath, QString *error)
 {
     const QFileInfo fi(filePath);
@@ -195,7 +180,16 @@ bool AppSettings::exportToIni(const QString &filePath, QString *error)
 
     QSettings out(fi.filePath(), QSettings::IniFormat);
     out.clear();
-    copyKeys(out, settings());
+    const QStringList allowed = {
+        keyLanguage(), keyDisasmBackend(), keyObjdumpPath(), keyRadare2Path(),
+        keyInsnLimitPerSection(), keyRadare2AnalysisLevel(), keyAsmSyntax(),
+        keyRadare2PreCommands(), keyExcludedPatterns(), keyGitBlameEnabled(),
+        keyGitBlameColor(), keyGitBlamePadding(),
+    };
+    for (const QString& key : allowed) {
+        if (settings().contains(key))
+            out.setValue(key, settings().value(key));
+    }
     out.sync();
     if (out.status() != QSettings::NoError) {
         if (error) *error = QObject::tr("Failed to write INI file");
@@ -220,6 +214,7 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
 
     // Only import known keys (so random settings won't pollute).
     const QStringList allowed = {
+        keyLanguage(),
         keyDisasmBackend(),
         keyObjdumpPath(),
         keyRadare2Path(),
@@ -233,16 +228,38 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
         keyGitBlamePadding(),
     };
 
+    bool disassemblerChanged = false;
+    bool excludedPatternsChanged = false;
+    bool gitBlameEnabledChanged = false;
+    bool gitBlameColorChanged = false;
+    bool gitBlamePaddingChanged = false;
     for (const QString &k : allowed) {
         if (in.contains(k))
             settings().setValue(k, in.value(k));
+        if (in.contains(k) && (k == keyDisasmBackend() || k == keyObjdumpPath()
+            || k == keyRadare2Path() || k == keyInsnLimitPerSection()
+            || k == keyRadare2AnalysisLevel() || k == keyAsmSyntax()
+            || k == keyRadare2PreCommands()))
+            disassemblerChanged = true;
+        excludedPatternsChanged = excludedPatternsChanged || (in.contains(k) && k == keyExcludedPatterns());
+        gitBlameEnabledChanged = gitBlameEnabledChanged || (in.contains(k) && k == keyGitBlameEnabled());
+        gitBlameColorChanged = gitBlameColorChanged || (in.contains(k) && k == keyGitBlameColor());
+        gitBlamePaddingChanged = gitBlamePaddingChanged || (in.contains(k) && k == keyGitBlamePadding());
     }
     settings().sync();
     if (settings().status() != QSettings::NoError) {
         if (error) *error = QObject::tr("Failed to apply settings");
         return false;
     }
-    if (in.contains(keyExcludedPatterns()))
+    if (excludedPatternsChanged)
         emit SettingsNotifier::instance()->excludedPatternsChanged();
+    if (gitBlameEnabledChanged)
+        emit SettingsNotifier::instance()->gitBlameEnabledChanged(gitBlameEnabled());
+    if (gitBlameColorChanged)
+        emit SettingsNotifier::instance()->gitBlameColorChanged(gitBlameColor());
+    if (gitBlamePaddingChanged)
+        emit SettingsNotifier::instance()->gitBlamePaddingChanged(gitBlamePadding());
+    if (disassemblerChanged)
+        emit SettingsNotifier::instance()->disassemblerSettingsChanged();
     return true;
 }

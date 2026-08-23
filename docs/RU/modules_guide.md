@@ -15,6 +15,7 @@
 	- [2.3. Window](#23-window)
 	- [2.4. Reference](#24-reference)
 - [3. API](#unknown)
+- [4. Настройки модулей](#4-настройки-модулей)
 
 ## 1. Описание модулей
 
@@ -144,8 +145,34 @@ static bool registered = []() {
 
 ``` cpp
 static bool registered = []() {
-    ModuleManager::instance().registerReference("ExampleName", "ExampleGroup", []() { return new ExampleReference(); });
+ModuleManager::instance().registerReference("ExampleName", "ExampleGroup", []() { return new ExampleReference(); });
     return true;
 }();
 ```
 
+## 4. Настройки модулей
+
+Если модулю нужны сохраняемые настройки, он может зарегистрировать собственную страницу через `SettingsRegistry`. Центральный диалог настроек автоматически добавит её в категорию «Модули». Модули без настроек страницу не регистрируют.
+
+Страница должна наследоваться от `SettingsPage` и реализовать три метода:
+
+- `load()` — загрузить сохранённые значения в элементы интерфейса;
+- `validate()` — проверить ввод, не изменяя настройки;
+- `apply()` — сохранить значения только после нажатия пользователем `OK`.
+
+Пример регистрации:
+
+```cpp
+SettingsRegistry::instance().registerModulePage("example", {
+    "modules.example",
+    "modules",
+    []() { return QObject::tr("Modules"); },
+    300,
+    []() { return QCoreApplication::translate("ExampleModule", "Example"); },
+    100,
+    {},
+    [](QWidget* parent) { return new ExampleSettingsPage(parent); }
+});
+```
+
+`pageId` и идентификатор владельца должны быть постоянными техническими идентификаторами и не должны зависеть от перевода. Все изменения следует сохранять в `apply()`: это гарантирует, что `Cancel` не изменит настройки пользователя.
