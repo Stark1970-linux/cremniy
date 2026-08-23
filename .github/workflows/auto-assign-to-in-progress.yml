@@ -1,4 +1,4 @@
-name: Move assigned issues to In Progress
+name: Auto Move to In Progress
 
 on:
   issues:
@@ -8,9 +8,10 @@ jobs:
   move-to-in-progress:
     runs-on: ubuntu-latest
     steps:
-      - name: Move issue to In Progress
-        uses: alex-page/github-project-automation-plus@v0.8.3
+      - name: Move issue to In Progress column
+        uses: actions/add-to-project@v1
         with:
-          project: "ROADMAP"
-          column: "In Progress"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          project-url: https://github.com/orgs/munirov/projects/2
+          status-field: "Status"
+          target-field-value: "In Progress"
+          github-token: ${{ secrets.GTHB_PROJECTS_AUTO }}
