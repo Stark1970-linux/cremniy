@@ -58,6 +58,23 @@
 - 🐛 **Отладчик** — пошаговое выполнение, просмотр регистров и памяти
 - 🧠 **Визуализация памяти** — наглядные карты расположения и выделения памяти
 
+## Участие в разработке 👋
+
+Вклад в проект **приветствуется**.
+
+Будь то исправление ошибок, новая функциональность или улучшение документации — открывайте issue или отправляйте pull request.
+
+Все задачи находятся в [**GitHub Projects**](https://github.com/orgs/munirov/projects/2/views/1).
+
+Все участники указываются в [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) и упоминаются в видео на [YouTube-канале](https://www.youtube.com/@igmunv).
+
+Подробнее — в [CONTRIBUTING.md](CONTRIBUTING_ru.md).
+
+> [!WARNING]
+> Если вы хотите взять задачу в работу, пожалуйста, оставьте комментарий в соответствующем [Issue](https://github.com/munirov/cremniy/issues). Это необходимо, чтобы избежать дублирования работы.
+>
+> Также после отправки Pull Request'а, укажите соответствующий [Issue](https://github.com/munirov/cremniy/issues) в описании к Pull Request'у с помощью строки `Closes #НОМЕР_ISSUE`
+
 ## Сборка 🛠️
 
 ### Зависимости
@@ -148,19 +165,6 @@ cmake --build .
 cmake ..\src -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
-
-## Участие в разработке 👋
-
-Вклад в проект **приветствуется**.
-
-Будь то исправление ошибок, новая функциональность или улучшение документации — открывайте issue или отправляйте pull request.
-
-Текущие задачи [находятся в ROADMAP](https://github.com/munirov/cremniy/blob/main/ROADMAP_ru.md)
-
-Все участники указываются в [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) и упоминаются в видео на [YouTube-канале](https://www.youtube.com/@igmunv).
-
-Подробнее — в [CONTRIBUTING.md](CONTRIBUTING_ru.md).
-
 
 ## Лицензия 📖
 
