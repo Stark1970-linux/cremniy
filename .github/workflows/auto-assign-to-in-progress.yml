@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Move issue to In Progress column
-        uses: actions/add-to-project@v1
+        uses: actions/add-to-project@v2
         with:
           project-url: https://github.com/orgs/munirov/projects/2
           status-field: "Status"
