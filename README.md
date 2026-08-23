@@ -58,6 +58,23 @@ You constantly **switch** between different windows, and the tools are **not lin
 - 🐛 **Debugger** — step through execution, inspect registers and memory
 - 🧠 **Memory visualization** — visual maps of memory layout and allocation
 
+## Contributing 👋
+
+Contributions are **welcome and encouraged**.
+
+Whether it's a bug fix, a new feature, or an improvement to documentation — feel free to open an issue or submit a pull request.
+
+All tasks can be found in [**GitHub Projects**](https://github.com/orgs/munirov/projects/2/views/1).
+
+All contributors are credited in [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) and mentioned in videos on the [YouTube channel](https://www.youtube.com/@igmunv).
+
+For guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+> [!WARNING]
+> If you would like to take on a task, please leave a comment on the corresponding [Issue](https://github.com/munirov/cremniy/issues). This helps prevent duplicate work.
+>
+> Additionally, once you submit a Pull Request, reference the corresponding [Issue](https://github.com/munirov/cremniy/issues) in the PR description using `Closes #ISSUE_NUMBER`.
+
 ## Build 🛠️
 
 ### Prerequisites
@@ -148,18 +165,6 @@ cmake --build .
 cmake ..\src -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
-
-## Contributing 👋
-
-Contributions are **welcome and encouraged**.
-
-Whether it's a bug fix, a new feature, or an improvement to documentation — feel free to open an issue or submit a pull request.
-
-Current tasks are [in the ROADMAP](https://github.com/munirov/cremniy/blob/main/ROADMAP.md)
-
-All contributors are credited in [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) and mentioned in videos on the [YouTube channel](https://www.youtube.com/@igmunv).
-
-For guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License 📖
 
