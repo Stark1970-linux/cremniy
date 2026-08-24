@@ -41,7 +41,7 @@ You constantly **switch** between different windows, and the tools are **not lin
 - 🔗 All tools are connected
 - 💻 Unified workflow
 
-![out](https://github.com/user-attachments/assets/f5e9c520-fb31-45cc-ab11-17eff66d7069)
+<img src="docs/features.gif" alt="Features" width="1280">
 
 ## Features ✨
 
