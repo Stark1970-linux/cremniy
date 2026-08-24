@@ -39,6 +39,8 @@ struct ProjectInfo {
 
 class ProjectInfoManager {
 
+    // используется для получения и сохранения информации о проекте в файле project.cremniy
+
     private:
         static inline const QString m_projectInfoFileName = "project.cremniy";
         static QString projectInfoFilePath(const QString &projectPath);

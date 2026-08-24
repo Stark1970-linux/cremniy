@@ -5,9 +5,11 @@
 #include <qpushbutton.h>
 
 
-ConfigureBuild::ConfigureBuild() {
+ConfigureBuild::ConfigureBuild(ProjectInfo &projInfo, QWidget *parrent)
+    : QDialog(parrent),
+      m_projectInfo(&projInfo)
+{
 
-    setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("Configure Build"));
 
     auto* root = new QVBoxLayout(this);
@@ -27,7 +29,9 @@ ConfigureBuild::ConfigureBuild() {
 
     m_buildCommandLabel = new QLabel(tr("Build Command"));
     m_buildCommandEdit  = new QLineEdit();
-    m_buildCommandEdit->setPlaceholderText("make");
+
+    if (m_projectInfo->buildCommand.isEmpty()) m_buildCommandEdit->setPlaceholderText("make");
+    else m_buildCommandEdit->setText(m_projectInfo->buildCommand);
 
     grid->addWidget(m_buildCommandLabel, 0, 0);
     grid->addWidget(m_buildCommandEdit,  0, 1);
@@ -59,6 +63,7 @@ ConfigureBuild::ConfigureBuild() {
 
 
 void ConfigureBuild::saveConfigureClicked(){
+    m_projectInfo->buildCommand = m_buildCommandEdit->text().trimmed();
     accept();
 }
 

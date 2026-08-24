@@ -23,10 +23,17 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     MenuBarBuilder menuBarBuilder(menu, this);
     menu->setNativeMenuBar(false);
 
-    // - - Configure Build
+    // - - Get Project Info - -
+    if (!ProjectInfoManager::loadProjectInfo(ProjectPath, m_projectInfo)){
+        QString dirName = QDir(ProjectPath).dirName();
+        m_projectInfo.name = dirName;
+        m_projectInfo.path = ProjectPath;
+        ProjectInfoManager::saveProjectInfo(m_projectInfo);
+    }
 
-    ConfigureBuild *confBuildDialog = new ConfigureBuild();
-    confBuildDialog->show();
+
+    // - - Configure Build - -
+    configurateBuild();
 
     // - - Widgets - -
     m_statusBar = statusBar();
@@ -149,6 +156,35 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 }
 
 IDEWindow::~IDEWindow() = default;
+
+void IDEWindow::configurateBuild(){
+
+    if (m_projectInfo.buildCommand.trimmed().isEmpty()){
+        openBuildConfigurate();
+    }
+
+}
+
+
+void IDEWindow::openBuildConfigurate(){
+
+    ConfigureBuild confBuildDialog(m_projectInfo, this);
+    if (confBuildDialog.exec() == QDialog::Accepted) {
+        ProjectInfoManager::saveProjectInfo(m_projectInfo);
+    }
+
+}
+
+
+void IDEWindow::on_Build(){
+
+}
+
+
+void IDEWindow::on_openBuildConfigurate(){
+    openBuildConfigurate();
+}
+
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     if (checked && !m_terminal) {
