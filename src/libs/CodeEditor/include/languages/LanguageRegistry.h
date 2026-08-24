@@ -59,27 +59,43 @@ public:
 
 private:
     LanguageRegistry() = default;
-
     QHash<QString, LanguageDefinition> m_byId;
     QHash<QString, QString> m_idByExtension;
     QHash<QString, QString> m_idByExactFileName;
 };
 
 /// Регистрирует функцию, которая будет вызвана один раз при старте программы
-/// (до main()) и должна вызвать LanguageRegistry::instance().registerLanguage(...).
+/// и должна вызвать LanguageRegistry::instance().registerLanguage(...).
 ///
 /// Пример использования — в конце файла src/languages/PythonLanguage.cpp:
 ///
 ///     CREMNIY_REGISTER_LANGUAGE(registerPythonLanguage)
 ///
-/// где registerPythonLanguage — статическая функция void(), объявленная
-/// в этом же файле. См. docs/adding_a_language.md для полного примера.
+/// где registerPythonLanguage — функция void(), объявленная в этом же файле.
+/// См. docs/adding_a_language.md для полного примера.
+///
+/// Реализация НЕ полагается только на порядок статической инициализации:
+/// поскольку CodeEditor собирается как статическая библиотека, линкер волен
+/// отбросить .o-файл языка целиком, если на него нет ни одной явной ссылки
+/// (побочный эффект конструктора статического объекта для линкера "ссылкой"
+/// не считается). Поэтому макрос дополнительно объявляет функцию с внешним
+/// связыванием (`<имя>_forceLink`), на которую src/languages/LanguageRegistration.cpp
+/// ссылается явно, а main() вызывает registerAllLanguages() один раз при
+/// старте программы, до создания первого CustomCodeEditor — это гарантирует,
+/// что object file языка попадёт в финальный бинарник независимо от
+/// поведения линкера.
+///
+/// При добавлении нового языка: помимо CREMNIY_REGISTER_LANGUAGE в новом
+/// .cpp-файле нужно добавить одну строку (extern-объявление + вызов) в
+/// src/languages/LanguageRegistration.cpp — см. комментарий в том файле
+/// и docs/adding_a_language.md.
 #define CREMNIY_REGISTER_LANGUAGE(registerFn)                                 \
     namespace {                                                              \
     struct RegisterFn##registerFn##_ {                                       \
         RegisterFn##registerFn##_() { registerFn(); }                       \
     };                                                                       \
     static RegisterFn##registerFn##_ registerFn##_instance_;                 \
-    }
+    }                                                                        \
+    void registerFn##_forceLink() { registerFn(); }
 
 #endif // LANGUAGEREGISTRY_H

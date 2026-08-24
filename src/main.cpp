@@ -14,10 +14,16 @@
 #include "app/WelcomeWindow/WelcomeForm/welcome_form.h"
 #include "core/locale/LanguageManager.h"
 #include "core/update/updatechecker.h"
+#include "libs/CodeEditor/include/languages/LanguageRegistration.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    // Force-links and registers every supported syntax-highlighting
+    // language. Must run before any CustomCodeEditor is constructed. See
+    // LanguageRegistration.h for why this explicit call is necessary.
+    registerAllLanguages();
 
     QCoreApplication::setOrganizationName("Munirov");
     QCoreApplication::setApplicationName("Cremniy");

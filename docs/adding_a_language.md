@@ -10,9 +10,10 @@ English • [Русский](adding_a_language_ru.md)
 
 Syntax highlighting for every language in the editor goes through a single
 interface: `LanguageRegistry`. Adding a new language means creating **one
-new `.cpp` file** and adding **one line** to `CMakeLists.txt`. You do not
-need to touch `CustomCodeEditor.cpp`, `EditorLanguageSupport`, or any other
-existing file.
+new `.cpp` file**, adding **one line** to `CMakeLists.txt`, and adding **one
+line** to `LanguageRegistration.cpp` (a linker-visibility requirement,
+explained below). You do not need to touch `CustomCodeEditor.cpp`,
+`EditorLanguageSupport`, or any other existing file.
 
 This document walks through the whole process using a fictional "Zig-like"
 language as an example.
@@ -140,9 +141,45 @@ Open `src/libs/CodeEditor/CMakeLists.txt` and add your new file to the
     src/languages/ZigLanguage.cpp   # <- add this line
 ```
 
-That's it. No other file needs to change.
+### 4. Add one line to LanguageRegistration.cpp
 
-### 4. Build and verify
+Because `CodeEditor` is built as a **static library**, a linker is free to
+drop an object file entirely if nothing in the final binary references any
+symbol from it — and a language's `.cpp` file, on its own, exposes nothing
+that's called by name anywhere else. `CREMNIY_REGISTER_LANGUAGE` generates
+an externally-linked `<registerFn>_forceLink()` thunk specifically to give
+the linker a reason to keep the file; `LanguageRegistration.cpp` is the one
+place that calls every language's thunk explicitly, and `main()` calls
+`registerAllLanguages()` once at startup.
+
+Open `src/libs/CodeEditor/src/languages/LanguageRegistration.cpp` and add
+two lines: an `extern` declaration alongside the others, and a call inside
+`registerAllLanguages()`:
+
+```cpp
+extern void registerYamlLanguage_forceLink();
+extern void registerZigLanguage_forceLink();   // <- add this line
+
+void registerAllLanguages()
+{
+    // ...
+    registerYamlLanguage_forceLink();
+    registerZigLanguage_forceLink();   // <- add this line
+}
+```
+
+The function name is always `<the name you passed to
+CREMNIY_REGISTER_LANGUAGE>_forceLink` — for `registerZigLanguage`, that's
+`registerZigLanguage_forceLink`.
+
+**If you skip this step:** the project still compiles and links
+successfully, but on some linkers/platforms your language simply won't
+appear at runtime — no error, no warning, just silently no highlighting.
+This is exactly the failure mode that motivated adding this step; see the
+comments in `LanguageRegistry.h` and `LanguageRegistration.cpp` for the
+full explanation if you're curious.
+
+### 5. Build and verify
 
 After building, open (or create) a file with your new extension. You
 should see:
@@ -177,6 +214,10 @@ existing `.xml` resource files.
 
 - **Forgetting the `CMakeLists.txt` line.** The file simply won't be
   compiled and the language won't appear — no error, no warning.
+- **Forgetting the `LanguageRegistration.cpp` entry.** The project still
+  builds fine, but the language silently doesn't register at runtime on
+  linkers that drop unreferenced object files from a static library — see
+  step 4 above.
 - **Duplicate `id`.** Re-registering an existing id silently overwrites the
   previous definition. Check `LanguageRegistry::allLanguages()` (or just
   grep `src/languages/`) before picking an id.
@@ -193,6 +234,7 @@ existing `.xml` resource files.
 |------------------------------------------|-------|
 | Interface definition                     | `src/libs/CodeEditor/include/languages/LanguageDefinition.h` |
 | Registry + registration macro            | `src/libs/CodeEditor/include/languages/LanguageRegistry.h`, `src/languages/LanguageRegistry.cpp` |
+| Force-link hook (add one line here too)  | `src/libs/CodeEditor/src/languages/LanguageRegistration.cpp` |
 | Rule-building helpers                    | `src/libs/CodeEditor/include/languages/LanguageRuleHelpers.h` |
 | Existing per-language files (examples)   | `src/libs/CodeEditor/src/languages/*.cpp` |
 | Generic rule-based highlighter           | `src/libs/CodeEditor/src/widgets/highlighters/RuleBasedHighlighter.*` |
