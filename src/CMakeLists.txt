@@ -1,6 +1,28 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(cremniy VERSION 0.4.0 LANGUAGES CXX)
+find_package(Git QUIET)
+
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    if(GIT_TAG MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
+        set(PROJECT_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+    endif()
+endif()
+
+if(NOT PROJECT_VERSION)
+    set(PROJECT_VERSION "0.0.0")
+endif()
+
+project(cremniy VERSION ${PROJECT_VERSION} LANGUAGES CXX)
+
+message(STATUS "Cremniy version: ${PROJECT_VERSION}")
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
