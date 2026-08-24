@@ -24,6 +24,7 @@ add_library(CodeEditor STATIC
     include/widgets/BlameLineInfo.h
     include/languages/LanguageDefinition.h
     include/languages/LanguageRegistry.h
+    include/languages/LanguageRegistration.h
     include/languages/LanguageRuleHelpers.h
     src/core/LineCache.cpp
     src/core/LineIndex.cpp
@@ -45,6 +46,7 @@ add_library(CodeEditor STATIC
     src/widgets/highlighters/XmlLanguageHighlighter.h
     src/widgets/highlighters/XmlLanguageHighlighter.cpp
     src/languages/LanguageRegistry.cpp
+    src/languages/LanguageRegistration.cpp
     src/languages/AsmLanguage.cpp
     src/languages/CBraceFamilyLanguages.cpp
     src/languages/CppLanguage.cpp
