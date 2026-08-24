@@ -4,6 +4,7 @@
 #include "libs/CodeEditor/include/languages/LanguageRegistry.h"
 #include "core/modules/ModuleManager.h"
 #include "core/settings/appsettings.h"
+#include "codeeditorsettings.h"
 #include "core/git/gitmanager.h"
 
 #include <QBoxLayout>
@@ -110,16 +111,22 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
 
     m_blameThread->start();
 
-    m_codeEditorWidget->setGitBlameEnabled(AppSettings::gitBlameEnabled());
-    m_codeEditorWidget->setGitBlameColor(AppSettings::gitBlameColor());
-    m_codeEditorWidget->setGitBlamePadding(AppSettings::gitBlamePadding());
+    m_codeEditorWidget->setGitBlameEnabled(CodeEditorSettings::gitBlameEnabled());
+    m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
+    m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
 
-    connect(SettingsNotifier::instance(), &SettingsNotifier::gitBlameEnabledChanged,
-            this, &CodeEditorTab::setGitBlameSlot);
-    connect(SettingsNotifier::instance(), &SettingsNotifier::gitBlameColorChanged,
-            m_codeEditorWidget, &CustomCodeEditor::setGitBlameColor);
-    connect(SettingsNotifier::instance(), &SettingsNotifier::gitBlamePaddingChanged,
-            m_codeEditorWidget, &CustomCodeEditor::setGitBlamePadding);
+    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
+            this, [this](const QString &key) {
+        // Модуль сам знает свои ключи и сам решает, что изменилось;
+        // ядро лишь сообщает «такой-то ключ поменялся».
+        if (key == CodeEditorSettings::keyGitBlameEnabled()) {
+            setGitBlameSlot(CodeEditorSettings::gitBlameEnabled());
+        } else if (key == CodeEditorSettings::keyGitBlameColor()) {
+            m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
+        } else if (key == CodeEditorSettings::keyGitBlamePadding()) {
+            m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
+        }
+    });
 
     connect(GitNotifier::instance(), &GitNotifier::repositoryChanged,
             this, &CodeEditorTab::requestBlameUpdate);
@@ -241,7 +248,7 @@ void CodeEditorTab::setTabData()
             } else {
                 m_codeEditorWidget->setWordWrapEnabled(true);
                 m_codeEditorWidget->setFileExt(CustomCodeEditor::syntaxKeyForPath(m_fileContext->filePath()));
-                m_codeEditorWidget->setGitBlameEnabled(AppSettings::gitBlameEnabled());
+                m_codeEditorWidget->setGitBlameEnabled(CodeEditorSettings::gitBlameEnabled());
             }
         }
         m_codeEditorWidget->setBuffer(m_dataBuffer);

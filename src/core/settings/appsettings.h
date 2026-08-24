@@ -4,81 +4,43 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QVariant>
 
+// Центральное хранилище настроек.
+//
+// Ядро НЕ знает о настройках конкретных модулей. Здесь живут только
+// настройки самого приложения (язык, исключённые паттерны) и обобщённый
+// доступ «ключ -> значение». Какие ключи существуют, какие у них типы и
+// умолчания — объявляет каждый модуль сам через SettingsRegistry
+// (см. SettingsPageDescriptor::moduleOptions). Экспорт/импорт INI обходит
+// все модульные ключи, зарегистрированные в фабрике настроек, поэтому при
+// добавлении нового модуля core/settings менять не нужно.
 class AppSettings
 {
 public:
-    enum class DisasmBackend {
-        Objdump = 0,
-        Radare2 = 1,
-    };
-
-    //
+    // ── Настройки самого приложения ───────────────────────────────────────
     static QString language();
     static void setLanguage(const QString& locale);
-
-    static DisasmBackend disasmBackend();
-    static void setDisasmBackend(DisasmBackend backend);
-
-    static QString objdumpPath();
-    static void setObjdumpPath(const QString &path);
-
-    static QString radare2Path();
-    static void setRadare2Path(const QString &path);
-
-    enum class Radare2AnalysisLevel {
-        None = 0,
-        Aa   = 1,
-        Aaa  = 2,
-    };
-
-    enum class AsmSyntax {
-        Intel = 0,
-        Att   = 1,
-    };
-
-    static int disasmInsnLimitPerSection();
-    static void setDisasmInsnLimitPerSection(int limit);
-
-    static Radare2AnalysisLevel radare2AnalysisLevel();
-    static void setRadare2AnalysisLevel(Radare2AnalysisLevel lvl);
-
-    static AsmSyntax asmSyntax();
-    static void setAsmSyntax(AsmSyntax syntax);
-
-    // Optional commands executed in r2 before JSON queries (semicolon-separated).
-    static QString radare2PreCommands();
-    static void setRadare2PreCommands(const QString &cmds);
 
     // File-tree exclusion patterns ("node_modules", "*.log", ".git").
     static QStringList excludedPatterns();
     static void setExcludedPatterns(const QStringList &patterns);
 
-    // Git Blame
-    static bool gitBlameEnabled();
-    static void setGitBlameEnabled(bool enabled);
-    static QString gitBlameColor();
-    static void setGitBlameColor(const QString &color);
-    static int gitBlamePadding();
-    static void setGitBlamePadding(int padding);
+    // ── Обобщённое хранилище ──────────────────────────────────────────────
+    // Модули читают и пишут СВОИ ключи через эти методы. Ключи владеются
+    // модулем и объявляются фабрике настроек (SettingsRegistry::moduleOptions),
+    // поэтому ядро никогда не должно хардкодить "modules/...".
+    static QVariant value(const QString &key, const QVariant &defaultValue = QVariant());
+    static void setValue(const QString &key, const QVariant &value);
+    static bool contains(const QString &key);
 
     // Import/export settings to share with others (INI file).
     static bool exportToIni(const QString &filePath, QString *error = nullptr);
     static bool importFromIni(const QString &filePath, QString *error = nullptr);
 
 private:
-    static QString keyDisasmBackend();
     static QString keyLanguage();
-    static QString keyObjdumpPath();
-    static QString keyRadare2Path();
-    static QString keyInsnLimitPerSection();
-    static QString keyRadare2AnalysisLevel();
-    static QString keyAsmSyntax();
-    static QString keyRadare2PreCommands();
     static QString keyExcludedPatterns();
-    static QString keyGitBlameEnabled();
-    static QString keyGitBlameColor();
-    static QString keyGitBlamePadding();
 };
 
 class SettingsNotifier : public QObject
@@ -88,10 +50,11 @@ public:
     static SettingsNotifier *instance();
 signals:
     void excludedPatternsChanged();
-    void gitBlameEnabledChanged(bool enabled);
-    void gitBlameColorChanged(const QString &color);
-    void gitBlamePaddingChanged(int padding);
-    void disassemblerSettingsChanged();
+    // Универсальный сигнал: изменился ключ настройки. Ядро рассылает его при
+    // импорте INI, а модули — при записи своих ключей. Подписчики сами
+    // фильтруют ключи, которые им принадлежат (сравнивая с ключами, которые
+    // модуль объявил в своей схеме настроек).
+    void settingsChanged(const QString &key);
 private:
     explicit SettingsNotifier(QObject *parent = nullptr) : QObject(parent) {}
 };

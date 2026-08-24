@@ -160,7 +160,27 @@ ModuleManager::instance().registerReference("ExampleName", "ExampleGroup", []() 
 - `validate()` — проверить ввод, не изменяя настройки;
 - `apply()` — сохранить значения только после нажатия пользователем `OK`.
 
-Пример регистрации:
+Все изменения в `apply()` сохраняются через **настройки самого модуля** — ядро (`core/settings/AppSettings`) хранит только пары «ключ → значение» и НЕ знает ни одного ключа конкретного модуля. Поэтому:
+
+- каждый модуль сам объявляет свои ключи, их типы и значения по умолчанию (обычно в файле `<Module>Settings.h/.cpp` рядом со страницей);
+- модуль сам передаёт схему своих настроек фабрике (поле `moduleOptions` в описании страницы);
+- экспорт/импорт INI и уведомления об изменении (`SettingsNotifier::settingsChanged(key)`) обходят эту схему автоматически, и при добавлении нового модуля ядро менять не нужно.
+
+Пример файла настроек модуля (`ExampleSettings.h`):
+
+```cpp
+// Ключи, умолчания и типы принадлежат модулю, а не ядру.
+namespace ExampleSettings {
+QString keyWidth() { return "modules/example/width"; }
+inline int width() { return AppSettings::value(keyWidth(), 40).toInt(); }
+inline void setWidth(int v) {
+    AppSettings::setValue(keyWidth(), v);
+    emit SettingsNotifier::instance()->settingsChanged(keyWidth());
+}
+}
+```
+
+Пример регистрации страницы со схемой настроек:
 
 ```cpp
 SettingsRegistry::instance().registerModulePage("example", {
@@ -171,8 +191,13 @@ SettingsRegistry::instance().registerModulePage("example", {
     []() { return QCoreApplication::translate("ExampleModule", "Example"); },
     100,
     {},
-    [](QWidget* parent) { return new ExampleSettingsPage(parent); }
+    [](QWidget* parent) { return new ExampleSettingsPage(parent); },
+    // Схема настроек модуля: ключи + умолчания. Новый модуль попадает в
+    // экспорт/импорт INI автоматически, без правок core/settings.
+    {
+        { ExampleSettings::keyWidth(), 40 },
+    }
 });
 ```
 
-`pageId` и идентификатор владельца должны быть постоянными техническими идентификаторами и не должны зависеть от перевода. Все изменения следует сохранять в `apply()`: это гарантирует, что `Cancel` не изменит настройки пользователя.
+`pageId` и владелец должны быть постоянными техническими идентификаторами и не должны зависеть от перевода. Все изменения следует сохранять в `apply()`: это гарантирует, что `Cancel` не изменит настройки пользователя.

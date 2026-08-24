@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include <QDebug>
+#include <QSet>
 
 SettingsRegistry& SettingsRegistry::instance()
 {
@@ -62,4 +63,20 @@ QVector<SettingsPageDescriptor> SettingsRegistry::pages() const
         }
     );
     return result;
+}
+
+QStringList SettingsRegistry::moduleOptionKeys() const
+{
+    QStringList keys;
+    QSet<QString> seen;
+    for (const SettingsPageDescriptor& page : m_pages) {
+        for (const ModuleOptionDescriptor& option : page.moduleOptions) {
+            const QString key = option.key.trimmed();
+            if (key.isEmpty() || seen.contains(key))
+                continue;
+            seen.insert(key);
+            keys.append(key);
+        }
+    }
+    return keys;
 }

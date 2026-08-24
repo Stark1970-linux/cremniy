@@ -17,7 +17,7 @@
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
-#include "core/settings/appsettings.h"
+#include "disassemblersettings.h"
 #include "core/settings/settingsregistry.h"
 
 namespace {
@@ -39,7 +39,18 @@ const bool registered = SettingsRegistry::instance().registerModulePage("disasse
     &pageTitle,
     200,
     {},
-    [](QWidget* parent) { return new DisassemblerSettingsPage(parent); }
+    [](QWidget* parent) { return new DisassemblerSettingsPage(parent); },
+    // Схема настроек этого модуля: фабрика собирает её, чтобы экспорт/
+    // импорт INI знал о модуле, не имея о нём никакой информации в ядре.
+    {
+        { DisassemblerSettings::keyBackend(), static_cast<int>(DisassemblerSettings::Backend::Objdump) },
+        { DisassemblerSettings::keyObjdumpPath(), QString() },
+        { DisassemblerSettings::keyRadare2Path(), QString() },
+        { DisassemblerSettings::keyInsnLimitPerSection(), 4000 },
+        { DisassemblerSettings::keyRadare2AnalysisLevel(), static_cast<int>(DisassemblerSettings::AnalysisLevel::None) },
+        { DisassemblerSettings::keyAsmSyntax(), static_cast<int>(DisassemblerSettings::Syntax::Intel) },
+        { DisassemblerSettings::keyRadare2PreCommands(), QString() },
+    }
 });
 
 QString resolvedExecutable(const QString& userPath, const QString& executableName)
@@ -109,12 +120,12 @@ DisassemblerSettingsPage::DisassemblerSettingsPage(QWidget* parent)
     auto* backendGroup = new QGroupBox(tr("Backend"), this);
     auto* backendForm = new QFormLayout(backendGroup);
     m_backendCombo = new QComboBox(backendGroup);
-    m_backendCombo->addItem(tr("objdump"), static_cast<int>(AppSettings::DisasmBackend::Objdump));
-    m_backendCombo->addItem(tr("radare2"), static_cast<int>(AppSettings::DisasmBackend::Radare2));
+    m_backendCombo->addItem(tr("objdump"), static_cast<int>(DisassemblerSettings::Backend::Objdump));
+    m_backendCombo->addItem(tr("radare2"), static_cast<int>(DisassemblerSettings::Backend::Radare2));
     backendForm->addRow(tr("Disassembler backend"), m_backendCombo);
     m_syntaxCombo = new QComboBox(backendGroup);
-    m_syntaxCombo->addItem(tr("Intel"), static_cast<int>(AppSettings::AsmSyntax::Intel));
-    m_syntaxCombo->addItem(tr("AT&T"), static_cast<int>(AppSettings::AsmSyntax::Att));
+    m_syntaxCombo->addItem(tr("Intel"), static_cast<int>(DisassemblerSettings::Syntax::Intel));
+    m_syntaxCombo->addItem(tr("AT&T"), static_cast<int>(DisassemblerSettings::Syntax::Att));
     backendForm->addRow(tr("Assembly syntax"), m_syntaxCombo);
     layout->addWidget(backendGroup);
 
@@ -161,9 +172,9 @@ DisassemblerSettingsPage::DisassemblerSettingsPage(QWidget* parent)
     m_r2Options = new QGroupBox(tr("radare2"), this);
     auto* r2Form = new QFormLayout(m_r2Options);
     m_r2AnalysisCombo = new QComboBox(m_r2Options);
-    m_r2AnalysisCombo->addItem(tr("None (fast)"), static_cast<int>(AppSettings::Radare2AnalysisLevel::None));
-    m_r2AnalysisCombo->addItem(tr("aa (basic)"), static_cast<int>(AppSettings::Radare2AnalysisLevel::Aa));
-    m_r2AnalysisCombo->addItem(tr("aaa (full)"), static_cast<int>(AppSettings::Radare2AnalysisLevel::Aaa));
+    m_r2AnalysisCombo->addItem(tr("None (fast)"), static_cast<int>(DisassemblerSettings::AnalysisLevel::None));
+    m_r2AnalysisCombo->addItem(tr("aa (basic)"), static_cast<int>(DisassemblerSettings::AnalysisLevel::Aa));
+    m_r2AnalysisCombo->addItem(tr("aaa (full)"), static_cast<int>(DisassemblerSettings::AnalysisLevel::Aaa));
     r2Form->addRow(tr("Analysis"), m_r2AnalysisCombo);
     m_r2PreCommands = new QPlainTextEdit(m_r2Options);
     m_r2PreCommands->setPlaceholderText(tr("Optional r2 commands before JSON queries (one per line). Example:\ne asm.syntax=intel\ne asm.bits=64"));
@@ -183,13 +194,13 @@ DisassemblerSettingsPage::DisassemblerSettingsPage(QWidget* parent)
 
 void DisassemblerSettingsPage::load()
 {
-    m_backendCombo->setCurrentIndex(m_backendCombo->findData(static_cast<int>(AppSettings::disasmBackend())));
-    m_insnLimit->setValue(AppSettings::disasmInsnLimitPerSection());
-    m_syntaxCombo->setCurrentIndex(m_syntaxCombo->findData(static_cast<int>(AppSettings::asmSyntax())));
-    m_objdumpPath->setText(AppSettings::objdumpPath());
-    m_radare2Path->setText(AppSettings::radare2Path());
-    m_r2AnalysisCombo->setCurrentIndex(m_r2AnalysisCombo->findData(static_cast<int>(AppSettings::radare2AnalysisLevel())));
-    m_r2PreCommands->setPlainText(AppSettings::radare2PreCommands().replace(';', '\n'));
+    m_backendCombo->setCurrentIndex(m_backendCombo->findData(static_cast<int>(DisassemblerSettings::backend())));
+    m_insnLimit->setValue(DisassemblerSettings::insnLimitPerSection());
+    m_syntaxCombo->setCurrentIndex(m_syntaxCombo->findData(static_cast<int>(DisassemblerSettings::asmSyntax())));
+    m_objdumpPath->setText(DisassemblerSettings::objdumpPath());
+    m_radare2Path->setText(DisassemblerSettings::radare2Path());
+    m_r2AnalysisCombo->setCurrentIndex(m_r2AnalysisCombo->findData(static_cast<int>(DisassemblerSettings::radare2AnalysisLevel())));
+    m_r2PreCommands->setPlainText(DisassemblerSettings::radare2PreCommands().replace(';', '\n'));
     updateUiState();
     updateDependencyStatus();
 }
@@ -202,19 +213,20 @@ bool DisassemblerSettingsPage::validate(QString* errorMessage) const
 
 void DisassemblerSettingsPage::apply()
 {
-    AppSettings::setDisasmBackend(static_cast<AppSettings::DisasmBackend>(m_backendCombo->currentData().toInt()));
-    AppSettings::setDisasmInsnLimitPerSection(m_insnLimit->value());
-    AppSettings::setAsmSyntax(static_cast<AppSettings::AsmSyntax>(m_syntaxCombo->currentData().toInt()));
-    AppSettings::setObjdumpPath(m_objdumpPath->text());
-    AppSettings::setRadare2Path(m_radare2Path->text());
-    AppSettings::setRadare2AnalysisLevel(static_cast<AppSettings::Radare2AnalysisLevel>(m_r2AnalysisCombo->currentData().toInt()));
-    AppSettings::setRadare2PreCommands(m_r2PreCommands->toPlainText().split('\n', Qt::SkipEmptyParts).join(';'));
-    emit SettingsNotifier::instance()->disassemblerSettingsChanged();
+    DisassemblerSettings::setBackend(static_cast<DisassemblerSettings::Backend>(m_backendCombo->currentData().toInt()));
+    DisassemblerSettings::setInsnLimitPerSection(m_insnLimit->value());
+    DisassemblerSettings::setAsmSyntax(static_cast<DisassemblerSettings::Syntax>(m_syntaxCombo->currentData().toInt()));
+    DisassemblerSettings::setObjdumpPath(m_objdumpPath->text());
+    DisassemblerSettings::setRadare2Path(m_radare2Path->text());
+    DisassemblerSettings::setRadare2AnalysisLevel(static_cast<DisassemblerSettings::AnalysisLevel>(m_r2AnalysisCombo->currentData().toInt()));
+    DisassemblerSettings::setRadare2PreCommands(m_r2PreCommands->toPlainText().split('\n', Qt::SkipEmptyParts).join(';'));
+    // Каждый сеттер выше сам слает SettingsNotifier::settingsChanged(key),
+    // так что отдельный агрегатный сигнал модуля не нужен.
 }
 
 void DisassemblerSettingsPage::updateUiState()
 {
-    const bool radare2 = m_backendCombo->currentData().toInt() == static_cast<int>(AppSettings::DisasmBackend::Radare2);
+    const bool radare2 = m_backendCombo->currentData().toInt() == static_cast<int>(DisassemblerSettings::Backend::Radare2);
     m_r2Options->setEnabled(radare2);
 }
 

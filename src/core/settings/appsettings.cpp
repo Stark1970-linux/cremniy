@@ -1,7 +1,11 @@
 #include "appsettings.h"
 
-#include <QSettings>
 #include <QFileInfo>
+#include <QSet>
+#include <QSettings>
+#include <utility>
+
+#include "core/settings/settingsregistry.h"
 
 static QSettings &settings()
 {
@@ -10,17 +14,7 @@ static QSettings &settings()
 }
 
 QString AppSettings::keyLanguage() { return "application/language"; }
-QString AppSettings::keyDisasmBackend() { return "modules/disassembler/backend"; }
-QString AppSettings::keyObjdumpPath()   { return "modules/disassembler/objdumpPath"; }
-QString AppSettings::keyRadare2Path()   { return "modules/disassembler/radare2Path"; }
-QString AppSettings::keyInsnLimitPerSection() { return "modules/disassembler/insnLimitPerSection"; }
-QString AppSettings::keyRadare2AnalysisLevel() { return "modules/disassembler/radare2/analysisLevel"; }
-QString AppSettings::keyAsmSyntax() { return "modules/disassembler/asmSyntax"; }
-QString AppSettings::keyRadare2PreCommands() { return "modules/disassembler/radare2/preCommands"; }
 QString AppSettings::keyExcludedPatterns() { return "workspace/files/excludedPatterns"; }
-QString AppSettings::keyGitBlameEnabled() { return "modules/codeEditor/gitBlameEnabled"; }
-QString AppSettings::keyGitBlameColor() { return "modules/codeEditor/gitBlameColor"; }
-QString AppSettings::keyGitBlamePadding() { return "modules/codeEditor/gitBlamePadding"; }
 
 QString AppSettings::language()
 {
@@ -33,84 +27,19 @@ void AppSettings::setLanguage(const QString& locale)
     settings().setValue(keyLanguage(), locale.trimmed());
 }
 
-AppSettings::DisasmBackend AppSettings::disasmBackend()
+QVariant AppSettings::value(const QString &key, const QVariant &defaultValue)
 {
-    const int v = settings().value(keyDisasmBackend(), static_cast<int>(DisasmBackend::Objdump)).toInt();
-    if (v == static_cast<int>(DisasmBackend::Radare2)) return DisasmBackend::Radare2;
-    return DisasmBackend::Objdump;
+    return settings().value(key, defaultValue);
 }
 
-void AppSettings::setDisasmBackend(DisasmBackend backend)
+void AppSettings::setValue(const QString &key, const QVariant &value)
 {
-    settings().setValue(keyDisasmBackend(), static_cast<int>(backend));
+    settings().setValue(key, value);
 }
 
-QString AppSettings::objdumpPath()
+bool AppSettings::contains(const QString &key)
 {
-    return settings().value(keyObjdumpPath()).toString().trimmed();
-}
-
-void AppSettings::setObjdumpPath(const QString &path)
-{
-    settings().setValue(keyObjdumpPath(), path.trimmed());
-}
-
-QString AppSettings::radare2Path()
-{
-    return settings().value(keyRadare2Path()).toString().trimmed();
-}
-
-void AppSettings::setRadare2Path(const QString &path)
-{
-    settings().setValue(keyRadare2Path(), path.trimmed());
-}
-
-int AppSettings::disasmInsnLimitPerSection()
-{
-    const int v = settings().value(keyInsnLimitPerSection(), 4000).toInt();
-    if (v < 50) return 50;
-    if (v > 200000) return 200000;
-    return v;
-}
-
-void AppSettings::setDisasmInsnLimitPerSection(int limit)
-{
-    settings().setValue(keyInsnLimitPerSection(), limit);
-}
-
-AppSettings::Radare2AnalysisLevel AppSettings::radare2AnalysisLevel()
-{
-    const int v = settings().value(keyRadare2AnalysisLevel(), static_cast<int>(Radare2AnalysisLevel::None)).toInt();
-    if (v == static_cast<int>(Radare2AnalysisLevel::Aaa)) return Radare2AnalysisLevel::Aaa;
-    if (v == static_cast<int>(Radare2AnalysisLevel::Aa)) return Radare2AnalysisLevel::Aa;
-    return Radare2AnalysisLevel::None;
-}
-
-void AppSettings::setRadare2AnalysisLevel(Radare2AnalysisLevel lvl)
-{
-    settings().setValue(keyRadare2AnalysisLevel(), static_cast<int>(lvl));
-}
-
-AppSettings::AsmSyntax AppSettings::asmSyntax()
-{
-    const int v = settings().value(keyAsmSyntax(), static_cast<int>(AsmSyntax::Intel)).toInt();
-    if (v == static_cast<int>(AsmSyntax::Att)) return AsmSyntax::Att;
-    return AsmSyntax::Intel;
-}
-
-void AppSettings::setAsmSyntax(AsmSyntax syntax)
-{
-    settings().setValue(keyAsmSyntax(), static_cast<int>(syntax));
-}
-
-QString AppSettings::radare2PreCommands()
-{
-    return settings().value(keyRadare2PreCommands()).toString().trimmed();
-}
-
-void AppSettings::setRadare2PreCommands(const QString &cmds)
-{
-    settings().setValue(keyRadare2PreCommands(), cmds.trimmed());
+    return settings().contains(key);
 }
 
 QStringList AppSettings::excludedPatterns()
@@ -131,39 +60,6 @@ void AppSettings::setExcludedPatterns(const QStringList &patterns)
     emit SettingsNotifier::instance()->excludedPatternsChanged();
 }
 
-bool AppSettings::gitBlameEnabled()
-{
-    return settings().value(keyGitBlameEnabled(), false).toBool();
-}
-
-void AppSettings::setGitBlameEnabled(bool enabled)
-{
-    settings().setValue(keyGitBlameEnabled(), enabled);
-    emit SettingsNotifier::instance()->gitBlameEnabledChanged(enabled);
-}
-
-QString AppSettings::gitBlameColor()
-{
-    return settings().value(keyGitBlameColor(), "#6D6552").toString();
-}
-
-void AppSettings::setGitBlameColor(const QString &color)
-{
-    settings().setValue(keyGitBlameColor(), color);
-    emit SettingsNotifier::instance()->gitBlameColorChanged(color);
-}
-
-int AppSettings::gitBlamePadding()
-{
-    return settings().value(keyGitBlamePadding(), 6).toInt();
-}
-
-void AppSettings::setGitBlamePadding(int padding)
-{
-    settings().setValue(keyGitBlamePadding(), padding);
-    emit SettingsNotifier::instance()->gitBlamePaddingChanged(padding);
-}
-
 SettingsNotifier *SettingsNotifier::instance()
 {
     static SettingsNotifier s;
@@ -180,13 +76,15 @@ bool AppSettings::exportToIni(const QString &filePath, QString *error)
 
     QSettings out(fi.filePath(), QSettings::IniFormat);
     out.clear();
-    const QStringList allowed = {
-        keyLanguage(), keyDisasmBackend(), keyObjdumpPath(), keyRadare2Path(),
-        keyInsnLimitPerSection(), keyRadare2AnalysisLevel(), keyAsmSyntax(),
-        keyRadare2PreCommands(), keyExcludedPatterns(), keyGitBlameEnabled(),
-        keyGitBlameColor(), keyGitBlamePadding(),
-    };
-    for (const QString& key : allowed) {
+    // Экспортируем всё, что знает ядро: настройки приложения и все ключи,
+    // которые модули объявили в фабрике настроек. Хардкод-список исчез:
+    // новый модуль добавляется в экспорт автоматически через свою схему.
+    const QStringList moduleKeys = SettingsRegistry::instance().moduleOptionKeys();
+    for (const QString& key : {keyLanguage(), keyExcludedPatterns()}) {
+        if (settings().contains(key))
+            out.setValue(key, settings().value(key));
+    }
+    for (const QString& key : moduleKeys) {
         if (settings().contains(key))
             out.setValue(key, settings().value(key));
     }
@@ -212,54 +110,36 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
         return false;
     }
 
-    // Only import known keys (so random settings won't pollute).
-    const QStringList allowed = {
-        keyLanguage(),
-        keyDisasmBackend(),
-        keyObjdumpPath(),
-        keyRadare2Path(),
-        keyInsnLimitPerSection(),
-        keyRadare2AnalysisLevel(),
-        keyAsmSyntax(),
-        keyRadare2PreCommands(),
-        keyExcludedPatterns(),
-        keyGitBlameEnabled(),
-        keyGitBlameColor(),
-        keyGitBlamePadding(),
-    };
+    // Импортируем только известные ключи: приложение + схема модулей.
+    const QStringList moduleKeys = SettingsRegistry::instance().moduleOptionKeys();
 
-    bool disassemblerChanged = false;
     bool excludedPatternsChanged = false;
-    bool gitBlameEnabledChanged = false;
-    bool gitBlameColorChanged = false;
-    bool gitBlamePaddingChanged = false;
-    for (const QString &k : allowed) {
-        if (in.contains(k))
-            settings().setValue(k, in.value(k));
-        if (in.contains(k) && (k == keyDisasmBackend() || k == keyObjdumpPath()
-            || k == keyRadare2Path() || k == keyInsnLimitPerSection()
-            || k == keyRadare2AnalysisLevel() || k == keyAsmSyntax()
-            || k == keyRadare2PreCommands()))
-            disassemblerChanged = true;
-        excludedPatternsChanged = excludedPatternsChanged || (in.contains(k) && k == keyExcludedPatterns());
-        gitBlameEnabledChanged = gitBlameEnabledChanged || (in.contains(k) && k == keyGitBlameEnabled());
-        gitBlameColorChanged = gitBlameColorChanged || (in.contains(k) && k == keyGitBlameColor());
-        gitBlamePaddingChanged = gitBlamePaddingChanged || (in.contains(k) && k == keyGitBlamePadding());
+    QSet<QString> changedModuleKeys;
+
+    for (const QString& key : {keyLanguage(), keyExcludedPatterns()}) {
+        if (in.contains(key))
+            settings().setValue(key, in.value(key));
+        if (in.contains(key) && key == keyExcludedPatterns())
+            excludedPatternsChanged = true;
     }
+    for (const QString& key : moduleKeys) {
+        if (!in.contains(key))
+            continue;
+        settings().setValue(key, in.value(key));
+        changedModuleKeys.insert(key);
+    }
+
     settings().sync();
     if (settings().status() != QSettings::NoError) {
         if (error) *error = QObject::tr("Failed to apply settings");
         return false;
     }
+
     if (excludedPatternsChanged)
         emit SettingsNotifier::instance()->excludedPatternsChanged();
-    if (gitBlameEnabledChanged)
-        emit SettingsNotifier::instance()->gitBlameEnabledChanged(gitBlameEnabled());
-    if (gitBlameColorChanged)
-        emit SettingsNotifier::instance()->gitBlameColorChanged(gitBlameColor());
-    if (gitBlamePaddingChanged)
-        emit SettingsNotifier::instance()->gitBlamePaddingChanged(gitBlamePadding());
-    if (disassemblerChanged)
-        emit SettingsNotifier::instance()->disassemblerSettingsChanged();
+    // Ядро не знает, что означают эти ключи; оно лишь сообщает «такой-то
+    // ключ изменился», а модуль сам решает, что с этим делать.
+    for (const QString& key : std::as_const(changedModuleKeys))
+        emit SettingsNotifier::instance()->settingsChanged(key);
     return true;
 }
