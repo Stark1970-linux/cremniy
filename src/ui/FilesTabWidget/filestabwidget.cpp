@@ -18,6 +18,7 @@
 #include <qfileinfo.h>
 #include <QPushButton>
 #include "Modules/Tabs/CodeEditor/codeeditortab.h"
+#include "buildTab/buildtab.h"
 
 namespace {
 
@@ -64,6 +65,12 @@ void FilesTabWidget::tabSelect(int index) {
     QString lastInfo = currentTool ? currentTool->property("lastStatusBarInfo").toString() : QString();
     emit statusBarInfoChanged(lastInfo);
     emit searchDocumentsChanged();
+}
+
+void FilesTabWidget::createBuildTab(const ProjectInfo &projInfo){
+    BuildTab *buildTab = new BuildTab(projInfo, this);
+    int new_tab_index = this->addTab(buildTab, QString("Build '%1'").arg(projInfo.name));
+    this->setCurrentIndex(new_tab_index);
 }
 
 // Create new tab and open file if he is not open already
