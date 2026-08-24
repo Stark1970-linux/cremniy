@@ -5,7 +5,6 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <QApplication>
-#include "dialogs/builddialog.h"
 #include "dialogs/configurebuild.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
@@ -180,8 +179,7 @@ void IDEWindow::openBuildConfigurate(){
 
 
 void IDEWindow::on_Build(){
-    auto* bDialog = new buildDialog(m_projectInfo, this);
-    bDialog->show();
+    m_filesTabWidget->createBuildTab(m_projectInfo);
 }
 
 

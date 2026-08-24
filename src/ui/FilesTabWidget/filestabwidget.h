@@ -4,6 +4,7 @@
 #include <QTabWidget>
 #include "core/modules/ModuleManager.h"
 #include "core/search/searchengine.h"
+#include "project_info_manager.h"
 #include "widgets/filetab.h"
 
 class FilesTabWidget : public QTabWidget {
@@ -13,6 +14,7 @@ public:
     ~FilesTabWidget() override;
 
     void tabSelect(int index);
+    void createBuildTab(const ProjectInfo &projInfo);
     void openFile(QString fullPath, QString fileName);
     QVector<SearchDocument> searchDocuments(SearchScope scope) const;
     QByteArray documentContents(const QString& filePath, bool* found) const;
