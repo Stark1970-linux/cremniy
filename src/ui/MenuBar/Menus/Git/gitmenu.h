@@ -8,6 +8,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QTimer>
+#include <QPointer>
 
 /**
  * @brief Git menu for repository operations
@@ -26,7 +27,7 @@ public:
 private:
     // Pointers to manager and IDE window
     GitManager *m_git = nullptr;
-    IDEWindow *m_ideWind = nullptr;
+    QPointer<IDEWindow> m_ideWind;
 
     // Submenus
     QMenu *m_branchMenu;        // Branches
