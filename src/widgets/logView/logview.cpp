@@ -13,9 +13,19 @@ void logView::onErrorReceived(const QString &log){
     QTextCursor cursor = textCursor();
     cursor.movePosition(QTextCursor::End);
     cursor.insertText(log + "\n", format);
+
+    QTextCharFormat defaultFormat;
+    defaultFormat.setForeground(Qt::white);
+    cursor.setCharFormat(defaultFormat);
+
     setTextCursor(cursor);
 }
 
 void logView::onOutputReceived(const QString &log){
-    appendPlainText(log);
+    QTextCharFormat format;
+    format.setForeground(Qt::white);
+    QTextCursor cursor = textCursor();
+    cursor.movePosition(QTextCursor::End);
+    cursor.insertText(log + "\n", format);
+    setTextCursor(cursor);
 }

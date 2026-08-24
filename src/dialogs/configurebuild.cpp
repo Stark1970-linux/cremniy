@@ -5,8 +5,8 @@
 #include <qpushbutton.h>
 
 
-ConfigureBuild::ConfigureBuild(ProjectInfo &projInfo, QWidget *parrent)
-    : QDialog(parrent),
+ConfigureBuild::ConfigureBuild(ProjectInfo &projInfo, QWidget *parent)
+    : QDialog(parent),
       m_projectInfo(&projInfo)
 {
 
@@ -30,7 +30,7 @@ ConfigureBuild::ConfigureBuild(ProjectInfo &projInfo, QWidget *parrent)
     m_buildCommandLabel = new QLabel(tr("Build Command"));
     m_buildCommandEdit  = new QLineEdit();
 
-    if (m_projectInfo->buildCommand.isEmpty()) m_buildCommandEdit->setPlaceholderText("make");
+    if (m_projectInfo->buildCommand.isEmpty()) m_buildCommandEdit->setPlaceholderText(tr("e.g. cmake --build . (executed in the project root directory)"));
     else m_buildCommandEdit->setText(m_projectInfo->buildCommand);
 
     grid->addWidget(m_buildCommandLabel, 0, 0);

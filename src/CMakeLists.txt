@@ -173,6 +173,7 @@ qt_add_executable(${PROJECT_NAME}
     core/buildman/buildmanager.cpp
     core/buildman/buildmanager.cpp
     widgets/logView/logview.h widgets/logView/logview.cpp
+    dialogs/builddialog.h dialogs/builddialog.cpp
 
 )
 

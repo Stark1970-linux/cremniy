@@ -5,11 +5,13 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <QApplication>
+#include "dialogs/builddialog.h"
 #include "dialogs/configurebuild.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/search/searchpanel.h"
 #include <QShortcut>
+#include <qtimer.h>
 
 IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     : QMainWindow(parent), m_projectPath(ProjectPath) {
@@ -17,6 +19,7 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     // - - Window Settings - -
     this->setWindowState(Qt::WindowMaximized);
     this->setWindowTitle("Cremniy");
+    setMinimumSize(800, 600);
 
     // - - Menu Bar - -
     auto const menu = menuBar();
@@ -30,10 +33,6 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
         m_projectInfo.path = ProjectPath;
         ProjectInfoManager::saveProjectInfo(m_projectInfo);
     }
-
-
-    // - - Configure Build - -
-    configurateBuild();
 
     // - - Widgets - -
     m_statusBar = statusBar();
@@ -153,6 +152,10 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     connect(m_searchPanel, &SearchPanel::statusMessage, this, [this](const QString& message) {
         m_statusLabel->setText(message);
     });
+
+    // - - Configure Build - -
+    QTimer::singleShot(0, this, &IDEWindow::configurateBuild);
+
 }
 
 IDEWindow::~IDEWindow() = default;
@@ -177,7 +180,8 @@ void IDEWindow::openBuildConfigurate(){
 
 
 void IDEWindow::on_Build(){
-
+    auto* bDialog = new buildDialog(m_projectInfo, this);
+    bDialog->show();
 }
 
 

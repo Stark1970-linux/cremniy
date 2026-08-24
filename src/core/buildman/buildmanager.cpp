@@ -1,11 +1,12 @@
 #include "buildmanager.h"
 
 
-BuildManager::BuildManager(QString &workPath, QString &command, logView* logViewWidg)
+BuildManager::BuildManager(const QString &workPath, const QString &command, logView* logViewWidg)
     : m_workPath(workPath),
       m_command(command)
 {
     m_buildProcess = new QProcess(this);
+    m_buildProcess->setWorkingDirectory(m_workPath);
 
     // данные в stdout
     connect(m_buildProcess, &QProcess::readyReadStandardOutput, this, [this, logViewWidg]() {
@@ -21,7 +22,7 @@ BuildManager::BuildManager(QString &workPath, QString &command, logView* logView
 
     // завершение процесса сборки
     connect(m_buildProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this, logViewWidg]() {
-        logViewWidg->onErrorReceived("Finish");
+        logViewWidg->onOutputReceived("Finish");
     });
 }
 

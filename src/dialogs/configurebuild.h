@@ -9,7 +9,7 @@
 class ConfigureBuild : public QDialog {
 
     public:
-        ConfigureBuild(ProjectInfo &projInfo, QWidget *parrent);
+        ConfigureBuild(ProjectInfo &projInfo, QWidget *parent);
 
     private:
         QLabel* m_buildCommandLabel;

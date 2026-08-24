@@ -13,7 +13,7 @@ class BuildManager : public QObject {
         QString m_command;
 
     public:
-        BuildManager(QString &workPath, QString &command, logView* logViewWidg);
+        BuildManager(const QString &workPath, const QString &command, logView* logViewWidg);
         ~BuildManager();
 
         void build();
