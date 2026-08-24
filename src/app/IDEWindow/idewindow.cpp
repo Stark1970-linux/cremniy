@@ -1,12 +1,11 @@
 #include "idewindow.h"
-#include "dialogs/filecreatedialog.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
 #include <qheaderview.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
-#include "core/icons/iconprovider.h"
 #include <QApplication>
+#include "dialogs/configurebuild.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/search/searchpanel.h"
@@ -23,6 +22,11 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     auto const menu = menuBar();
     MenuBarBuilder menuBarBuilder(menu, this);
     menu->setNativeMenuBar(false);
+
+    // - - Configure Build
+
+    ConfigureBuild *confBuildDialog = new ConfigureBuild();
+    confBuildDialog->show();
 
     // - - Widgets - -
     m_statusBar = statusBar();

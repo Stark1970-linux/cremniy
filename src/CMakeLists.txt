@@ -167,6 +167,8 @@ qt_add_executable(${PROJECT_NAME}
     ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
     ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
     ui/MenuBar/basemenu.h
+    dialogs/configurebuild.h dialogs/configurebuild.cpp
+    core/project/project_info_manager.h core/project/project_info_manager.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
