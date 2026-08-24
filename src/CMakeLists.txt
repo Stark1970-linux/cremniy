@@ -121,6 +121,10 @@ qt_add_executable(${PROJECT_NAME}
     dialogs/filecreatedialog.h
     dialogs/settingsdialog.cpp
     dialogs/settingsdialog.h
+    dialogs/pages/generalsettingspage.cpp
+    dialogs/pages/generalsettingspage.h
+    dialogs/pages/filessettingspage.cpp
+    dialogs/pages/filessettingspage.h
 
     # Widgets
     widgets/clickablelineedit.h
@@ -157,6 +161,9 @@ qt_add_executable(${PROJECT_NAME}
 
     core/settings/appsettings.cpp
     core/settings/appsettings.h
+    core/settings/settingspage.h
+    core/settings/settingsregistry.cpp
+    core/settings/settingsregistry.h
 
     core/update/updatechecker.cpp
     core/update/updatechecker.h

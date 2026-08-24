@@ -15,6 +15,7 @@
 	- [2.3. Window](#23-window)
 	- [2.4. Reference](#24-reference)
 - [3. API](#unknown)
+- [4. Настройки модулей](#4-настройки-модулей)
 
 ## 1. Описание модулей
 
@@ -144,8 +145,59 @@ static bool registered = []() {
 
 ``` cpp
 static bool registered = []() {
-    ModuleManager::instance().registerReference("ExampleName", "ExampleGroup", []() { return new ExampleReference(); });
+ModuleManager::instance().registerReference("ExampleName", "ExampleGroup", []() { return new ExampleReference(); });
     return true;
 }();
 ```
 
+## 4. Настройки модулей
+
+Если модулю нужны сохраняемые настройки, он может зарегистрировать собственную страницу через `SettingsRegistry`. Центральный диалог настроек автоматически добавит её в категорию «Модули». Модули без настроек страницу не регистрируют.
+
+Страница должна наследоваться от `SettingsPage` и реализовать три метода:
+
+- `load()` — загрузить сохранённые значения в элементы интерфейса;
+- `validate()` — проверить ввод, не изменяя настройки;
+- `apply()` — сохранить значения только после нажатия пользователем `OK`.
+
+Все изменения в `apply()` сохраняются через **настройки самого модуля** — ядро (`core/settings/AppSettings`) хранит только пары «ключ → значение» и НЕ знает ни одного ключа конкретного модуля. Поэтому:
+
+- каждый модуль сам объявляет свои ключи, их типы и значения по умолчанию (обычно в файле `<Module>Settings.h/.cpp` рядом со страницей);
+- модуль сам передаёт схему своих настроек фабрике (поле `moduleOptions` в описании страницы);
+- экспорт/импорт INI и уведомления об изменении (`SettingsNotifier::settingsChanged(key)`) обходят эту схему автоматически, и при добавлении нового модуля ядро менять не нужно.
+
+Пример файла настроек модуля (`ExampleSettings.h`):
+
+```cpp
+// Ключи, умолчания и типы принадлежат модулю, а не ядру.
+namespace ExampleSettings {
+QString keyWidth() { return "modules/example/width"; }
+inline int width() { return AppSettings::value(keyWidth(), 40).toInt(); }
+inline void setWidth(int v) {
+    AppSettings::setValue(keyWidth(), v);
+    emit SettingsNotifier::instance()->settingsChanged(keyWidth());
+}
+}
+```
+
+Пример регистрации страницы со схемой настроек:
+
+```cpp
+SettingsRegistry::instance().registerModulePage("example", {
+    "modules.example",
+    "modules",
+    []() { return QObject::tr("Modules"); },
+    300,
+    []() { return QCoreApplication::translate("ExampleModule", "Example"); },
+    100,
+    {},
+    [](QWidget* parent) { return new ExampleSettingsPage(parent); },
+    // Схема настроек модуля: ключи + умолчания. Новый модуль попадает в
+    // экспорт/импорт INI автоматически, без правок core/settings.
+    {
+        { ExampleSettings::keyWidth(), 40 },
+    }
+});
+```
+
+`pageId` и владелец должны быть постоянными техническими идентификаторами и не должны зависеть от перевода. Все изменения следует сохранять в `apply()`: это гарантирует, что `Cancel` не изменит настройки пользователя.

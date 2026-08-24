@@ -1,5 +1,6 @@
 #include "gitmenu.h"
 #include "core/settings/appsettings.h"
+#include "Modules/Tabs/CodeEditor/codeeditorsettings.h"
 #include "ui/MenuBar/menufactory.h"
 #include <QApplication>
 #include <QFileDialog>
@@ -88,7 +89,7 @@ GitMenu::GitMenu() : BaseMenu(tr("Git"))
     addSeparator();
     m_toggleBlame = addAction(tr("Inline Git Blame"));
     m_toggleBlame->setCheckable(true);
-    m_toggleBlame->setChecked(AppSettings::gitBlameEnabled());
+    m_toggleBlame->setChecked(CodeEditorSettings::gitBlameEnabled());
 }
 
 void GitMenu::setupConnections(IDEWindow* ideWind)
@@ -154,11 +155,14 @@ void GitMenu::setupConnections(IDEWindow* ideWind)
     connect(m_showLogGraph, &QAction::triggered, this, &GitMenu::onShowLogGraph);
 
     connect(m_toggleBlame, &QAction::toggled, this, [](bool checked) {
-        AppSettings::setGitBlameEnabled(checked);
+        CodeEditorSettings::setGitBlameEnabled(checked);
     });
 
-    connect(SettingsNotifier::instance(), &SettingsNotifier::gitBlameEnabledChanged,
-            m_toggleBlame, &QAction::setChecked);
+    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
+            this, [this](const QString &key) {
+        if (key == CodeEditorSettings::keyGitBlameEnabled())
+            m_toggleBlame->setChecked(CodeEditorSettings::gitBlameEnabled());
+    });
 }
 
 // Вспомогательные методы
