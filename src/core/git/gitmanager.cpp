@@ -1,6 +1,7 @@
 #include "gitmanager.h"
 #include "internal/gitblameengine.h"
 #include "internal/gitbranchservice.h"
+#include "internal/gitcommitservice.h"
 #include "internal/gitrepository.h"
 #include <git2.h>
 #include <QDir>
@@ -94,346 +95,65 @@ bool GitManager::renameBranch(const QString &oldName, const QString &newName)
 
 bool GitManager::createCommit(const QString &message)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // получаем индекс
-    git_index *index = nullptr;
-    int error = git_repository_index(&index, m_repository->handle());
-    if (error != 0) {
-        setError(tr("Failed to get index"));
-        return false;
-    }
-
-    // создаём tree из индекса
-    git_oid tree_oid;
-    error = git_index_write_tree(&tree_oid, index);
-    if (error != 0) {
-        git_index_free(index);
-        setError(tr("Failed to write tree"));
-        return false;
-    }
-
-    git_tree *tree = nullptr;
-    error = git_tree_lookup(&tree, m_repository->handle(), &tree_oid);
-    git_index_free(index);
-    if (error != 0) {
-        setError(tr("Failed to find tree"));
-        return false;
-    }
-
-    // получаем коммит как родителя
-    git_commit *parent = nullptr;
-    git_oid head_oid;
-    error = git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
-    if (error == 0) {
-        git_commit_lookup(&parent, m_repository->handle(), &head_oid);
-    }
-
-    // создаём подпись
-    git_signature *sig = createSignature();
-    if (!sig) {
-        git_tree_free(tree);
-        if (parent) git_commit_free(parent);
-        return false;
-    }
-
-    // создаём коммит
-    git_oid commit_oid;
-    if (parent) {
-        error = git_commit_create(
-            &commit_oid, m_repository->handle(), "HEAD",
-            sig, sig, nullptr,
-            message.toUtf8().constData(),
-            tree, 1, (const git_commit **)&parent);
-    } else {
-        error = git_commit_create(
-            &commit_oid, m_repository->handle(), "HEAD",
-            sig, sig, nullptr,
-            message.toUtf8().constData(),
-            tree, 0, nullptr);
-    }
-
-    git_signature_free(sig);
-    git_tree_free(tree);
-    if (parent) git_commit_free(parent);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Failed to create commit"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::CommitService::create(*m_repository, message);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 QStringList GitManager::commitHistory(int count) const
 {
-    QStringList result;
-    if (!m_repository->isOpen()) return result;
-
-    git_revwalk *walker = nullptr;
-    int error = git_revwalk_new(&walker, m_repository->handle());
-    if (error != 0) return result;
-
-    git_revwalk_sorting(walker, GIT_SORT_TIME);
-    git_revwalk_push_head(walker);
-
-    git_oid oid;
-    int i = 0;
-    while (git_revwalk_next(&oid, walker) == 0 && i < count) {
-        result.append(QString::fromUtf8(git_oid_tostr_s(&oid)));
-        i++;
-    }
-
-    git_revwalk_free(walker);
-    return result;
+    return GitInternal::CommitService::history(*m_repository, count);
 }
 
 QString GitManager::commitMessage(const QString &oid) const
 {
-    if (!m_repository->isOpen()) return {};
-
-    git_oid commit_oid;
-    if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0)
-        return {};
-
-    git_commit *commit = nullptr;
-    if (git_commit_lookup(&commit, m_repository->handle(), &commit_oid) != 0)
-        return {};
-
-    QString msg = QString::fromUtf8(git_commit_message(commit));
-    git_commit_free(commit);
-    return msg.trimmed();
+    return GitInternal::CommitService::message(*m_repository, oid);
 }
 
 QString GitManager::commitAuthor(const QString &oid) const
 {
-    if (!m_repository->isOpen()) return {};
-
-    git_oid commit_oid;
-    if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0)
-        return {};
-
-    git_commit *commit = nullptr;
-    if (git_commit_lookup(&commit, m_repository->handle(), &commit_oid) != 0)
-        return {};
-
-    const git_signature *sig = git_commit_author(commit);
-    QString author = QString::fromUtf8(sig->name) + " <" + QString::fromUtf8(sig->email) + ">";
-    git_commit_free(commit);
-    return author;
+    return GitInternal::CommitService::author(*m_repository, oid);
 }
 
 bool GitManager::checkoutCommit(const QString &oid)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_oid commit_oid;
-    if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0) {
-        setError(tr("Invalid commit OID"));
-        return false;
-    }
-
-    git_commit *commit = nullptr;
-    int error = git_commit_lookup(&commit, m_repository->handle(), &commit_oid);
-    if (error != 0) {
-        setError(tr("Commit not found"));
-        return false;
-    }
-
-    git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-    opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-
-    error = git_checkout_tree(m_repository->handle(), (const git_object *)commit, &opts);
-    if (error != 0) {
-        git_commit_free(commit);
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Checkout error"));
-        return false;
-    }
-
-    git_repository_set_head_detached(m_repository->handle(), &commit_oid);
-    git_commit_free(commit);
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::CommitService::checkout(*m_repository, oid);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::resetHard(const QString &oid)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_oid commit_oid;
-    if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0) {
-        setError(tr("Invalid commit OID"));
-        return false;
-    }
-
-    git_object *target = nullptr;
-    int error = git_object_lookup(&target, m_repository->handle(), &commit_oid, GIT_OBJECT_COMMIT);
-    if (error != 0) {
-        setError(tr("Object not found"));
-        return false;
-    }
-
-    error = git_reset(m_repository->handle(), target, GIT_RESET_HARD, nullptr);
-    git_object_free(target);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Reset error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::CommitService::resetHard(*m_repository, oid);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::resetMixed(const QString &oid)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_oid commit_oid;
-    if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0) {
-        setError(tr("Invalid commit OID"));
-        return false;
-    }
-
-    git_object *target = nullptr;
-    int error = git_object_lookup(&target, m_repository->handle(), &commit_oid, GIT_OBJECT_COMMIT);
-    if (error != 0) {
-        setError(tr("Object not found"));
-        return false;
-    }
-
-    error = git_reset(m_repository->handle(), target, GIT_RESET_MIXED, nullptr);
-    git_object_free(target);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Reset error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::CommitService::resetMixed(*m_repository, oid);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::revertCommit(const QString &oid)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_oid commit_oid;
-    if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0) {
-        setError(tr("Invalid commit OID"));
-        return false;
-    }
-
-    git_commit *commit = nullptr;
-    int error = git_commit_lookup(&commit, m_repository->handle(), &commit_oid);
-    if (error != 0) {
-        setError(tr("Commit not found"));
-        return false;
-    }
-
-    error = git_revert(m_repository->handle(), commit, nullptr);
-    git_commit_free(commit);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Revert error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::CommitService::revert(*m_repository, oid);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::amendCommit(const QString &message)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // берём коммит
-    git_oid head_oid;
-    int error = git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
-    if (error != 0) {
-        setError(tr("Failed to get HEAD"));
-        return false;
-    }
-
-    git_commit *old_commit = nullptr;
-    error = git_commit_lookup(&old_commit, m_repository->handle(), &head_oid);
-    if (error != 0) {
-        setError(tr("Failed to find HEAD commit"));
-        return false;
-    }
-
-    // создаём подпись
-    git_signature *sig = createSignature();
-    if (!sig) {
-        git_commit_free(old_commit);
-        return false;
-    }
-
-    // берём tree из старого коммита
-    git_tree *tree = nullptr;
-    error = git_commit_tree(&tree, old_commit);
-    if (error != 0) {
-        git_signature_free(sig);
-        git_commit_free(old_commit);
-        setError(tr("Failed to get commit tree"));
-        return false;
-    }
-
-    // создаём новый коммит с тем же деревом, но новым сообщением
-    git_oid new_commit_oid;
-    unsigned int parent_count = git_commit_parentcount(old_commit);
-    QVector<const git_commit *> old_parents;
-    for (unsigned int i = 0; i < parent_count; i++) {
-        git_commit *parent = nullptr;
-        git_commit_parent(&parent, old_commit, i);
-        old_parents.append(parent);
-    }
-
-    error = git_commit_create(
-        &new_commit_oid, m_repository->handle(), "HEAD",
-        sig, sig, nullptr,
-        message.toUtf8().constData(),
-        tree,
-        parent_count,
-        parent_count > 0 ? old_parents.data() : nullptr);
-
-    git_signature_free(sig);
-    git_tree_free(tree);
-    git_commit_free(old_commit);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Amend error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::CommitService::amend(*m_repository, message);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 // Синхронизация

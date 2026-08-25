@@ -13,6 +13,7 @@ private slots:
     void discoversWorktreeMarkerFile();
     void returnsEmptyOutsideRepository();
     void ownsRepositoryLifecycle();
+    void reportsCommitValidationErrors();
 };
 
 void GitCoreTest::discoversRepositoryFromNestedDirectory() {
@@ -65,6 +66,12 @@ void GitCoreTest::ownsRepositoryLifecycle() {
     git.close();
     QVERIFY(!git.isOpen());
     QVERIFY(git.repoPath().isEmpty());
+}
+
+void GitCoreTest::reportsCommitValidationErrors() {
+    GitManager git;
+    QVERIFY(!git.checkoutCommit(QStringLiteral("not-an-oid")));
+    QCOMPARE(git.lastError(), QStringLiteral("Repository not open"));
 }
 
 QTEST_GUILESS_MAIN(GitCoreTest)
