@@ -11,7 +11,7 @@
 #include <QTextLayout>
 #include <QVector>
 #include <QCache>
-#include "widgets/BlameLineInfo.h"
+#include "blamelineinfo.h"
 
 class FileDataBuffer;
 class LineIndex;

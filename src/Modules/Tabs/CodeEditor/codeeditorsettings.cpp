@@ -7,20 +7,8 @@ namespace CodeEditorSettings {
 static const QString kDefaultBlameColor = QStringLiteral("#6D6552");
 static const int kDefaultBlamePadding = 6;
 
-QString keyGitBlameEnabled() { return QStringLiteral("modules/codeEditor/gitBlameEnabled"); }
 QString keyGitBlameColor() { return QStringLiteral("modules/codeEditor/gitBlameColor"); }
 QString keyGitBlamePadding() { return QStringLiteral("modules/codeEditor/gitBlamePadding"); }
-
-bool gitBlameEnabled()
-{
-    return AppSettings::value(keyGitBlameEnabled(), false).toBool();
-}
-
-void setGitBlameEnabled(bool enabled)
-{
-    AppSettings::setValue(keyGitBlameEnabled(), enabled);
-    emit SettingsNotifier::instance()->settingsChanged(keyGitBlameEnabled());
-}
 
 QString gitBlameColor()
 {

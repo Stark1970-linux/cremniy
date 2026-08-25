@@ -1,4 +1,5 @@
 #include "gitmanager.h"
+#include <git2.h>
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>
@@ -10,9 +11,6 @@ GitManager::GitManager(QObject *parent)
     // Инициализируем один раз
     git_libgit2_init();
 
-    connect(this, &GitManager::repositoryChanged, []() {
-        emit GitNotifier::instance()->repositoryChanged();
-    });
 }
 
 GitManager::~GitManager()
@@ -967,19 +965,15 @@ bool GitManager::init(const QString &path)
 
 QString GitManager::findGitRepositoryRoot(const QString &path)
 {
-    QDir dir(path);
+    const QFileInfo pathInfo(path);
+    QDir dir(pathInfo.isDir() ? pathInfo.absoluteFilePath() : pathInfo.absolutePath());
 
-    /* Search for .git directory upwards */
-    while (!dir.isRoot()) {
-        if (dir.exists(".git")) {
-            QDir gitDir(dir.filePath(".git"));
-            /* Check if it's a directory (or a file in case of worktrees) */
-            if (gitDir.exists() || QFileInfo(dir.filePath(".git")).isDir()) {
-                return dir.absolutePath();
-            }
-        }
-        if (!dir.cdUp()) break;
-    }
+    /* A worktree uses a .git file, while a regular checkout uses a directory. */
+    do {
+        const QFileInfo marker(dir.filePath(QStringLiteral(".git")));
+        if (marker.exists() && (marker.isDir() || marker.isFile()))
+            return dir.absolutePath();
+    } while (dir.cdUp());
 
     return {};
 }
@@ -1305,10 +1299,4 @@ git_signature *GitManager::createSignature() const
     }
 
     return sig;
-}
-
-GitNotifier *GitNotifier::instance()
-{
-    static GitNotifier s;
-    return &s;
 }

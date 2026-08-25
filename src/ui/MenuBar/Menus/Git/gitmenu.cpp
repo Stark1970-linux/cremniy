@@ -1,6 +1,5 @@
 #include "gitmenu.h"
-#include "core/settings/appsettings.h"
-#include "Modules/Tabs/CodeEditor/codeeditorsettings.h"
+#include "core/git/gitblameservice.h"
 #include "ui/MenuBar/menufactory.h"
 #include <QApplication>
 #include <QFileDialog>
@@ -89,7 +88,7 @@ GitMenu::GitMenu() : BaseMenu(tr("Git"))
     addSeparator();
     m_toggleBlame = addAction(tr("Inline Git Blame"));
     m_toggleBlame->setCheckable(true);
-    m_toggleBlame->setChecked(CodeEditorSettings::gitBlameEnabled());
+    m_toggleBlame->setChecked(GitBlameService::instance()->isEnabled());
 }
 
 void GitMenu::setupConnections(IDEWindow* ideWind)
@@ -100,7 +99,7 @@ void GitMenu::setupConnections(IDEWindow* ideWind)
 
     // автообнаружение репозитория у открытой папки проекта
     const QString projectPath = ideWind->property("projectPath").toString();
-    const QString repoPath = findGitRepositoryRoot(projectPath);
+    const QString repoPath = GitManager::findGitRepositoryRoot(projectPath);
     if (!repoPath.isEmpty()) {
         m_git->open(repoPath);
     }
@@ -154,15 +153,13 @@ void GitMenu::setupConnections(IDEWindow* ideWind)
     connect(m_stashList, &QAction::triggered, this, &GitMenu::onStashList);
     connect(m_showLogGraph, &QAction::triggered, this, &GitMenu::onShowLogGraph);
 
-    connect(m_toggleBlame, &QAction::toggled, this, [](bool checked) {
-        CodeEditorSettings::setGitBlameEnabled(checked);
-    });
-
-    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
-            this, [this](const QString &key) {
-        if (key == CodeEditorSettings::keyGitBlameEnabled())
-            m_toggleBlame->setChecked(CodeEditorSettings::gitBlameEnabled());
-    });
+    auto *blameService = GitBlameService::instance();
+    connect(m_toggleBlame, &QAction::toggled,
+            blameService, &GitBlameService::setEnabled);
+    connect(blameService, &GitBlameService::enabledChanged,
+            m_toggleBlame, &QAction::setChecked);
+    connect(m_git, &GitManager::repositoryChanged,
+            blameService, &GitBlameService::repositoryChanged);
 }
 
 // Вспомогательные методы
@@ -361,7 +358,7 @@ void GitMenu::onRepoWatchTimeout()
     if (projectPath.isEmpty()) return;
 
     const bool currentlyOpen = m_git->isOpen();
-    const QString repoPath = findGitRepositoryRoot(projectPath);
+    const QString repoPath = GitManager::findGitRepositoryRoot(projectPath);
 
     if (!currentlyOpen && !repoPath.isEmpty()) {
         m_git->open(repoPath);
@@ -799,14 +796,4 @@ void GitMenu::onShowLogGraph()
     layout->addWidget(closeBtn);
 
     dlg.exec();
-}
-
-QString GitMenu::findGitRepositoryRoot(const QString &path)
-{
-    return GitManager::findGitRepositoryRoot(path);
-}
-
-bool GitMenu::isGitRepository(const QString &path)
-{
-    return !findGitRepositoryRoot(path).isEmpty();
 }

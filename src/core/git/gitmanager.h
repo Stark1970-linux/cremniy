@@ -3,10 +3,11 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
-#include <QDateTime>
 #include <QVector>
-#include <git2.h>
-#include "widgets/BlameLineInfo.h"
+#include "blamelineinfo.h"
+
+struct git_repository;
+struct git_signature;
 
 /**
  * @brief Wrapper class over libgit2 for all git operations
@@ -181,15 +182,4 @@ private:
 
     /** @brief Create signature */
     git_signature *createSignature() const;
-};
-
-class GitNotifier : public QObject
-{
-    Q_OBJECT
-public:
-    static GitNotifier *instance();
-signals:
-    void repositoryChanged();
-private:
-    explicit GitNotifier(QObject *parent = nullptr) : QObject(parent) {}
 };

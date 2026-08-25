@@ -2,7 +2,7 @@
 #define BLAMETOOLTIP_H
 
 #include <QWidget>
-#include "widgets/BlameLineInfo.h"
+#include "blamelineinfo.h"
 
 /**
  * @brief A beautiful, semi-transparent tooltip for Git Blame information.
