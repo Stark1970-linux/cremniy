@@ -1,5 +1,6 @@
 #include "gitmanager.h"
 #include "internal/gitblameengine.h"
+#include "internal/gitbranchservice.h"
 #include "internal/gitrepository.h"
 #include <git2.h>
 #include <QDir>
@@ -48,177 +49,45 @@ void GitManager::setError(const QString &error) const
 
 QStringList GitManager::branches() const
 {
-    QStringList result;
-    if (!m_repository->isOpen()) return result;
-
-    git_branch_iterator *iter = nullptr;
-    int error = git_branch_iterator_new(&iter, m_repository->handle(), GIT_BRANCH_LOCAL);
-    if (error != 0) return result;
-
-    git_reference *ref = nullptr;
-    git_branch_t type;
-    while (git_branch_next(&ref, &type, iter) == 0) {
-        const char *name = nullptr;
-        if (git_branch_name(&name, ref) == 0) {
-            result.append(QString::fromUtf8(name));
-        }
-        git_reference_free(ref);
-    }
-    git_branch_iterator_free(iter);
-
-    return result;
+    return GitInternal::BranchService::branches(*m_repository);
 }
 
 QString GitManager::currentBranch() const
 {
-    if (!m_repository->isOpen()) return {};
-
-    git_reference *head = nullptr;
-    int error = git_repository_head(&head, m_repository->handle());
-    if (error != 0) return {};
-
-    const char *name = nullptr;
-    git_branch_name(&name, head);
-    QString branchName = QString::fromUtf8(name);
-    git_reference_free(head);
-
-    return branchName;
+    return GitInternal::BranchService::currentBranch(*m_repository);
 }
 
 bool GitManager::checkoutBranch(const QString &branchName)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // ищем ветку
-    git_reference *ref = nullptr;
-    QString refName = "refs/heads/" + branchName;
-    int error = git_reference_dwim(&ref, m_repository->handle(), refName.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Branch not found: ") + branchName);
-        return false;
-    }
-
-    // безопасный чекаут
-    git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-    opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-
-    error = git_checkout_tree(m_repository->handle(), (const git_object *)git_reference_target(ref), &opts);
-    if (error != 0) {
-        git_reference_free(ref);
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Checkout error"));
-        return false;
-    }
-
-    error = git_repository_set_head(m_repository->handle(), refName.toUtf8().constData());
-    git_reference_free(ref);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("HEAD setup error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::BranchService::checkout(*m_repository, branchName);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::createBranch(const QString &branchName)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // берём  коммит
-    git_oid head_oid;
-    int error = git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
-    if (error != 0) {
-        setError(tr("Failed to get HEAD"));
-        return false;
-    }
-
-    git_commit *commit = nullptr;
-    error = git_commit_lookup(&commit, m_repository->handle(), &head_oid);
-    if (error != 0) {
-        setError(tr("Failed to find HEAD commit"));
-        return false;
-    }
-
-    git_reference *new_ref = nullptr;
-    error = git_branch_create(&new_ref, m_repository->handle(), branchName.toUtf8().constData(), commit, 0);
-    git_commit_free(commit);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Failed to create branch"));
-        return false;
-    }
-
-    git_reference_free(new_ref);
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::BranchService::create(*m_repository, branchName);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::deleteBranch(const QString &branchName)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_reference *ref = nullptr;
-    QString refName = "refs/heads/" + branchName;
-    int error = git_reference_dwim(&ref, m_repository->handle(), refName.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Branch not found: ") + branchName);
-        return false;
-    }
-
-    error = git_branch_delete(ref);
-    git_reference_free(ref);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Failed to delete branch"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::BranchService::remove(*m_repository, branchName);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::renameBranch(const QString &oldName, const QString &newName)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_reference *ref = nullptr;
-    QString refName = "refs/heads/" + oldName;
-    int error = git_reference_dwim(&ref, m_repository->handle(), refName.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Branch not found: ") + oldName);
-        return false;
-    }
-
-    git_reference *new_ref = nullptr;
-    error = git_branch_move(&new_ref, ref, newName.toUtf8().constData(), 0);
-    git_reference_free(ref);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Failed to rename branch"));
-        return false;
-    }
-
-    git_reference_free(new_ref);
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::BranchService::rename(
+        *m_repository, oldName, newName);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 // Коммиты

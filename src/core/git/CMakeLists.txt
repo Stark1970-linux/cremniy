@@ -8,6 +8,8 @@ add_library(cremniy_git_core STATIC
     internal/gitrepository.h
     internal/gitblameengine.cpp
     internal/gitblameengine.h
+    internal/gitbranchservice.cpp
+    internal/gitbranchservice.h
 )
 
 target_include_directories(cremniy_git_core
