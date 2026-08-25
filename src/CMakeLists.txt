@@ -294,6 +294,30 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+if(APPLE)
+    set(ICNS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resources/macos/cremniy.icns")
+    set(MACOSX_BUNDLE_ICON_FILE cremniy.icns)
+    set_source_files_properties(${ICNS_FILE} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    target_sources(${PROJECT_NAME} PRIVATE ${ICNS_FILE})
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_ICON_FILE cremniy.icns
+        MACOSX_BUNDLE_BUNDLE_NAME "Cremniy"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.mironov.cremniy"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/macos/Info.plist.in"
+    )
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/resources/macos/Assets.car
+            $<TARGET_BUNDLE_CONTENT_DIR:${PROJECT_NAME}>/Resources/Assets.car
+        COMMENT "Copying prebuilt Tahoe icon asset"
+    )
+endif()
+
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
     BUNDLE DESTINATION .
