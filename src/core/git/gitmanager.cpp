@@ -6,6 +6,7 @@
 #include "internal/gitmergeservice.h"
 #include "internal/gitremoteservice.h"
 #include "internal/gitrepository.h"
+#include "internal/gitstashservice.h"
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
@@ -244,85 +245,28 @@ QString GitManager::status() const {
 }
 
 bool GitManager::stashSave(const QString& message) {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_signature* sig = createSignature();
-    if (!sig)
-        return false;
-
-    int error = git_stash_save(nullptr, m_repository->handle(), sig, message.isEmpty() ? nullptr : message.toUtf8().constData(), GIT_STASH_DEFAULT);
-    git_signature_free(sig);
-
-    if (error != 0) {
-        const git_error* e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Stash save error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::StashService::save(*m_repository, message);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::stashApply(int index) {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    int error = git_stash_apply(m_repository->handle(), index, nullptr);
-    if (error != 0) {
-        const git_error* e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Stash apply error"));
-        return false;
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::StashService::apply(*m_repository, index);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::stashDrop(int index) {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    int error = git_stash_drop(m_repository->handle(), index);
-    if (error != 0) {
-        const git_error* e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Stash delete error"));
-        return false;
-    }
-
-    return true;
+    const bool success = GitInternal::StashService::drop(*m_repository, index);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 QStringList GitManager::stashList() const {
-    QStringList result;
-    if (!m_repository->isOpen())
-        return result;
-
-    git_revwalk* walker = nullptr;
-    if (git_revwalk_new(&walker, m_repository->handle()) != 0)
-        return result;
-
-    git_revwalk_sorting(walker, GIT_SORT_TIME);
-    git_revwalk_push_ref(walker, "refs/stash");
-
-    git_oid oid;
-    while (git_revwalk_next(&oid, walker) == 0) {
-        git_commit* commit = nullptr;
-        if (git_commit_lookup(&commit, m_repository->handle(), &oid) == 0) {
-            QString msg = QString::fromUtf8(git_commit_message(commit));
-            result.append(msg.trimmed());
-            git_commit_free(commit);
-        }
-    }
-
-    git_revwalk_free(walker);
-    return result;
+    return GitInternal::StashService::list(*m_repository);
 }
 
 QString GitManager::logGraph(int count) const {
@@ -392,8 +336,4 @@ QString GitManager::logGraph(int count) const {
 
     git_revwalk_free(walker);
     return result;
-}
-
-git_signature* GitManager::createSignature() const {
-    return m_repository->createSignature();
 }

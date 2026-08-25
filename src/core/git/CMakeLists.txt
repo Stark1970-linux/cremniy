@@ -18,6 +18,8 @@ add_library(cremniy_git_core STATIC
     internal/gitindexservice.h
     internal/gitmergeservice.cpp
     internal/gitmergeservice.h
+    internal/gitstashservice.cpp
+    internal/gitstashservice.h
 )
 
 target_include_directories(cremniy_git_core
