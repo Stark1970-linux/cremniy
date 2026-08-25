@@ -3,6 +3,7 @@
 #include "internal/gitbranchservice.h"
 #include "internal/gitcommitservice.h"
 #include "internal/gitindexservice.h"
+#include "internal/gitmergeservice.h"
 #include "internal/gitremoteservice.h"
 #include "internal/gitrepository.h"
 #include <QDateTime>
@@ -174,79 +175,10 @@ bool GitManager::fetch(const QString& remote) {
 // Слияние
 
 bool GitManager::merge(const QString& branchName) {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // ищем коммит для слияния
-    git_oid merge_oid;
-    QString refName = branchName.startsWith("refs/") ? branchName : "refs/heads/" + branchName;
-    int error = git_reference_name_to_id(&merge_oid, m_repository->handle(), refName.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Failed to find: ") + branchName);
-        return false;
-    }
-
-    git_annotated_commit* their_heads[1] = {nullptr};
-    error = git_annotated_commit_lookup(&their_heads[0], m_repository->handle(), &merge_oid);
-    if (error != 0) {
-        setError(tr("Failed to find commit for merge"));
-        return false;
-    }
-
-    git_merge_options merge_opts = GIT_MERGE_OPTIONS_INIT;
-    git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
-    checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-
-    error = git_merge(m_repository->handle(), (const git_annotated_commit**) their_heads, 1, &merge_opts, &checkout_opts);
-    git_annotated_commit_free(their_heads[0]);
-
-    if (error != 0) {
-        const git_error* e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Merge error"));
-        return false;
-    }
-
-    // если нет конфликтов, делаем коммит слияния
-    if (!hasConflicts()) {
-        git_index* index = nullptr;
-        git_repository_index(&index, m_repository->handle());
-
-        git_oid tree_oid;
-        git_index_write_tree(&tree_oid, index);
-        git_index_free(index);
-
-        git_tree* tree = nullptr;
-        git_tree_lookup(&tree, m_repository->handle(), &tree_oid);
-
-        git_oid head_oid;
-        git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
-        git_commit* head_commit = nullptr;
-        git_commit_lookup(&head_commit, m_repository->handle(), &head_oid);
-
-        git_commit* other_commit = nullptr;
-        git_commit_lookup(&other_commit, m_repository->handle(), &merge_oid);
-
-        git_signature* sig = createSignature();
-        if (sig) {
-            const git_commit* parents[] = {head_commit, other_commit};
-            git_oid commit_oid;
-            git_commit_create(
-                &commit_oid, m_repository->handle(), "HEAD",
-                sig, sig, nullptr,
-                (tr("Merge branch '") + branchName + "'").toUtf8().constData(),
-                tree, 2, parents);
-            git_signature_free(sig);
-        }
-
-        git_tree_free(tree);
-        git_commit_free(head_commit);
-        git_commit_free(other_commit);
-    }
-
-    emit repositoryChanged();
-    return true;
+    const bool success = GitInternal::MergeService::merge(*m_repository, branchName);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::hasConflicts() const {
