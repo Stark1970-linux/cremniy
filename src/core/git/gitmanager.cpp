@@ -1,4 +1,5 @@
 #include "gitmanager.h"
+#include "internal/gitrepository.h"
 #include <git2.h>
 #include <QDir>
 #include <QFileInfo>
@@ -6,61 +7,40 @@
 
 GitManager::GitManager(QObject *parent)
     : QObject(parent)
-    , m_repo(nullptr)
+    , m_repository(std::make_unique<GitInternal::Repository>())
 {
-    // Инициализируем один раз
-    git_libgit2_init();
-
 }
 
-GitManager::~GitManager()
-{
-    close();
-    git_libgit2_shutdown();
-}
+GitManager::~GitManager() = default;
 
 bool GitManager::open(const QString &repoPath)
 {
-    close();
-
-    int error = git_repository_open(&m_repo, repoPath.toUtf8().constData());
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Failed to open repository"));
-        return false;
-    }
-
-    m_repoPath = repoPath;
-    return true;
+    return m_repository->open(repoPath);
 }
 
 void GitManager::close()
 {
-    if (m_repo) {
-        git_repository_free(m_repo);
-        m_repo = nullptr;
-    }
-    m_repoPath.clear();
+    m_repository->close();
 }
 
 bool GitManager::isOpen() const
 {
-    return m_repo != nullptr;
+    return m_repository->isOpen();
 }
 
 QString GitManager::lastError() const
 {
-    return m_lastError;
+    return m_repository->lastError();
 }
 
 QString GitManager::repoPath() const
 {
-    return m_repoPath;
+    return m_repository->path();
 }
 
 void GitManager::setError(const QString &error) const
 {
-    m_lastError = error;
+    m_repository->setError(error);
 }
 
 // Ветки
@@ -68,10 +48,10 @@ void GitManager::setError(const QString &error) const
 QStringList GitManager::branches() const
 {
     QStringList result;
-    if (!m_repo) return result;
+    if (!m_repository->isOpen()) return result;
 
     git_branch_iterator *iter = nullptr;
-    int error = git_branch_iterator_new(&iter, m_repo, GIT_BRANCH_LOCAL);
+    int error = git_branch_iterator_new(&iter, m_repository->handle(), GIT_BRANCH_LOCAL);
     if (error != 0) return result;
 
     git_reference *ref = nullptr;
@@ -90,10 +70,10 @@ QStringList GitManager::branches() const
 
 QString GitManager::currentBranch() const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_reference *head = nullptr;
-    int error = git_repository_head(&head, m_repo);
+    int error = git_repository_head(&head, m_repository->handle());
     if (error != 0) return {};
 
     const char *name = nullptr;
@@ -106,7 +86,7 @@ QString GitManager::currentBranch() const
 
 bool GitManager::checkoutBranch(const QString &branchName)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -114,7 +94,7 @@ bool GitManager::checkoutBranch(const QString &branchName)
     // ищем ветку
     git_reference *ref = nullptr;
     QString refName = "refs/heads/" + branchName;
-    int error = git_reference_dwim(&ref, m_repo, refName.toUtf8().constData());
+    int error = git_reference_dwim(&ref, m_repository->handle(), refName.toUtf8().constData());
     if (error != 0) {
         setError(tr("Branch not found: ") + branchName);
         return false;
@@ -124,7 +104,7 @@ bool GitManager::checkoutBranch(const QString &branchName)
     git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
     opts.checkout_strategy = GIT_CHECKOUT_SAFE;
 
-    error = git_checkout_tree(m_repo, (const git_object *)git_reference_target(ref), &opts);
+    error = git_checkout_tree(m_repository->handle(), (const git_object *)git_reference_target(ref), &opts);
     if (error != 0) {
         git_reference_free(ref);
         const git_error *e = git_error_last();
@@ -132,7 +112,7 @@ bool GitManager::checkoutBranch(const QString &branchName)
         return false;
     }
 
-    error = git_repository_set_head(m_repo, refName.toUtf8().constData());
+    error = git_repository_set_head(m_repository->handle(), refName.toUtf8().constData());
     git_reference_free(ref);
 
     if (error != 0) {
@@ -147,28 +127,28 @@ bool GitManager::checkoutBranch(const QString &branchName)
 
 bool GitManager::createBranch(const QString &branchName)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     // берём  коммит
     git_oid head_oid;
-    int error = git_reference_name_to_id(&head_oid, m_repo, "HEAD");
+    int error = git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
     if (error != 0) {
         setError(tr("Failed to get HEAD"));
         return false;
     }
 
     git_commit *commit = nullptr;
-    error = git_commit_lookup(&commit, m_repo, &head_oid);
+    error = git_commit_lookup(&commit, m_repository->handle(), &head_oid);
     if (error != 0) {
         setError(tr("Failed to find HEAD commit"));
         return false;
     }
 
     git_reference *new_ref = nullptr;
-    error = git_branch_create(&new_ref, m_repo, branchName.toUtf8().constData(), commit, 0);
+    error = git_branch_create(&new_ref, m_repository->handle(), branchName.toUtf8().constData(), commit, 0);
     git_commit_free(commit);
 
     if (error != 0) {
@@ -184,14 +164,14 @@ bool GitManager::createBranch(const QString &branchName)
 
 bool GitManager::deleteBranch(const QString &branchName)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     git_reference *ref = nullptr;
     QString refName = "refs/heads/" + branchName;
-    int error = git_reference_dwim(&ref, m_repo, refName.toUtf8().constData());
+    int error = git_reference_dwim(&ref, m_repository->handle(), refName.toUtf8().constData());
     if (error != 0) {
         setError(tr("Branch not found: ") + branchName);
         return false;
@@ -212,14 +192,14 @@ bool GitManager::deleteBranch(const QString &branchName)
 
 bool GitManager::renameBranch(const QString &oldName, const QString &newName)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     git_reference *ref = nullptr;
     QString refName = "refs/heads/" + oldName;
-    int error = git_reference_dwim(&ref, m_repo, refName.toUtf8().constData());
+    int error = git_reference_dwim(&ref, m_repository->handle(), refName.toUtf8().constData());
     if (error != 0) {
         setError(tr("Branch not found: ") + oldName);
         return false;
@@ -244,14 +224,14 @@ bool GitManager::renameBranch(const QString &oldName, const QString &newName)
 
 bool GitManager::createCommit(const QString &message)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     // получаем индекс
     git_index *index = nullptr;
-    int error = git_repository_index(&index, m_repo);
+    int error = git_repository_index(&index, m_repository->handle());
     if (error != 0) {
         setError(tr("Failed to get index"));
         return false;
@@ -267,7 +247,7 @@ bool GitManager::createCommit(const QString &message)
     }
 
     git_tree *tree = nullptr;
-    error = git_tree_lookup(&tree, m_repo, &tree_oid);
+    error = git_tree_lookup(&tree, m_repository->handle(), &tree_oid);
     git_index_free(index);
     if (error != 0) {
         setError(tr("Failed to find tree"));
@@ -277,9 +257,9 @@ bool GitManager::createCommit(const QString &message)
     // получаем коммит как родителя
     git_commit *parent = nullptr;
     git_oid head_oid;
-    error = git_reference_name_to_id(&head_oid, m_repo, "HEAD");
+    error = git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
     if (error == 0) {
-        git_commit_lookup(&parent, m_repo, &head_oid);
+        git_commit_lookup(&parent, m_repository->handle(), &head_oid);
     }
 
     // создаём подпись
@@ -294,13 +274,13 @@ bool GitManager::createCommit(const QString &message)
     git_oid commit_oid;
     if (parent) {
         error = git_commit_create(
-            &commit_oid, m_repo, "HEAD",
+            &commit_oid, m_repository->handle(), "HEAD",
             sig, sig, nullptr,
             message.toUtf8().constData(),
             tree, 1, (const git_commit **)&parent);
     } else {
         error = git_commit_create(
-            &commit_oid, m_repo, "HEAD",
+            &commit_oid, m_repository->handle(), "HEAD",
             sig, sig, nullptr,
             message.toUtf8().constData(),
             tree, 0, nullptr);
@@ -323,10 +303,10 @@ bool GitManager::createCommit(const QString &message)
 QStringList GitManager::commitHistory(int count) const
 {
     QStringList result;
-    if (!m_repo) return result;
+    if (!m_repository->isOpen()) return result;
 
     git_revwalk *walker = nullptr;
-    int error = git_revwalk_new(&walker, m_repo);
+    int error = git_revwalk_new(&walker, m_repository->handle());
     if (error != 0) return result;
 
     git_revwalk_sorting(walker, GIT_SORT_TIME);
@@ -345,14 +325,14 @@ QStringList GitManager::commitHistory(int count) const
 
 QString GitManager::commitMessage(const QString &oid) const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_oid commit_oid;
     if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0)
         return {};
 
     git_commit *commit = nullptr;
-    if (git_commit_lookup(&commit, m_repo, &commit_oid) != 0)
+    if (git_commit_lookup(&commit, m_repository->handle(), &commit_oid) != 0)
         return {};
 
     QString msg = QString::fromUtf8(git_commit_message(commit));
@@ -362,14 +342,14 @@ QString GitManager::commitMessage(const QString &oid) const
 
 QString GitManager::commitAuthor(const QString &oid) const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_oid commit_oid;
     if (git_oid_fromstr(&commit_oid, oid.toUtf8().constData()) != 0)
         return {};
 
     git_commit *commit = nullptr;
-    if (git_commit_lookup(&commit, m_repo, &commit_oid) != 0)
+    if (git_commit_lookup(&commit, m_repository->handle(), &commit_oid) != 0)
         return {};
 
     const git_signature *sig = git_commit_author(commit);
@@ -380,7 +360,7 @@ QString GitManager::commitAuthor(const QString &oid) const
 
 bool GitManager::checkoutCommit(const QString &oid)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -392,7 +372,7 @@ bool GitManager::checkoutCommit(const QString &oid)
     }
 
     git_commit *commit = nullptr;
-    int error = git_commit_lookup(&commit, m_repo, &commit_oid);
+    int error = git_commit_lookup(&commit, m_repository->handle(), &commit_oid);
     if (error != 0) {
         setError(tr("Commit not found"));
         return false;
@@ -401,7 +381,7 @@ bool GitManager::checkoutCommit(const QString &oid)
     git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
     opts.checkout_strategy = GIT_CHECKOUT_SAFE;
 
-    error = git_checkout_tree(m_repo, (const git_object *)commit, &opts);
+    error = git_checkout_tree(m_repository->handle(), (const git_object *)commit, &opts);
     if (error != 0) {
         git_commit_free(commit);
         const git_error *e = git_error_last();
@@ -409,7 +389,7 @@ bool GitManager::checkoutCommit(const QString &oid)
         return false;
     }
 
-    git_repository_set_head_detached(m_repo, &commit_oid);
+    git_repository_set_head_detached(m_repository->handle(), &commit_oid);
     git_commit_free(commit);
 
     emit repositoryChanged();
@@ -418,7 +398,7 @@ bool GitManager::checkoutCommit(const QString &oid)
 
 bool GitManager::resetHard(const QString &oid)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -430,13 +410,13 @@ bool GitManager::resetHard(const QString &oid)
     }
 
     git_object *target = nullptr;
-    int error = git_object_lookup(&target, m_repo, &commit_oid, GIT_OBJECT_COMMIT);
+    int error = git_object_lookup(&target, m_repository->handle(), &commit_oid, GIT_OBJECT_COMMIT);
     if (error != 0) {
         setError(tr("Object not found"));
         return false;
     }
 
-    error = git_reset(m_repo, target, GIT_RESET_HARD, nullptr);
+    error = git_reset(m_repository->handle(), target, GIT_RESET_HARD, nullptr);
     git_object_free(target);
 
     if (error != 0) {
@@ -451,7 +431,7 @@ bool GitManager::resetHard(const QString &oid)
 
 bool GitManager::resetMixed(const QString &oid)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -463,13 +443,13 @@ bool GitManager::resetMixed(const QString &oid)
     }
 
     git_object *target = nullptr;
-    int error = git_object_lookup(&target, m_repo, &commit_oid, GIT_OBJECT_COMMIT);
+    int error = git_object_lookup(&target, m_repository->handle(), &commit_oid, GIT_OBJECT_COMMIT);
     if (error != 0) {
         setError(tr("Object not found"));
         return false;
     }
 
-    error = git_reset(m_repo, target, GIT_RESET_MIXED, nullptr);
+    error = git_reset(m_repository->handle(), target, GIT_RESET_MIXED, nullptr);
     git_object_free(target);
 
     if (error != 0) {
@@ -484,7 +464,7 @@ bool GitManager::resetMixed(const QString &oid)
 
 bool GitManager::revertCommit(const QString &oid)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -496,13 +476,13 @@ bool GitManager::revertCommit(const QString &oid)
     }
 
     git_commit *commit = nullptr;
-    int error = git_commit_lookup(&commit, m_repo, &commit_oid);
+    int error = git_commit_lookup(&commit, m_repository->handle(), &commit_oid);
     if (error != 0) {
         setError(tr("Commit not found"));
         return false;
     }
 
-    error = git_revert(m_repo, commit, nullptr);
+    error = git_revert(m_repository->handle(), commit, nullptr);
     git_commit_free(commit);
 
     if (error != 0) {
@@ -517,21 +497,21 @@ bool GitManager::revertCommit(const QString &oid)
 
 bool GitManager::amendCommit(const QString &message)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     // берём коммит
     git_oid head_oid;
-    int error = git_reference_name_to_id(&head_oid, m_repo, "HEAD");
+    int error = git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
     if (error != 0) {
         setError(tr("Failed to get HEAD"));
         return false;
     }
 
     git_commit *old_commit = nullptr;
-    error = git_commit_lookup(&old_commit, m_repo, &head_oid);
+    error = git_commit_lookup(&old_commit, m_repository->handle(), &head_oid);
     if (error != 0) {
         setError(tr("Failed to find HEAD commit"));
         return false;
@@ -565,7 +545,7 @@ bool GitManager::amendCommit(const QString &message)
     }
 
     error = git_commit_create(
-        &new_commit_oid, m_repo, "HEAD",
+        &new_commit_oid, m_repository->handle(), "HEAD",
         sig, sig, nullptr,
         message.toUtf8().constData(),
         tree,
@@ -590,14 +570,14 @@ bool GitManager::amendCommit(const QString &message)
 
 bool GitManager::push(const QString &remote, const QString &branch)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     // ищем remote
     git_remote *rem = nullptr;
-    int error = git_remote_lookup(&rem, m_repo, remote.toUtf8().constData());
+    int error = git_remote_lookup(&rem, m_repository->handle(), remote.toUtf8().constData());
     if (error != 0) {
         setError(tr("Remote not found: ") + remote);
         return false;
@@ -636,7 +616,7 @@ bool GitManager::push(const QString &remote, const QString &branch)
 
 bool GitManager::pull(const QString &remote, const QString &branch)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -657,13 +637,13 @@ bool GitManager::pull(const QString &remote, const QString &branch)
 
 bool GitManager::fetch(const QString &remote)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     git_remote *rem = nullptr;
-    int error = git_remote_lookup(&rem, m_repo, remote.toUtf8().constData());
+    int error = git_remote_lookup(&rem, m_repository->handle(), remote.toUtf8().constData());
     if (error != 0) {
         setError(tr("Remote not found: ") + remote);
         return false;
@@ -686,7 +666,7 @@ bool GitManager::fetch(const QString &remote)
 
 bool GitManager::merge(const QString &branchName)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -694,14 +674,14 @@ bool GitManager::merge(const QString &branchName)
     // ищем коммит для слияния
     git_oid merge_oid;
     QString refName = branchName.startsWith("refs/") ? branchName : "refs/heads/" + branchName;
-    int error = git_reference_name_to_id(&merge_oid, m_repo, refName.toUtf8().constData());
+    int error = git_reference_name_to_id(&merge_oid, m_repository->handle(), refName.toUtf8().constData());
     if (error != 0) {
         setError(tr("Failed to find: ") + branchName);
         return false;
     }
 
     git_annotated_commit *their_heads[1] = { nullptr };
-    error = git_annotated_commit_lookup(&their_heads[0], m_repo, &merge_oid);
+    error = git_annotated_commit_lookup(&their_heads[0], m_repository->handle(), &merge_oid);
     if (error != 0) {
         setError(tr("Failed to find commit for merge"));
         return false;
@@ -711,7 +691,7 @@ bool GitManager::merge(const QString &branchName)
     git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
     checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
 
-    error = git_merge(m_repo, (const git_annotated_commit **)their_heads, 1, &merge_opts, &checkout_opts);
+    error = git_merge(m_repository->handle(), (const git_annotated_commit **)their_heads, 1, &merge_opts, &checkout_opts);
     git_annotated_commit_free(their_heads[0]);
 
     if (error != 0) {
@@ -723,29 +703,29 @@ bool GitManager::merge(const QString &branchName)
     // если нет конфликтов, делаем коммит слияния
     if (!hasConflicts()) {
         git_index *index = nullptr;
-        git_repository_index(&index, m_repo);
+        git_repository_index(&index, m_repository->handle());
 
         git_oid tree_oid;
         git_index_write_tree(&tree_oid, index);
         git_index_free(index);
 
         git_tree *tree = nullptr;
-        git_tree_lookup(&tree, m_repo, &tree_oid);
+        git_tree_lookup(&tree, m_repository->handle(), &tree_oid);
 
         git_oid head_oid;
-        git_reference_name_to_id(&head_oid, m_repo, "HEAD");
+        git_reference_name_to_id(&head_oid, m_repository->handle(), "HEAD");
         git_commit *head_commit = nullptr;
-        git_commit_lookup(&head_commit, m_repo, &head_oid);
+        git_commit_lookup(&head_commit, m_repository->handle(), &head_oid);
 
         git_commit *other_commit = nullptr;
-        git_commit_lookup(&other_commit, m_repo, &merge_oid);
+        git_commit_lookup(&other_commit, m_repository->handle(), &merge_oid);
 
         git_signature *sig = createSignature();
         if (sig) {
             const git_commit *parents[] = { head_commit, other_commit };
             git_oid commit_oid;
             git_commit_create(
-                &commit_oid, m_repo, "HEAD",
+                &commit_oid, m_repository->handle(), "HEAD",
                 sig, sig, nullptr,
                 (tr("Merge branch '") + branchName + "'").toUtf8().constData(),
                 tree, 2, parents);
@@ -763,10 +743,10 @@ bool GitManager::merge(const QString &branchName)
 
 bool GitManager::hasConflicts() const
 {
-    if (!m_repo) return false;
+    if (!m_repository->isOpen()) return false;
 
     git_index *index = nullptr;
-    if (git_repository_index(&index, m_repo) != 0) return false;
+    if (git_repository_index(&index, m_repository->handle()) != 0) return false;
 
     bool hasConflict = git_index_has_conflicts(index);
     git_index_free(index);
@@ -776,10 +756,10 @@ bool GitManager::hasConflicts() const
 QStringList GitManager::conflictFiles() const
 {
     QStringList result;
-    if (!m_repo) return result;
+    if (!m_repository->isOpen()) return result;
 
     git_index *index = nullptr;
-    if (git_repository_index(&index, m_repo) != 0) return result;
+    if (git_repository_index(&index, m_repository->handle()) != 0) return result;
 
     git_index_conflict_iterator *iter = nullptr;
     if (git_index_conflict_iterator_new(&iter, index) != 0) {
@@ -808,13 +788,13 @@ QStringList GitManager::conflictFiles() const
 
 bool GitManager::stageFile(const QString &filePath)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     git_index *index = nullptr;
-    int error = git_repository_index(&index, m_repo);
+    int error = git_repository_index(&index, m_repository->handle());
     if (error != 0) {
         setError(tr("Failed to get index"));
         return false;
@@ -842,13 +822,13 @@ bool GitManager::stageFile(const QString &filePath)
 
 bool GitManager::unstageFile(const QString &filePath)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
     git_index *index = nullptr;
-    int error = git_repository_index(&index, m_repo);
+    int error = git_repository_index(&index, m_repository->handle());
     if (error != 0) {
         setError(tr("Failed to get index"));
         return false;
@@ -876,13 +856,13 @@ bool GitManager::unstageFile(const QString &filePath)
 
 QString GitManager::fileDiff(const QString &filePath) const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_diff *diff = nullptr;
     git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
     opts.flags = GIT_DIFF_INCLUDE_UNTRACKED;
 
-    int error = git_diff_index_to_workdir(&diff, m_repo, nullptr, &opts);
+    int error = git_diff_index_to_workdir(&diff, m_repository->handle(), nullptr, &opts);
     if (error != 0) return {};
 
     git_buf buf = {0};
@@ -901,12 +881,12 @@ QString GitManager::fileDiff(const QString &filePath) const
 
 QString GitManager::stagedDiff() const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_diff *diff = nullptr;
     git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
 
-    int error = git_diff_tree_to_index(&diff, m_repo, nullptr, nullptr, &opts);
+    int error = git_diff_tree_to_index(&diff, m_repository->handle(), nullptr, nullptr, &opts);
     if (error != 0) return {};
 
     git_buf buf = {0};
@@ -937,9 +917,7 @@ bool GitManager::clone(const QString &url, const QString &path)
         return false;
     }
 
-    close();
-    m_repo = cloned_repo;
-    m_repoPath = path;
+    m_repository->adopt(cloned_repo, path);
 
     emit repositoryChanged();
     return true;
@@ -955,9 +933,7 @@ bool GitManager::init(const QString &path)
         return false;
     }
 
-    close();
-    m_repo = new_repo;
-    m_repoPath = path;
+    m_repository->adopt(new_repo, path);
 
     emit repositoryChanged();
     return true;
@@ -981,7 +957,7 @@ QString GitManager::findGitRepositoryRoot(const QString &path)
 QVector<BlameLineInfo> GitManager::blameFile(const QString &relativeFilePath) const
 {
     QVector<BlameLineInfo> result;
-    if (!m_repo) return result;
+    if (!m_repository->isOpen()) return result;
 
     git_blame_options opts = GIT_BLAME_OPTIONS_INIT;
     /* Use GIT_BLAME_NORMAL as base and add flags */
@@ -993,7 +969,7 @@ QVector<BlameLineInfo> GitManager::blameFile(const QString &relativeFilePath) co
     if (path.startsWith("./")) path.remove(0, 2);
 
     git_blame *blame = nullptr;
-    int error = git_blame_file(&blame, m_repo, path.toUtf8().constData(), &opts);
+    int error = git_blame_file(&blame, m_repository->handle(), path.toUtf8().constData(), &opts);
     if (error != 0) {
         const git_error *e = git_error_last();
         setError(e ? QString::fromUtf8(e->message) : tr("Blame error"));
@@ -1028,7 +1004,7 @@ QVector<BlameLineInfo> GitManager::blameFile(const QString &relativeFilePath) co
             info.commitSummary = tr("Uncommitted changes");
         } else {
             git_commit *commit = nullptr;
-            if (git_commit_lookup(&commit, m_repo, &hunk->final_commit_id) == 0) {
+            if (git_commit_lookup(&commit, m_repository->handle(), &hunk->final_commit_id) == 0) {
                 const git_signature *sig = git_commit_author(commit);
                 info.authorName = QString::fromUtf8(sig->name);
                 info.authorEmail = QString::fromUtf8(sig->email);
@@ -1056,7 +1032,7 @@ QVector<BlameLineInfo> GitManager::blameFile(const QString &relativeFilePath) co
 
 QString GitManager::status() const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_status_options opts = GIT_STATUS_OPTIONS_INIT;
     opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
@@ -1064,7 +1040,7 @@ QString GitManager::status() const
                  GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
 
     git_status_list *status_list = nullptr;
-    int error = git_status_list_new(&status_list, m_repo, &opts);
+    int error = git_status_list_new(&status_list, m_repository->handle(), &opts);
     if (error != 0) return {};
 
     size_t count = git_status_list_entrycount(status_list);
@@ -1101,7 +1077,7 @@ QString GitManager::status() const
 
 bool GitManager::stashSave(const QString &message)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
@@ -1109,7 +1085,7 @@ bool GitManager::stashSave(const QString &message)
     git_signature *sig = createSignature();
     if (!sig) return false;
 
-    int error = git_stash_save(nullptr, m_repo, sig, message.isEmpty() ? nullptr : message.toUtf8().constData(), GIT_STASH_DEFAULT);
+    int error = git_stash_save(nullptr, m_repository->handle(), sig, message.isEmpty() ? nullptr : message.toUtf8().constData(), GIT_STASH_DEFAULT);
     git_signature_free(sig);
 
     if (error != 0) {
@@ -1124,12 +1100,12 @@ bool GitManager::stashSave(const QString &message)
 
 bool GitManager::stashApply(int index)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
-    int error = git_stash_apply(m_repo, index, nullptr);
+    int error = git_stash_apply(m_repository->handle(), index, nullptr);
     if (error != 0) {
         const git_error *e = git_error_last();
         setError(e ? QString::fromUtf8(e->message) : tr("Stash apply error"));
@@ -1142,12 +1118,12 @@ bool GitManager::stashApply(int index)
 
 bool GitManager::stashDrop(int index)
 {
-    if (!m_repo) {
+    if (!m_repository->isOpen()) {
         setError(tr("Repository not open"));
         return false;
     }
 
-    int error = git_stash_drop(m_repo, index);
+    int error = git_stash_drop(m_repository->handle(), index);
     if (error != 0) {
         const git_error *e = git_error_last();
         setError(e ? QString::fromUtf8(e->message) : tr("Stash delete error"));
@@ -1160,10 +1136,10 @@ bool GitManager::stashDrop(int index)
 QStringList GitManager::stashList() const
 {
     QStringList result;
-    if (!m_repo) return result;
+    if (!m_repository->isOpen()) return result;
 
     git_revwalk *walker = nullptr;
-    if (git_revwalk_new(&walker, m_repo) != 0) return result;
+    if (git_revwalk_new(&walker, m_repository->handle()) != 0) return result;
 
     git_revwalk_sorting(walker, GIT_SORT_TIME);
     git_revwalk_push_ref(walker, "refs/stash");
@@ -1171,7 +1147,7 @@ QStringList GitManager::stashList() const
     git_oid oid;
     while (git_revwalk_next(&oid, walker) == 0) {
         git_commit *commit = nullptr;
-        if (git_commit_lookup(&commit, m_repo, &oid) == 0) {
+        if (git_commit_lookup(&commit, m_repository->handle(), &oid) == 0) {
             QString msg = QString::fromUtf8(git_commit_message(commit));
             result.append(msg.trimmed());
             git_commit_free(commit);
@@ -1184,10 +1160,10 @@ QStringList GitManager::stashList() const
 
 QString GitManager::logGraph(int count) const
 {
-    if (!m_repo) return {};
+    if (!m_repository->isOpen()) return {};
 
     git_revwalk *walker = nullptr;
-    int error = git_revwalk_new(&walker, m_repo);
+    int error = git_revwalk_new(&walker, m_repository->handle());
     if (error != 0) return {};
 
     git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_TOPOLOGICAL);
@@ -1203,7 +1179,7 @@ QString GitManager::logGraph(int count) const
 
     while (git_revwalk_next(&oid, walker) == 0 && i < count) {
         git_commit *commit = nullptr;
-        if (git_commit_lookup(&commit, m_repo, &oid) != 0) continue;
+        if (git_commit_lookup(&commit, m_repository->handle(), &oid) != 0) continue;
 
         const git_signature *sig = git_commit_author(commit);
         QString msg = QString::fromUtf8(git_commit_message(commit)).split('\n').first();
@@ -1216,7 +1192,7 @@ QString GitManager::logGraph(int count) const
         for (const QString &branch : branchList) {
             git_oid branch_oid;
             QString refName = "refs/heads/" + branch;
-            if (git_reference_name_to_id(&branch_oid, m_repo, refName.toUtf8().constData()) == 0) {
+            if (git_reference_name_to_id(&branch_oid, m_repository->handle(), refName.toUtf8().constData()) == 0) {
                 if (git_oid_equal(&oid, &branch_oid)) {
                     if (branch == currentBranch) {
                         refs.prepend("* " + branch);
@@ -1248,55 +1224,7 @@ QString GitManager::logGraph(int count) const
     return result;
 }
 
-// Приватные методы
-
-QString GitManager::userName() const
-{
-    if (!m_repo) return "User";
-
-    git_config *cfg = nullptr;
-    if (git_repository_config(&cfg, m_repo) != 0) return "User";
-
-    const char *name = nullptr;
-    if (git_config_get_string(&name, cfg, "user.name") != 0) {
-        git_config_free(cfg);
-        return "User";
-    }
-
-    QString result = QString::fromUtf8(name);
-    git_config_free(cfg);
-    return result;
-}
-
-QString GitManager::userEmail() const
-{
-    if (!m_repo) return "user@example.com";
-
-    git_config *cfg = nullptr;
-    if (git_repository_config(&cfg, m_repo) != 0) return "user@example.com";
-
-    const char *email = nullptr;
-    if (git_config_get_string(&email, cfg, "user.email") != 0) {
-        git_config_free(cfg);
-        return "user@example.com";
-    }
-
-    QString result = QString::fromUtf8(email);
-    git_config_free(cfg);
-    return result;
-}
-
 git_signature *GitManager::createSignature() const
 {
-    QString name = userName();
-    QString email = userEmail();
-
-    git_signature *sig = nullptr;
-    int error = git_signature_now(&sig, name.toUtf8().constData(), email.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Failed to create signature"));
-        return nullptr;
-    }
-
-    return sig;
+    return m_repository->createSignature();
 }

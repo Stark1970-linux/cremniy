@@ -4,6 +4,8 @@ add_library(cremniy_git_core STATIC
     gitblameservice.h
     gitmanager.cpp
     gitmanager.h
+    internal/gitrepository.cpp
+    internal/gitrepository.h
 )
 
 target_include_directories(cremniy_git_core

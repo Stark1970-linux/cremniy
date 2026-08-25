@@ -12,6 +12,7 @@ private slots:
     void discoversRepositoryFromNestedDirectory();
     void discoversWorktreeMarkerFile();
     void returnsEmptyOutsideRepository();
+    void ownsRepositoryLifecycle();
 };
 
 void GitCoreTest::discoversRepositoryFromNestedDirectory() {
@@ -48,6 +49,22 @@ void GitCoreTest::returnsEmptyOutsideRepository() {
     QTemporaryDir temporaryDirectory;
     QVERIFY(temporaryDirectory.isValid());
     QVERIFY(GitManager::findGitRepositoryRoot(temporaryDirectory.path()).isEmpty());
+}
+
+void GitCoreTest::ownsRepositoryLifecycle() {
+    QTemporaryDir temporaryDirectory(QDir::current().absoluteFilePath(QStringLiteral("gitcoretest-XXXXXX")));
+    QVERIFY(temporaryDirectory.isValid());
+
+    const QString repositoryPath = QDir(temporaryDirectory.path()).absoluteFilePath(QStringLiteral("repository"));
+    QVERIFY(QDir().mkpath(repositoryPath));
+    GitManager git;
+    QVERIFY2(git.init(repositoryPath), qPrintable(git.lastError()));
+    QVERIFY(git.isOpen());
+    QCOMPARE(QDir(git.repoPath()).absolutePath(), QDir(repositoryPath).absolutePath());
+
+    git.close();
+    QVERIFY(!git.isOpen());
+    QVERIFY(git.repoPath().isEmpty());
 }
 
 QTEST_GUILESS_MAIN(GitCoreTest)

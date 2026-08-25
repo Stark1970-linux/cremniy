@@ -4,10 +4,11 @@
 #include <QString>
 #include <QStringList>
 #include <QVector>
+#include <memory>
 #include "blamelineinfo.h"
 
-struct git_repository;
 struct git_signature;
+namespace GitInternal { class Repository; }
 
 /**
  * @brief Wrapper class over libgit2 for all git operations
@@ -167,18 +168,10 @@ signals:
     void repositoryChanged();
 
 private:
-    git_repository *m_repo = nullptr;
-    QString m_repoPath;
-    mutable QString m_lastError;
+    std::unique_ptr<GitInternal::Repository> m_repository;
 
     /** @brief Set error message */
     void setError(const QString &error) const;
-
-    /** @brief Get username from config */
-    QString userName() const;
-
-    /** @brief Get user email from config */
-    QString userEmail() const;
 
     /** @brief Create signature */
     git_signature *createSignature() const;
