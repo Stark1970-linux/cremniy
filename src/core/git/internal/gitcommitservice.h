@@ -18,6 +18,7 @@ namespace GitInternal {
         static bool resetMixed(Repository& repository, const QString& oid);
         static bool revert(Repository& repository, const QString& oid);
         static bool amend(Repository& repository, const QString& message);
+        static QString graph(const Repository& repository, int count);
 
     private:
         static bool reset(Repository& repository, const QString& oid, int resetType);

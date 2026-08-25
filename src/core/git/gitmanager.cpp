@@ -7,10 +7,6 @@
 #include "internal/gitremoteservice.h"
 #include "internal/gitrepository.h"
 #include "internal/gitstashservice.h"
-#include <QDateTime>
-#include <QDir>
-#include <QFileInfo>
-#include <git2.h>
 
 GitManager::GitManager(QObject* parent)
     : QObject(parent), m_repository(std::make_unique<GitInternal::Repository>()) {
@@ -270,70 +266,5 @@ QStringList GitManager::stashList() const {
 }
 
 QString GitManager::logGraph(int count) const {
-    if (!m_repository->isOpen())
-        return {};
-
-    git_revwalk* walker = nullptr;
-    int error = git_revwalk_new(&walker, m_repository->handle());
-    if (error != 0)
-        return {};
-
-    git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_TOPOLOGICAL);
-    git_revwalk_push_head(walker);
-
-    // получаем все ветки для пометок
-    QStringList branchList = branches();
-    QString currentBranch = this->currentBranch();
-
-    QString result;
-    git_oid oid;
-    int i = 0;
-
-    while (git_revwalk_next(&oid, walker) == 0 && i < count) {
-        git_commit* commit = nullptr;
-        if (git_commit_lookup(&commit, m_repository->handle(), &oid) != 0)
-            continue;
-
-        const git_signature* sig = git_commit_author(commit);
-        QString msg = QString::fromUtf8(git_commit_message(commit)).split('\n').first();
-        QString oidStr = QString::fromUtf8(git_oid_tostr_s(&oid));
-        QString author = QString::fromUtf8(sig->name);
-        QString dateStr = QDateTime::fromSecsSinceEpoch(sig->when.time).toString("yyyy-MM-dd HH:mm");
-
-        // проверяем, указывает ли ветка на этот коммит
-        QStringList refs;
-        for (const QString& branch: branchList) {
-            git_oid branch_oid;
-            QString refName = "refs/heads/" + branch;
-            if (git_reference_name_to_id(&branch_oid, m_repository->handle(), refName.toUtf8().constData()) == 0) {
-                if (git_oid_equal(&oid, &branch_oid)) {
-                    if (branch == currentBranch) {
-                        refs.prepend("* " + branch);
-                    }
-                    else {
-                        refs.append(branch);
-                    }
-                }
-            }
-        }
-
-        QString refStr;
-        if (!refs.isEmpty()) {
-            refStr = " (" + refs.join(", ") + ")";
-        }
-
-        result += QString("* %1 %2%3\n  | %4 <%5>\n  | %6\n")
-                      .arg(oidStr.left(7))
-                      .arg(dateStr)
-                      .arg(refStr)
-                      .arg(author)
-                      .arg(QString::fromUtf8(sig->email))
-                      .arg(msg);
-
-        git_commit_free(commit);
-        i++;
-    }
-
-    git_revwalk_free(walker);
-    return result;
+    return GitInternal::CommitService::graph(*m_repository, count);
 }

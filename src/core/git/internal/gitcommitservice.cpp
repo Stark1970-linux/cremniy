@@ -1,8 +1,10 @@
 #include "gitcommitservice.h"
 
+#include "gitbranchservice.h"
 #include "gitrepository.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QVector>
 #include <git2.h>
 #include <utility>
@@ -307,6 +309,71 @@ namespace GitInternal {
 
         repository.clearError();
         return true;
+    }
+
+    QString CommitService::graph(const Repository& repository, int count) {
+        if (!repository.isOpen() || count <= 0)
+            return {};
+
+        git_revwalk* walker = nullptr;
+        if (git_revwalk_new(&walker, repository.handle()) != 0)
+            return {};
+
+        git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_TOPOLOGICAL);
+        if (git_revwalk_push_head(walker) != 0) {
+            git_revwalk_free(walker);
+            return {};
+        }
+
+        const QStringList branchList = BranchService::branches(repository);
+        const QString currentBranch = BranchService::currentBranch(repository);
+
+        QString result;
+        git_oid oid;
+        int commitCount = 0;
+        while (commitCount < count && git_revwalk_next(&oid, walker) == 0) {
+            git_commit* commit = nullptr;
+            if (git_commit_lookup(&commit, repository.handle(), &oid) != 0)
+                continue;
+
+            const git_signature* signature = git_commit_author(commit);
+            const QString message = QString::fromUtf8(git_commit_message(commit)).split('\n').first();
+            const QString oidString = QString::fromUtf8(git_oid_tostr_s(&oid));
+            const QString author = signature && signature->name
+                                       ? QString::fromUtf8(signature->name)
+                                       : QString();
+            const QString email = signature && signature->email
+                                      ? QString::fromUtf8(signature->email)
+                                      : QString();
+            const QString date = signature
+                                     ? QDateTime::fromSecsSinceEpoch(signature->when.time).toString(QStringLiteral("yyyy-MM-dd HH:mm"))
+                                     : QString();
+
+            QStringList references;
+            for (const QString& branch: branchList) {
+                git_oid branchOid;
+                const QByteArray referenceName = (QStringLiteral("refs/heads/") + branch).toUtf8();
+                if (git_reference_name_to_id(&branchOid, repository.handle(), referenceName.constData()) == 0
+                    && git_oid_equal(&oid, &branchOid)) {
+                    if (branch == currentBranch)
+                        references.prepend(QStringLiteral("* ") + branch);
+                    else
+                        references.append(branch);
+                }
+            }
+
+            const QString referenceText = references.isEmpty()
+                                              ? QString()
+                                              : QStringLiteral(" (") + references.join(QStringLiteral(", ")) + QStringLiteral(")");
+            result += QStringLiteral("* %1 %2%3\n  | %4 <%5>\n  | %6\n")
+                          .arg(oidString.left(7), date, referenceText, author, email, message);
+
+            git_commit_free(commit);
+            ++commitCount;
+        }
+
+        git_revwalk_free(walker);
+        return result;
     }
 
 }// namespace GitInternal
