@@ -9,6 +9,10 @@ GitManager::GitManager(QObject *parent)
 {
     // Инициализируем один раз
     git_libgit2_init();
+
+    connect(this, &GitManager::repositoryChanged, []() {
+        emit GitNotifier::instance()->repositoryChanged();
+    });
 }
 
 GitManager::~GitManager()
@@ -961,6 +965,99 @@ bool GitManager::init(const QString &path)
     return true;
 }
 
+QString GitManager::findGitRepositoryRoot(const QString &path)
+{
+    QDir dir(path);
+
+    /* Search for .git directory upwards */
+    while (!dir.isRoot()) {
+        if (dir.exists(".git")) {
+            QDir gitDir(dir.filePath(".git"));
+            /* Check if it's a directory (or a file in case of worktrees) */
+            if (gitDir.exists() || QFileInfo(dir.filePath(".git")).isDir()) {
+                return dir.absolutePath();
+            }
+        }
+        if (!dir.cdUp()) break;
+    }
+
+    return {};
+}
+
+QVector<BlameLineInfo> GitManager::blameFile(const QString &relativeFilePath) const
+{
+    QVector<BlameLineInfo> result;
+    if (!m_repo) return result;
+
+    git_blame_options opts = GIT_BLAME_OPTIONS_INIT;
+    /* Use GIT_BLAME_NORMAL as base and add flags */
+    opts.flags = GIT_BLAME_TRACK_COPIES_SAME_FILE;
+
+    /* If the file is not in the repository, git_blame_file will fail.
+     * Ensure path is normalized. */
+    QString path = relativeFilePath;
+    if (path.startsWith("./")) path.remove(0, 2);
+
+    git_blame *blame = nullptr;
+    int error = git_blame_file(&blame, m_repo, path.toUtf8().constData(), &opts);
+    if (error != 0) {
+        const git_error *e = git_error_last();
+        setError(e ? QString::fromUtf8(e->message) : tr("Blame error"));
+        return result;
+    }
+
+    uint32_t lineCount = git_blame_get_hunk_count(blame);
+    /* git_blame hunks are not line-by-line if multiple lines are from the same commit.
+     * We need to map them back to lines. However, libgit2's blame hunk tells us
+     * which lines it covers.
+     */
+
+    /* We need to know the total number of lines in the file to size our result.
+     * But git_blame doesn't directly give total lines in the WORKDIR version easily.
+     * Actually, we can iterate hunks and find the max line number.
+     */
+    uint32_t totalLines = 0;
+    for (uint32_t i = 0; i < lineCount; ++i) {
+        const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame, i);
+        totalLines = qMax(totalLines, (uint32_t)(hunk->final_start_line_number + hunk->lines_in_hunk - 1));
+    }
+
+    result.resize(totalLines);
+
+    for (uint32_t i = 0; i < lineCount; ++i) {
+        const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame, i);
+        BlameLineInfo info;
+
+        if (git_oid_is_zero(&hunk->final_commit_id)) {
+            info.isUncommitted = true;
+            info.authorName = tr("You");
+            info.commitSummary = tr("Uncommitted changes");
+        } else {
+            git_commit *commit = nullptr;
+            if (git_commit_lookup(&commit, m_repo, &hunk->final_commit_id) == 0) {
+                const git_signature *sig = git_commit_author(commit);
+                info.authorName = QString::fromUtf8(sig->name);
+                info.authorEmail = QString::fromUtf8(sig->email);
+                info.commitDate = QDateTime::fromSecsSinceEpoch(sig->when.time);
+                info.fullOid = QString::fromUtf8(git_oid_tostr_s(&hunk->final_commit_id));
+                info.shortOid = info.fullOid.left(7);
+                info.commitSummary = QString::fromUtf8(git_commit_message(commit)).split('\n').first();
+                git_commit_free(commit);
+            }
+        }
+
+        for (uint32_t j = 0; j < hunk->lines_in_hunk; ++j) {
+            uint32_t lineIdx = (uint32_t)(hunk->final_start_line_number + j - 1);
+            if (lineIdx < (uint32_t)result.size()) {
+                result[lineIdx] = info;
+            }
+        }
+    }
+
+    git_blame_free(blame);
+    return result;
+}
+
 // Дополнительно
 
 QString GitManager::status() const
@@ -1208,4 +1305,10 @@ git_signature *GitManager::createSignature() const
     }
 
     return sig;
+}
+
+GitNotifier *GitNotifier::instance()
+{
+    static GitNotifier s;
+    return &s;
 }

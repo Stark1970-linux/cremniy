@@ -20,6 +20,12 @@ add_library(CodeEditor STATIC
     include/widgets/EditorLanguageSupport.h
     include/widgets/EditorTypingBehaviors.h
     include/widgets/LineNumberArea.h
+    include/widgets/BlameTooltip.h
+    include/widgets/BlameLineInfo.h
+    include/languages/LanguageDefinition.h
+    include/languages/LanguageRegistry.h
+    include/languages/LanguageRegistration.h
+    include/languages/LanguageRuleHelpers.h
     src/core/LineCache.cpp
     src/core/LineIndex.cpp
     src/core/UTF8Decoder.cpp
@@ -28,10 +34,9 @@ add_library(CodeEditor STATIC
     src/widgets/EditorLanguageSupport.cpp
     src/widgets/EditorTypingBehaviors.cpp
     src/widgets/LineNumberArea.cpp
+    src/widgets/BlameTooltip.cpp
     src/widgets/highlighters/AsmHighlighter.h
     src/widgets/highlighters/AsmHighlighter.cpp
-    src/widgets/highlighters/HighlighterFactory.h
-    src/widgets/highlighters/HighlighterFactory.cpp
     src/widgets/highlighters/MakefileHighlighter.h
     src/widgets/highlighters/MakefileHighlighter.cpp
     src/widgets/highlighters/MarkdownHighlighter.h
@@ -40,6 +45,26 @@ add_library(CodeEditor STATIC
     src/widgets/highlighters/RuleBasedHighlighter.cpp
     src/widgets/highlighters/XmlLanguageHighlighter.h
     src/widgets/highlighters/XmlLanguageHighlighter.cpp
+    src/languages/LanguageRegistry.cpp
+    src/languages/LanguageRegistration.cpp
+    src/languages/AsmLanguage.cpp
+    src/languages/CBraceFamilyLanguages.cpp
+    src/languages/CppLanguage.cpp
+    src/languages/GlslLanguage.cpp
+    src/languages/IniLanguage.cpp
+    src/languages/JavaScriptLanguage.cpp
+    src/languages/JsonLanguage.cpp
+    src/languages/LuaLanguage.cpp
+    src/languages/MakeLanguage.cpp
+    src/languages/MarkdownLanguage.cpp
+    src/languages/PythonLanguage.cpp
+    src/languages/RustLanguage.cpp
+    src/languages/ShellLanguage.cpp
+    src/languages/SlnLanguage.cpp
+    src/languages/SqlLanguage.cpp
+    src/languages/TomlLanguage.cpp
+    src/languages/XmlLanguage.cpp
+    src/languages/YamlLanguage.cpp
     third_party/QCodeEditor/include/QCECompleter.hpp
     third_party/QCodeEditor/include/QCXXHighlighter.hpp
     third_party/QCodeEditor/include/QCodeEditor.hpp

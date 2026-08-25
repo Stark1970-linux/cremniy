@@ -1,7 +1,11 @@
 #include "codeeditortab.h"
 #include "utils/utils.h"
 #include "libs/CodeEditor/include/widgets/CustomCodeEditor.h"
+#include "libs/CodeEditor/include/languages/LanguageRegistry.h"
 #include "core/modules/ModuleManager.h"
+#include "core/settings/appsettings.h"
+#include "codeeditorsettings.h"
+#include "core/git/gitmanager.h"
 
 #include <QBoxLayout>
 #include <QFileInfo>
@@ -94,6 +98,38 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
     m_goToLineShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_G), this);
 
     connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
+
+    /* Blame Worker Setup */
+    m_blameThread = new QThread(this);
+    m_blameWorker = new GitBlameWorker();
+    m_blameWorker->moveToThread(m_blameThread);
+
+    connect(m_blameThread, &QThread::finished, m_blameWorker, &QObject::deleteLater);
+    connect(this, &CodeEditorTab::destroyed, m_blameThread, &QThread::quit);
+
+    connect(m_blameWorker, &GitBlameWorker::blameFinished, this, &CodeEditorTab::onBlameFinished);
+
+    m_blameThread->start();
+
+    m_codeEditorWidget->setGitBlameEnabled(CodeEditorSettings::gitBlameEnabled());
+    m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
+    m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
+
+    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
+            this, [this](const QString &key) {
+        // Модуль сам знает свои ключи и сам решает, что изменилось;
+        // ядро лишь сообщает «такой-то ключ поменялся».
+        if (key == CodeEditorSettings::keyGitBlameEnabled()) {
+            setGitBlameSlot(CodeEditorSettings::gitBlameEnabled());
+        } else if (key == CodeEditorSettings::keyGitBlameColor()) {
+            m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
+        } else if (key == CodeEditorSettings::keyGitBlamePadding()) {
+            m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
+        }
+    });
+
+    connect(GitNotifier::instance(), &GitNotifier::repositoryChanged,
+            this, &CodeEditorTab::requestBlameUpdate);
 }
 
 void CodeEditorTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer) {
@@ -137,44 +173,54 @@ void CodeEditorTab::setFile(QString filepath)
     m_fileContext = new FileContext(filepath);
     m_codeEditorWidget->setFileExt(CustomCodeEditor::syntaxKeyForPath(filepath));
     m_currentLang = detectLanguage(filepath);
+
+    m_repoRoot = GitManager::findGitRepositoryRoot(QFileInfo(filepath).absolutePath());
+    requestBlameUpdate();
+}
+
+void CodeEditorTab::requestBlameUpdate()
+{
+    if (m_repoRoot.isEmpty() || !m_codeEditorWidget->isGitBlameEnabled() || m_largeFileMode) {
+        m_codeEditorWidget->setBlameData({});
+        return;
+    }
+
+    QMetaObject::invokeMethod(m_blameWorker, "runBlame",
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, m_repoRoot),
+                              Q_ARG(QString, m_fileContext->filePath()));
+}
+
+void CodeEditorTab::onBlameFinished(const QVector<BlameLineInfo> &result)
+{
+    m_codeEditorWidget->setBlameData(result);
+}
+
+void CodeEditorTab::setGitBlameSlot(bool checked)
+{
+    if (m_codeEditorWidget->isGitBlameEnabled() == checked)
+        return;
+
+    m_codeEditorWidget->setGitBlameEnabled(checked);
+    if (checked) {
+        requestBlameUpdate();
+    } else {
+        m_codeEditorWidget->setBlameData({});
+    }
 }
 
 QString CodeEditorTab::detectLanguage(const QString& filePath)
 {
-    QFileInfo fi(filePath);
-    QString ext = fi.suffix().toLower();
-    QString baseName = fi.fileName().toLower();
+    // Single source of truth: LanguageRegistry. See docs/adding_a_language.md.
+    const QFileInfo fi(filePath);
+    const LanguageDefinition& language = LanguageRegistry::instance().resolveForFile(fi.fileName());
+    if (&language != &LanguageRegistry::plainTextLanguage())
+        return language.displayName;
 
-    static const QHash<QString, QString> extMap = {
-        {"c", "C"}, {"h", "C"},
-        {"cpp", "C++"}, {"cxx", "C++"}, {"cc", "C++"}, {"hpp", "C++"}, {"hxx", "C++"},
-        {"py", "Python"},
-        {"rs", "Rust"},
-        {"asm", "Assembly"}, {"s", "Assembly"},
-        {"js", "JavaScript"},
-        {"ts", "TypeScript"},
-        {"java", "Java"},
-        {"go", "Go"},
-        {"cmake", "CMake"},
-        {"mk", "Makefile"}, {"make", "Makefile"},
-        {"sh", "Shell"}, {"bash", "Shell"}, {"zsh", "Shell"},
-        {"json", "JSON"}, {"xml", "XML"}, {"html", "HTML"}, {"css", "CSS"},
-    };
-
-    if (extMap.contains(ext))
-        return extMap.value(ext);
-
-    if (ext.isEmpty()) {
-        if (baseName == "makefile" || baseName == "gnumakefile")
-            return "Makefile";
-        if (baseName == "cmakelists.txt")
-            return "CMake";
-        if (baseName == "dockerfile")
-            return "Dockerfile";
-        return "Plain Text";
-    }
-
-    return ext.toUpper();
+    // Unknown extension: fall back to the extension itself (uppercased) so the
+    // status bar still shows something useful, matching the previous behavior.
+    const QString ext = fi.suffix();
+    return ext.isEmpty() ? QStringLiteral("Plain Text") : ext.toUpper();
 }
 
 void CodeEditorTab::setTabData()
@@ -198,12 +244,15 @@ void CodeEditorTab::setTabData()
             if (m_largeFileMode) {
                 m_codeEditorWidget->setWordWrapEnabled(false);
                 m_codeEditorWidget->setSyntaxHighlighter(nullptr);
+                m_codeEditorWidget->setGitBlameEnabled(false);
             } else {
                 m_codeEditorWidget->setWordWrapEnabled(true);
                 m_codeEditorWidget->setFileExt(CustomCodeEditor::syntaxKeyForPath(m_fileContext->filePath()));
+                m_codeEditorWidget->setGitBlameEnabled(CodeEditorSettings::gitBlameEnabled());
             }
         }
         m_codeEditorWidget->setBuffer(m_dataBuffer);
+        requestBlameUpdate();
         forceSetData = false;
     }
 
@@ -245,6 +294,7 @@ void CodeEditorTab::saveTabData()
     if (!m_dataBuffer->saveToFile(m_fileContext->filePath()))
         return;
 
+    requestBlameUpdate();
     setModifyIndicator(false);
     emit dataEqual();
     emit refreshDataAllTabsSignal();

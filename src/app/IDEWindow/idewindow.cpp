@@ -1,17 +1,17 @@
 #include "idewindow.h"
-#include "dialogs/filecreatedialog.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
 #include <qheaderview.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
-#include "core/icons/iconprovider.h"
 #include <QApplication>
+#include "dialogs/configurebuild.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/search/searchpanel.h"
 #include "widgets/terminal/terminalpanel.h"
 #include <QShortcut>
+#include <qtimer.h>
 
 IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     : QMainWindow(parent), m_projectPath(ProjectPath) {
@@ -19,11 +19,20 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     // - - Window Settings - -
     this->setWindowState(Qt::WindowMaximized);
     this->setWindowTitle("Cremniy");
+    setMinimumSize(800, 600);
 
     // - - Menu Bar - -
     auto const menu = menuBar();
     MenuBarBuilder menuBarBuilder(menu, this);
     menu->setNativeMenuBar(false);
+
+    // - - Get Project Info - -
+    if (!ProjectInfoManager::loadProjectInfo(ProjectPath, m_projectInfo)){
+        QString dirName = QDir(ProjectPath).dirName();
+        m_projectInfo.name = dirName;
+        m_projectInfo.path = ProjectPath;
+        ProjectInfoManager::saveProjectInfo(m_projectInfo);
+    }
 
     // - - Widgets - -
     m_statusBar = statusBar();
@@ -140,9 +149,42 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     connect(m_searchPanel, &SearchPanel::statusMessage, this, [this](const QString& message) {
         m_statusLabel->setText(message);
     });
+
+    // - - Configure Build - -
+    QTimer::singleShot(0, this, &IDEWindow::configurateBuild);
+
 }
 
 IDEWindow::~IDEWindow() = default;
+
+void IDEWindow::configurateBuild(){
+
+    if (m_projectInfo.buildCommand.trimmed().isEmpty()){
+        openBuildConfigurate();
+    }
+
+}
+
+
+void IDEWindow::openBuildConfigurate(){
+
+    ConfigureBuild confBuildDialog(m_projectInfo, this);
+    if (confBuildDialog.exec() == QDialog::Accepted) {
+        ProjectInfoManager::saveProjectInfo(m_projectInfo);
+    }
+
+}
+
+
+void IDEWindow::on_Build(){
+    m_filesTabWidget->createBuildTab(m_projectInfo);
+}
+
+
+void IDEWindow::on_openBuildConfigurate(){
+    openBuildConfigurate();
+}
+
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     if (checked && !m_terminalPanel) {

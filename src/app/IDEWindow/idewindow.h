@@ -10,6 +10,7 @@
 #include <qsplitter.h>
 #include <qstatusbar.h>
 #include <QLabel>
+#include "project_info_manager.h"
 
 class TerminalPanel;
 
@@ -26,6 +27,11 @@ public:
 private:
     FileTab* currentFileTab() const;
     void showSearch(SearchScope scope, bool replaceMode);
+    void configurateBuild();
+    void openBuildConfigurate();
+
+    // - - Project Info - -
+    ProjectInfo m_projectInfo;
 
     // - - Main Widgets - -
     QMenuBar* m_menuBar;
@@ -50,6 +56,17 @@ private:
     QString m_projectPath;
 
 public slots:
+
+    /**
+     * @brief Собрать текущий проект (QMenuBar->Build->Build)
+    */
+    void on_Build();
+
+    /**
+     * @brief Открыть конфигурацию сборки (QMenuBar->Build->Configurate)
+    */
+    void on_openBuildConfigurate();
+
     /**
      * @brief Создать новый проект (QMenuBar->File->NewProject)
     */

@@ -19,6 +19,7 @@ BuildRequires: qt%{qt_ver}-qtbase-devel
 BuildRequires: qt%{qt_ver}-qttools-devel
 BuildRequires: qt%{qt_ver}-qtsvg-devel
 BuildRequires: desktop-file-utils
+BuildRequires: http-parser-devel
 
 
 Requires: qt%{qt_ver}-qtbase

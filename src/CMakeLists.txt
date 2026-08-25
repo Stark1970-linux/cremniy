@@ -1,6 +1,28 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(cremniy VERSION 0.2.0 LANGUAGES C CXX)
+find_package(Git QUIET)
+
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    if(GIT_TAG MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
+        set(PROJECT_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+    endif()
+endif()
+
+if(NOT PROJECT_VERSION)
+    set(PROJECT_VERSION "0.0.0")
+endif()
+
+project(cremniy VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
+
+message(STATUS "Cremniy version: ${PROJECT_VERSION}")
 
 include(CTest)
 
@@ -11,7 +33,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui Concurrent LinguistTools Test Svg)
+find_package(Qt6 6.8.2 REQUIRED COMPONENTS Core Widgets Gui Concurrent LinguistTools Test Svg Network)
 
 # libgit2 ships a CMake package on some platforms and only a pkg-config file or
 # plain headers/libraries on others. Support all three layouts so developers do
@@ -101,6 +123,10 @@ qt_add_executable(${PROJECT_NAME}
     dialogs/filecreatedialog.h
     dialogs/settingsdialog.cpp
     dialogs/settingsdialog.h
+    dialogs/pages/generalsettingspage.cpp
+    dialogs/pages/generalsettingspage.h
+    dialogs/pages/filessettingspage.cpp
+    dialogs/pages/filessettingspage.h
 
     # Widgets
     widgets/clickablelineedit.h
@@ -139,6 +165,12 @@ qt_add_executable(${PROJECT_NAME}
 
     core/settings/appsettings.cpp
     core/settings/appsettings.h
+    core/settings/settingspage.h
+    core/settings/settingsregistry.cpp
+    core/settings/settingsregistry.h
+
+    core/update/updatechecker.cpp
+    core/update/updatechecker.h
 
     core/icons/iconprovider.cpp
     core/icons/iconprovider.h
@@ -155,6 +187,8 @@ qt_add_executable(${PROJECT_NAME}
     # Git
     core/git/gitmanager.cpp
     core/git/gitmanager.h
+    core/git/gitblameworker.cpp
+    core/git/gitblameworker.h
 
     # UI
     ui/FilesTabWidget/filestabwidget.cpp
@@ -166,6 +200,16 @@ qt_add_executable(${PROJECT_NAME}
     ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
     ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
     ui/MenuBar/basemenu.h
+    dialogs/configurebuild.h dialogs/configurebuild.cpp
+    core/project/project_info_manager.h core/project/project_info_manager.cpp
+
+    core/buildman/buildmanager.cpp
+    core/buildman/buildmanager.cpp
+    widgets/logView/logview.h widgets/logView/logview.cpp
+
+
+    widgets/buildTab/buildtab.cpp widgets/buildTab/buildtab.h
+
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -223,6 +267,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Gui
     Qt6::Concurrent
     Qt6::Svg
+    Qt6::Network
     ${CREMNIY_LIBGIT2_TARGET}
 )
 

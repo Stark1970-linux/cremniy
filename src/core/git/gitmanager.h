@@ -3,7 +3,10 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QDateTime>
+#include <QVector>
 #include <git2.h>
+#include "widgets/BlameLineInfo.h"
 
 /**
  * @brief Wrapper class over libgit2 for all git operations
@@ -126,6 +129,18 @@ public:
     /** @brief Initialize repository */
     bool init(const QString &path);
 
+    /** @brief Find git repository root by searching upwards */
+    static QString findGitRepositoryRoot(const QString &path);
+
+    /* Blame */
+
+    /**
+     * @brief Get blame for file
+     * @param relativeFilePath Path relative to repository root
+     * @return Vector of blame info for each line
+     */
+    QVector<BlameLineInfo> blameFile(const QString &relativeFilePath) const;
+
     /* Additional */
 
     /** @brief Get repository status */
@@ -166,4 +181,15 @@ private:
 
     /** @brief Create signature */
     git_signature *createSignature() const;
+};
+
+class GitNotifier : public QObject
+{
+    Q_OBJECT
+public:
+    static GitNotifier *instance();
+signals:
+    void repositoryChanged();
+private:
+    explicit GitNotifier(QObject *parent = nullptr) : QObject(parent) {}
 };

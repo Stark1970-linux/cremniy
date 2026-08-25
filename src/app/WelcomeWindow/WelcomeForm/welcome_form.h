@@ -27,6 +27,8 @@ public:
     ~WelcomeForm() override = default;
     void openProject(const QString& path, const QString& language = {});
 
+    void openProject(const QString& path, const QString& language = {});
+
 private:
     QStackedWidget*     m_stack;
     RecentProjectsPage* m_recentPage;
