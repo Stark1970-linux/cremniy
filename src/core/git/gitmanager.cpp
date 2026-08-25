@@ -1,4 +1,5 @@
 #include "gitmanager.h"
+#include "internal/gitblameengine.h"
 #include "internal/gitrepository.h"
 #include <git2.h>
 #include <QDir>
@@ -907,125 +908,28 @@ QString GitManager::stagedDiff() const
 
 bool GitManager::clone(const QString &url, const QString &path)
 {
-    git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
-    git_repository *cloned_repo = nullptr;
-
-    int error = git_clone(&cloned_repo, url.toUtf8().constData(), path.toUtf8().constData(), &opts);
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Clone error"));
-        return false;
-    }
-
-    m_repository->adopt(cloned_repo, path);
-
-    emit repositoryChanged();
-    return true;
+    const bool success = m_repository->clone(url, path);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::init(const QString &path)
 {
-    git_repository *new_repo = nullptr;
-    int error = git_repository_init(&new_repo, path.toUtf8().constData(), 0);
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Init error"));
-        return false;
-    }
-
-    m_repository->adopt(new_repo, path);
-
-    emit repositoryChanged();
-    return true;
+    const bool success = m_repository->init(path);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 QString GitManager::findGitRepositoryRoot(const QString &path)
 {
-    const QFileInfo pathInfo(path);
-    QDir dir(pathInfo.isDir() ? pathInfo.absoluteFilePath() : pathInfo.absolutePath());
-
-    /* A worktree uses a .git file, while a regular checkout uses a directory. */
-    do {
-        const QFileInfo marker(dir.filePath(QStringLiteral(".git")));
-        if (marker.exists() && (marker.isDir() || marker.isFile()))
-            return dir.absolutePath();
-    } while (dir.cdUp());
-
-    return {};
+    return GitInternal::Repository::discoverRoot(path);
 }
 
 QVector<BlameLineInfo> GitManager::blameFile(const QString &relativeFilePath) const
 {
-    QVector<BlameLineInfo> result;
-    if (!m_repository->isOpen()) return result;
-
-    git_blame_options opts = GIT_BLAME_OPTIONS_INIT;
-    /* Use GIT_BLAME_NORMAL as base and add flags */
-    opts.flags = GIT_BLAME_TRACK_COPIES_SAME_FILE;
-
-    /* If the file is not in the repository, git_blame_file will fail.
-     * Ensure path is normalized. */
-    QString path = relativeFilePath;
-    if (path.startsWith("./")) path.remove(0, 2);
-
-    git_blame *blame = nullptr;
-    int error = git_blame_file(&blame, m_repository->handle(), path.toUtf8().constData(), &opts);
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Blame error"));
-        return result;
-    }
-
-    uint32_t lineCount = git_blame_get_hunk_count(blame);
-    /* git_blame hunks are not line-by-line if multiple lines are from the same commit.
-     * We need to map them back to lines. However, libgit2's blame hunk tells us
-     * which lines it covers.
-     */
-
-    /* We need to know the total number of lines in the file to size our result.
-     * But git_blame doesn't directly give total lines in the WORKDIR version easily.
-     * Actually, we can iterate hunks and find the max line number.
-     */
-    uint32_t totalLines = 0;
-    for (uint32_t i = 0; i < lineCount; ++i) {
-        const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame, i);
-        totalLines = qMax(totalLines, (uint32_t)(hunk->final_start_line_number + hunk->lines_in_hunk - 1));
-    }
-
-    result.resize(totalLines);
-
-    for (uint32_t i = 0; i < lineCount; ++i) {
-        const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame, i);
-        BlameLineInfo info;
-
-        if (git_oid_is_zero(&hunk->final_commit_id)) {
-            info.isUncommitted = true;
-            info.authorName = tr("You");
-            info.commitSummary = tr("Uncommitted changes");
-        } else {
-            git_commit *commit = nullptr;
-            if (git_commit_lookup(&commit, m_repository->handle(), &hunk->final_commit_id) == 0) {
-                const git_signature *sig = git_commit_author(commit);
-                info.authorName = QString::fromUtf8(sig->name);
-                info.authorEmail = QString::fromUtf8(sig->email);
-                info.commitDate = QDateTime::fromSecsSinceEpoch(sig->when.time);
-                info.fullOid = QString::fromUtf8(git_oid_tostr_s(&hunk->final_commit_id));
-                info.shortOid = info.fullOid.left(7);
-                info.commitSummary = QString::fromUtf8(git_commit_message(commit)).split('\n').first();
-                git_commit_free(commit);
-            }
-        }
-
-        for (uint32_t j = 0; j < hunk->lines_in_hunk; ++j) {
-            uint32_t lineIdx = (uint32_t)(hunk->final_start_line_number + j - 1);
-            if (lineIdx < (uint32_t)result.size()) {
-                result[lineIdx] = info;
-            }
-        }
-    }
-
-    git_blame_free(blame);
-    return result;
+    return GitInternal::BlameEngine::blameFile(*m_repository, relativeFilePath);
 }
 
 // Дополнительно

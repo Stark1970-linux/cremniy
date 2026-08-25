@@ -20,6 +20,8 @@ namespace GitInternal {
         Repository& operator=(const Repository&) = delete;
 
         bool open(const QString& path);
+        bool clone(const QString& url, const QString& path);
+        bool init(const QString& path);
         void close();
         void adopt(git_repository* repository, const QString& path);
 
@@ -32,6 +34,8 @@ namespace GitInternal {
         void clearError() const;
 
         git_signature* createSignature() const;
+
+        static QString discoverRoot(const QString& path);
 
     private:
         QString userName() const;

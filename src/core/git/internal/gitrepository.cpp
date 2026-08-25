@@ -1,6 +1,8 @@
 #include "gitrepository.h"
 
 #include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 #include <git2.h>
 
 namespace {
@@ -29,6 +31,36 @@ namespace GitInternal {
             const git_error* gitError = git_error_last();
             setError(gitError ? QString::fromUtf8(gitError->message)
                               : gitTr("Failed to open repository"));
+            return false;
+        }
+
+        adopt(repository, path);
+        clearError();
+        return true;
+    }
+
+    bool Repository::clone(const QString& url, const QString& path) {
+        git_clone_options options = GIT_CLONE_OPTIONS_INIT;
+        git_repository* repository = nullptr;
+        const int error = git_clone(
+            &repository, url.toUtf8().constData(), path.toUtf8().constData(), &options);
+        if (error != 0) {
+            const git_error* gitError = git_error_last();
+            setError(gitError ? QString::fromUtf8(gitError->message) : gitTr("Clone error"));
+            return false;
+        }
+
+        adopt(repository, path);
+        clearError();
+        return true;
+    }
+
+    bool Repository::init(const QString& path) {
+        git_repository* repository = nullptr;
+        const int error = git_repository_init(&repository, path.toUtf8().constData(), 0);
+        if (error != 0) {
+            const git_error* gitError = git_error_last();
+            setError(gitError ? QString::fromUtf8(gitError->message) : gitTr("Init error"));
             return false;
         }
 
@@ -118,6 +150,19 @@ namespace GitInternal {
             return nullptr;
         }
         return signature;
+    }
+
+    QString Repository::discoverRoot(const QString& path) {
+        const QFileInfo pathInfo(path);
+        QDir directory(pathInfo.isDir() ? pathInfo.absoluteFilePath() : pathInfo.absolutePath());
+
+        do {
+            const QFileInfo marker(directory.filePath(QStringLiteral(".git")));
+            if (marker.exists() && (marker.isDir() || marker.isFile()))
+                return directory.absolutePath();
+        } while (directory.cdUp());
+
+        return {};
     }
 
 }// namespace GitInternal

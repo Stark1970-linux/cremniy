@@ -1,7 +1,8 @@
 #include "gitblameservice.h"
 
 #include "core/settings/appsettings.h"
-#include "gitmanager.h"
+#include "internal/gitblameengine.h"
+#include "internal/gitrepository.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -77,21 +78,21 @@ void GitBlameService::requestBlame(const QString& filePath) {
 
     watcher->setFuture(QtConcurrent::run([absolutePath]() {
         BlameRequestResult result;
-        const QString repoRoot = GitManager::findGitRepositoryRoot(
+        const QString repoRoot = GitInternal::Repository::discoverRoot(
             QFileInfo(absolutePath).absolutePath());
         if (repoRoot.isEmpty())
             return result;
 
-        GitManager git;
-        if (!git.open(repoRoot)) {
-            result.error = git.lastError();
+        GitInternal::Repository repository;
+        if (!repository.open(repoRoot)) {
+            result.error = repository.lastError();
             return result;
         }
 
         const QString relativePath = QDir(repoRoot).relativeFilePath(absolutePath);
-        result.lines = git.blameFile(relativePath);
-        if (result.lines.isEmpty() && !git.lastError().isEmpty())
-            result.error = git.lastError();
+        result.lines = GitInternal::BlameEngine::blameFile(repository, relativePath);
+        if (result.lines.isEmpty() && !repository.lastError().isEmpty())
+            result.error = repository.lastError();
         return result;
     }));
 }
