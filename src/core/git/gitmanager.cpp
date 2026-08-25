@@ -2,6 +2,7 @@
 #include "internal/gitblameengine.h"
 #include "internal/gitbranchservice.h"
 #include "internal/gitcommitservice.h"
+#include "internal/gitremoteservice.h"
 #include "internal/gitrepository.h"
 #include <git2.h>
 #include <QDir>
@@ -160,48 +161,12 @@ bool GitManager::amendCommit(const QString &message)
 
 bool GitManager::push(const QString &remote, const QString &branch)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // ищем remote
-    git_remote *rem = nullptr;
-    int error = git_remote_lookup(&rem, m_repository->handle(), remote.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Remote not found: ") + remote);
-        return false;
-    }
-
-    // ветка для пуша
-    QString branchRef = branch.isEmpty() ? currentBranch() : branch;
+    const QString branchRef = branch.isEmpty() ? currentBranch() : branch;
     if (branchRef.isEmpty()) {
-        git_remote_free(rem);
         setError(tr("Push branch not specified"));
         return false;
     }
-
-    QString refspec = "refs/heads/" + branchRef + ":refs/heads/" + branchRef;
-
-    git_strarray refspecs;
-    refspecs.count = 1;
-    refspecs.strings = new char*[1];
-    QByteArray refspecBytes = refspec.toUtf8();
-    refspecs.strings[0] = refspecBytes.data();
-
-    git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
-
-    error = git_remote_push(rem, &refspecs, &push_opts);
-    delete[] refspecs.strings;
-    git_remote_free(rem);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Push error"));
-        return false;
-    }
-
-    return true;
+    return GitInternal::RemoteService::push(*m_repository, remote, branchRef);
 }
 
 bool GitManager::pull(const QString &remote, const QString &branch)
@@ -227,29 +192,7 @@ bool GitManager::pull(const QString &remote, const QString &branch)
 
 bool GitManager::fetch(const QString &remote)
 {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    git_remote *rem = nullptr;
-    int error = git_remote_lookup(&rem, m_repository->handle(), remote.toUtf8().constData());
-    if (error != 0) {
-        setError(tr("Remote not found: ") + remote);
-        return false;
-    }
-
-    git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
-    error = git_remote_fetch(rem, nullptr, &fetch_opts, nullptr);
-    git_remote_free(rem);
-
-    if (error != 0) {
-        const git_error *e = git_error_last();
-        setError(e ? QString::fromUtf8(e->message) : tr("Fetch error"));
-        return false;
-    }
-
-    return true;
+    return GitInternal::RemoteService::fetch(*m_repository, remote);
 }
 
 // Слияние

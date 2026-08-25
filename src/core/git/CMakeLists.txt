@@ -12,6 +12,8 @@ add_library(cremniy_git_core STATIC
     internal/gitbranchservice.h
     internal/gitcommitservice.cpp
     internal/gitcommitservice.h
+    internal/gitremoteservice.cpp
+    internal/gitremoteservice.h
 )
 
 target_include_directories(cremniy_git_core
