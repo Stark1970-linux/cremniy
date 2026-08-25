@@ -11,6 +11,9 @@ namespace GitInternal {
         static bool push(Repository& repository,
                          const QString& remote,
                          const QString& branch);
+        static bool pull(Repository& repository,
+                         const QString& remote,
+                         const QString& branch);
         static bool fetch(Repository& repository, const QString& remote);
     };
 

@@ -1,5 +1,7 @@
 #include "gitremoteservice.h"
 
+#include "gitbranchservice.h"
+#include "gitmergeservice.h"
 #include "gitrepository.h"
 
 #include <QCoreApplication>
@@ -25,7 +27,10 @@ namespace GitInternal {
             repository.setError(gitTr("Repository not open"));
             return false;
         }
-        if (branch.isEmpty()) {
+        const QString resolvedBranch = branch.isEmpty()
+                                           ? BranchService::currentBranch(repository)
+                                           : branch;
+        if (resolvedBranch.isEmpty()) {
             repository.setError(gitTr("Push branch not specified"));
             return false;
         }
@@ -36,8 +41,8 @@ namespace GitInternal {
             return false;
         }
 
-        const QByteArray refspec = (QStringLiteral("refs/heads/") + branch
-                                    + QStringLiteral(":refs/heads/") + branch)
+        const QByteArray refspec = (QStringLiteral("refs/heads/") + resolvedBranch
+                                    + QStringLiteral(":refs/heads/") + resolvedBranch)
                                        .toUtf8();
         char* refspecValue = const_cast<char*>(refspec.constData());
         git_strarray refspecs{&refspecValue, 1};
@@ -52,6 +57,29 @@ namespace GitInternal {
 
         repository.clearError();
         return true;
+    }
+
+    bool RemoteService::pull(Repository& repository,
+                             const QString& remote,
+                             const QString& branch) {
+        if (!repository.isOpen()) {
+            repository.setError(gitTr("Repository not open"));
+            return false;
+        }
+        if (!fetch(repository, remote))
+            return false;
+
+        const QString resolvedBranch = branch.isEmpty()
+                                           ? BranchService::currentBranch(repository)
+                                           : branch;
+        if (resolvedBranch.isEmpty()) {
+            repository.setError(gitTr("Branch not specified"));
+            return false;
+        }
+
+        const QString remoteReference = QStringLiteral("refs/remotes/") + remote
+                                        + QStringLiteral("/") + resolvedBranch;
+        return MergeService::merge(repository, remoteReference);
     }
 
     bool RemoteService::fetch(Repository& repository, const QString& remote) {

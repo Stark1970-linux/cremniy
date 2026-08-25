@@ -34,10 +34,6 @@ QString GitManager::repoPath() const {
     return m_repository->path();
 }
 
-void GitManager::setError(const QString& error) const {
-    m_repository->setError(error);
-}
-
 // Ветки
 
 QStringList GitManager::branches() const {
@@ -136,33 +132,14 @@ bool GitManager::amendCommit(const QString& message) {
 // Синхронизация
 
 bool GitManager::push(const QString& remote, const QString& branch) {
-    const QString branchRef = branch.isEmpty() ? currentBranch() : branch;
-    if (branchRef.isEmpty()) {
-        setError(tr("Push branch not specified"));
-        return false;
-    }
-    return GitInternal::RemoteService::push(*m_repository, remote, branchRef);
+    return GitInternal::RemoteService::push(*m_repository, remote, branch);
 }
 
 bool GitManager::pull(const QString& remote, const QString& branch) {
-    if (!m_repository->isOpen()) {
-        setError(tr("Repository not open"));
-        return false;
-    }
-
-    // сначала получаем изменения
-    if (!fetch(remote))
-        return false;
-
-    // потом сливаем
-    QString branchRef = branch.isEmpty() ? currentBranch() : branch;
-    if (branchRef.isEmpty()) {
-        setError(tr("Branch not specified"));
-        return false;
-    }
-
-    QString remoteRef = "refs/remotes/" + remote + "/" + branchRef;
-    return merge(remoteRef);
+    const bool success = GitInternal::RemoteService::pull(*m_repository, remote, branch);
+    if (success)
+        emit repositoryChanged();
+    return success;
 }
 
 bool GitManager::fetch(const QString& remote) {

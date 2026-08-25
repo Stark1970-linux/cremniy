@@ -169,7 +169,4 @@ signals:
 
 private:
     std::unique_ptr<GitInternal::Repository> m_repository;
-
-    /** @brief Set error message */
-    void setError(const QString& error) const;
 };
