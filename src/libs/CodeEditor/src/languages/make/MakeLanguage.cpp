@@ -1,6 +1,6 @@
 #include "languages/LanguageRegistry.h"
 
-#include "MakefileHighlighter.h"
+#include "make/MakefileHighlighter.h"
 #include "xml/XmlLanguageHighlighter.h"
 
 #include <QRegularExpression>

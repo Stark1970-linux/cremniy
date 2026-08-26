@@ -1,6 +1,6 @@
 #include "languages/LanguageRegistry.h"
 
-#include "AsmHighlighter.h"
+#include "asm/AsmHighlighter.h"
 
 namespace {
 

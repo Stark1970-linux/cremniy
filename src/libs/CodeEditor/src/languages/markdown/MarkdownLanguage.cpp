@@ -1,6 +1,6 @@
 #include "languages/LanguageRegistry.h"
 
-#include "MarkdownHighlighter.h"
+#include "markdown/MarkdownHighlighter.h"
 
 namespace {
 
