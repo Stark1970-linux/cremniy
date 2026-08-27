@@ -291,16 +291,20 @@ void TerminalView::enableMouseTracking(bool enable)
 
 void TerminalView::setFont(const QFont &font)
 {
-    QAbstractScrollArea::setFont(font);
+    QFont terminalFont = font;
+    terminalFont.setHintingPreference(QFont::PreferVerticalHinting);
+    terminalFont.setKerning(false);
+    terminalFont.setStyleStrategy(static_cast<QFont::StyleStrategy>(
+        terminalFont.styleStrategy() | QFont::PreferAntialias | QFont::PreferNoShaping));
 
-    QFontMetricsF qfm{font};
+    QAbstractScrollArea::setFont(terminalFont);
+
+    QFontMetricsF qfm{terminalFont};
     const qreal cellWidth = qfm.horizontalAdvance(QLatin1Char('M'));
-    qCInfo(terminalLog) << font.family() << font.pointSize() << cellWidth
+    qCInfo(terminalLog) << terminalFont.family() << terminalFont.pointSize() << cellWidth
                         << qfm.maxWidth() << viewport()->size();
 
     d->m_cellSize = {cellWidth, (double) qCeil(qfm.height())};
-
-    QAbstractScrollArea::setFont(font);
 
     applySizeChange();
 }
@@ -708,14 +712,10 @@ int TerminalView::paintCell(QPainter &p,
         const auto r = GlyphCache::instance().get(f, cell.text);
 
         if (r) {
-            const auto brSize = r->boundingRect().size();
-            QPointF brOffset;
-            if (brSize.width() > cellRect.size().width())
-                brOffset.setX(-(brSize.width() - cellRect.size().width()) / 2.0);
-            if (brSize.height() > cellRect.size().height())
-                brOffset.setY(-(brSize.height() - cellRect.size().height()) / 2.0);
-
-            QPointF finalPos = cellRect.topLeft() + brOffset;
+            QPointF finalPos = cellRect.topLeft();
+            const qreal verticalOverflow = r->boundingRect().height() - cellRect.height();
+            if (verticalOverflow > 0)
+                finalPos.ry() -= verticalOverflow / 2.0;
 
             p.drawGlyphRun(finalPos, *r);
 
@@ -879,6 +879,7 @@ void TerminalView::paintEvent(QPaintEvent *event)
     t.start();
     event->accept();
     QPainter p(viewport());
+    p.setRenderHint(QPainter::TextAntialiasing, true);
 
     p.save();
 
