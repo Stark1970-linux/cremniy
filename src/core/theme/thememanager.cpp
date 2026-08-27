@@ -1,4 +1,5 @@
 #include "thememanager.h"
+#include "systemtitlebar.h"
 
 #include <QApplication>
 #include <QFile>
@@ -38,7 +39,7 @@ ThemeDefinition makeDarkTheme()
     t.name = QObject::tr("Dark");
     t.isBuiltin = true;
     t.iconColor = QColor("#FFFFFF");
-    t.titleBarColor = QColor("#252526");
+    t.darkSystemTitleBar = true;
     t.projectIconColors = {
         { QStringLiteral("C"), QColor("#4A6FA5") },
         { QStringLiteral("C++"), QColor("#00599C") },
@@ -74,7 +75,7 @@ ThemeDefinition makeLightTheme()
     t.name = QObject::tr("Light");
     t.isBuiltin = true;
     t.iconColor = QColor("#1E1E1E");
-    t.titleBarColor = QColor("#F3F3F3");
+    t.darkSystemTitleBar = false;
     t.projectIconColors = {
         { QStringLiteral("C"), QColor("#4A6FA5") },
         { QStringLiteral("C++"), QColor("#00599C") },
@@ -243,7 +244,7 @@ QString ThemeManager::createCustomTheme(const QString& name, const QString& base
     const ThemeDefinition base = theme(baseThemeId);
     def.colors = base.colors;
     def.iconColor = base.iconColor;
-    def.titleBarColor = base.titleBarColor;
+    def.darkSystemTitleBar = base.darkSystemTitleBar;
     def.projectIconColors = base.projectIconColors;
 
     m_customThemes.append(def);
@@ -263,9 +264,7 @@ bool ThemeManager::updateCustomTheme(const ThemeDefinition& definition)
             t.iconColor = definition.iconColor.isValid()
                 ? definition.iconColor
                 : m_builtins.first().iconColor;
-            t.titleBarColor = definition.titleBarColor.isValid()
-                ? definition.titleBarColor
-                : m_builtins.first().titleBarColor;
+            t.darkSystemTitleBar = definition.darkSystemTitleBar;
             t.projectIconColors = definition.projectIconColors;
             for (auto it = m_builtins.first().projectIconColors.constBegin();
                  it != m_builtins.first().projectIconColors.constEnd(); ++it) {
@@ -320,11 +319,17 @@ void ThemeManager::loadCustomThemes()
         }
 
         const QString storedIconColor = settings.value("iconColor").toString();
+        const bool hasDarkSystemTitleBar = settings.contains("darkSystemTitleBar");
         const QString storedTitleBarColor = settings.value("titleBarColor").toString();
         const QColor parsedIconColor(storedIconColor);
         const QColor parsedTitleBarColor(storedTitleBarColor);
         def.iconColor = parsedIconColor.isValid() ? parsedIconColor : m_builtins.first().iconColor;
-        def.titleBarColor = parsedTitleBarColor.isValid() ? parsedTitleBarColor : m_builtins.first().titleBarColor;
+        if (hasDarkSystemTitleBar)
+            def.darkSystemTitleBar = settings.value("darkSystemTitleBar").toBool();
+        else if (parsedTitleBarColor.isValid())
+            def.darkSystemTitleBar = parsedTitleBarColor.lightnessF() < 0.5;
+        else
+            def.darkSystemTitleBar = m_builtins.first().darkSystemTitleBar;
         for (auto it = m_builtins.first().projectIconColors.constBegin();
              it != m_builtins.first().projectIconColors.constEnd(); ++it) {
             const QString key = QStringLiteral("projectIconColor.") + it.key();
@@ -359,13 +364,20 @@ void ThemeManager::saveCustomThemes() const
                 settings.setValue(key, it.value().name(QColor::HexRgb));
         }
         settings.setValue("iconColor", t.iconColor.name(QColor::HexRgb));
-        settings.setValue("titleBarColor", t.titleBarColor.name(QColor::HexRgb));
+        settings.setValue("darkSystemTitleBar", t.darkSystemTitleBar);
         for (auto it = t.projectIconColors.constBegin(); it != t.projectIconColors.constEnd(); ++it) {
             if (it.value().isValid())
                 settings.setValue(QStringLiteral("projectIconColor.") + it.key(), it.value().name(QColor::HexRgb));
         }
     }
     settings.endArray();
+}
+
+void ThemeManager::applySystemTitleBar(QWidget* window) const
+{
+    if (!window)
+        return;
+    SystemTitleBar::apply(window, theme(m_currentThemeId).darkSystemTitleBar);
 }
 
 void ThemeManager::applyThemeToApplication(const ThemeDefinition& def) const
@@ -375,7 +387,9 @@ void ThemeManager::applyThemeToApplication(const ThemeDefinition& def) const
 
     qApp->setPalette(def.toQPalette());
     qApp->setProperty("cremniyIconColor", def.iconColor);
-    qApp->setProperty("cremniyTitleBarColor", def.titleBarColor);
+    qApp->setProperty("cremniyDarkSystemTitleBar", def.darkSystemTitleBar);
+    for (QWidget* window : qApp->topLevelWidgets())
+        SystemTitleBar::apply(window, def.darkSystemTitleBar);
     for (auto it = def.projectIconColors.constBegin(); it != def.projectIconColors.constEnd(); ++it) {
         qApp->setProperty((QStringLiteral("cremniyProjectIconColor_") + it.key()).toLatin1().constData(), it.value());
     }

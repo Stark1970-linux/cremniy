@@ -1,6 +1,7 @@
 #include "paletteeditordialog.h"
 
 #include <QColorDialog>
+#include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QFont>
 #include <QFormLayout>
@@ -82,7 +83,6 @@ void PaletteEditorDialog::buildUi()
 
     const struct { const char* key; const char* title; const char* hint; } extraColors[] = {
         { "iconColor", QT_TR_NOOP("Icon color"), QT_TR_NOOP("Color used by file-tree and themed UI icons") },
-        { "titleBarColor", QT_TR_NOOP("Title bar"), QT_TR_NOOP("Color of the Cremniy title bar") },
     };
 
     for (const auto& info : extraColors) {
@@ -112,6 +112,30 @@ void PaletteEditorDialog::buildUi()
         updateExtraSwatch(key);
         form->addRow(labelBox, swatch);
     }
+
+    auto* systemTitleBarBox = new QWidget(content);
+    auto* systemTitleBarLayout = new QVBoxLayout(systemTitleBarBox);
+    systemTitleBarLayout->setContentsMargins(0, 0, 0, 0);
+    systemTitleBarLayout->setSpacing(2);
+    auto* systemTitleBarTitle = new QLabel(tr("Dark system title bar"), systemTitleBarBox);
+    QFont systemTitleBarFont = systemTitleBarTitle->font();
+    systemTitleBarFont.setBold(true);
+    systemTitleBarTitle->setFont(systemTitleBarFont);
+    auto* systemTitleBarHint = new QLabel(
+        tr("Use the dark system window title bar. When disabled, the system uses the light title bar."),
+        systemTitleBarBox);
+    systemTitleBarHint->setObjectName("settingsHintLabel");
+    systemTitleBarHint->setWordWrap(true);
+    systemTitleBarLayout->addWidget(systemTitleBarTitle);
+    systemTitleBarLayout->addWidget(systemTitleBarHint);
+
+    m_darkSystemTitleBarCheck = new QCheckBox(tr("Dark"), content);
+    m_darkSystemTitleBarCheck->setChecked(m_workingTheme.darkSystemTitleBar);
+    connect(m_darkSystemTitleBarCheck, &QCheckBox::toggled, this, [this](bool checked) {
+        m_workingTheme.darkSystemTitleBar = checked;
+        applyLivePreview();
+    });
+    form->addRow(systemTitleBarBox, m_darkSystemTitleBarCheck);
 
     auto* projectIconsHeading = new QLabel(tr("Project icons"), content);
     QFont projectIconsFont = projectIconsHeading->font();
@@ -200,8 +224,6 @@ void PaletteEditorDialog::onPickExtraColor(const QString& key)
     QColor current;
     if (key == QStringLiteral("iconColor"))
         current = m_workingTheme.iconColor;
-    else if (key == QStringLiteral("titleBarColor"))
-        current = m_workingTheme.titleBarColor;
     else if (key.startsWith(QStringLiteral("projectIconColor.")))
         current = m_workingTheme.projectIconColors.value(key.mid(QStringLiteral("projectIconColor.").size()));
     else
@@ -211,7 +233,6 @@ void PaletteEditorDialog::onPickExtraColor(const QString& key)
     connect(&dialog, &QColorDialog::currentColorChanged, this, [this, key](const QColor& color) {
         if (!color.isValid()) return;
         if (key == QStringLiteral("iconColor")) m_workingTheme.iconColor = color;
-        else if (key == QStringLiteral("titleBarColor")) m_workingTheme.titleBarColor = color;
         else if (key.startsWith(QStringLiteral("projectIconColor.")))
             m_workingTheme.projectIconColors[key.mid(QStringLiteral("projectIconColor.").size())] = color;
         updateExtraSwatch(key);
@@ -220,12 +241,10 @@ void PaletteEditorDialog::onPickExtraColor(const QString& key)
 
     if (dialog.exec() == QDialog::Accepted && dialog.selectedColor().isValid()) {
         if (key == QStringLiteral("iconColor")) m_workingTheme.iconColor = dialog.selectedColor();
-        else if (key == QStringLiteral("titleBarColor")) m_workingTheme.titleBarColor = dialog.selectedColor();
         else if (key.startsWith(QStringLiteral("projectIconColor.")))
             m_workingTheme.projectIconColors[key.mid(QStringLiteral("projectIconColor.").size())] = dialog.selectedColor();
     } else {
         if (key == QStringLiteral("iconColor")) m_workingTheme.iconColor = current;
-        else if (key == QStringLiteral("titleBarColor")) m_workingTheme.titleBarColor = current;
         else if (key.startsWith(QStringLiteral("projectIconColor.")))
             m_workingTheme.projectIconColors[key.mid(QStringLiteral("projectIconColor.").size())] = current;
     }
@@ -248,7 +267,6 @@ void PaletteEditorDialog::updateExtraSwatch(const QString& key)
     if (!swatch) return;
     QColor color;
     if (key == QStringLiteral("iconColor")) color = m_workingTheme.iconColor;
-    else if (key == QStringLiteral("titleBarColor")) color = m_workingTheme.titleBarColor;
     else if (key.startsWith(QStringLiteral("projectIconColor.")))
         color = m_workingTheme.projectIconColors.value(key.mid(QStringLiteral("projectIconColor.").size()));
     if (!color.isValid()) return;
@@ -271,7 +289,7 @@ void PaletteEditorDialog::onSave()
         : m_nameEdit->text().trimmed();
     def.colors = m_workingColors;
     def.iconColor = m_workingTheme.iconColor;
-    def.titleBarColor = m_workingTheme.titleBarColor;
+    def.darkSystemTitleBar = m_workingTheme.darkSystemTitleBar;
     def.projectIconColors = m_workingTheme.projectIconColors;
 
     ThemeManager::instance().updateCustomTheme(def);

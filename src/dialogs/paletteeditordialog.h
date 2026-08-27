@@ -9,6 +9,7 @@
 
 class QLineEdit;
 class QToolButton;
+class QCheckBox;
 
 // Редактор палитры одной темы: список ролей (Window background, Window
 // text, ...), у каждой - цветной свотч-кнопка, клик открывает
@@ -40,6 +41,7 @@ private:
     QMap<QPalette::ColorRole, QColor> m_workingColors;
     QMap<QPalette::ColorRole, QToolButton*> m_swatches;
     QMap<QString, QToolButton*> m_extraSwatches;
+    QCheckBox* m_darkSystemTitleBarCheck = nullptr;
     ThemeDefinition m_workingTheme;
     QLineEdit* m_nameEdit = nullptr;
 };

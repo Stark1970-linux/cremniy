@@ -8,6 +8,8 @@
 #include <QString>
 #include <QVector>
 
+class QWidget;
+
 // Одна редактируемая роль цвета темы. Мы не выставляем наружу все ~20 ролей
 // QPalette, а только те, что реально влияют на вид приложения (Fusion +
 // наш QSS используют именно их). Ключ - QPalette::ColorRole, но хранится
@@ -30,7 +32,7 @@ struct ThemeDefinition
     bool isBuiltin = false;           // встроенные темы нельзя удалить/переименовать
     QMap<QPalette::ColorRole, QColor> colors;
     QColor iconColor;
-    QColor titleBarColor;
+    bool darkSystemTitleBar = false;
     QMap<QString, QColor> projectIconColors;
 
     QPalette toQPalette() const;
@@ -66,6 +68,7 @@ public:
     QString createCustomTheme(const QString& name, const QString& baseThemeId);
     bool updateCustomTheme(const ThemeDefinition& definition);
     bool removeCustomTheme(const QString& id);
+    void applySystemTitleBar(QWidget* window) const;
     // Уникальное имя по умолчанию вида "Custom theme", "Custom theme 2", ...
     QString suggestedNewThemeName() const;
 

@@ -14,7 +14,6 @@
 #include "project_info_manager.h"
 
 class SearchPanel;
-class CremniyTitleBar;
 class QShortcut;
 
 class IDEWindow : public QMainWindow {
@@ -35,8 +34,6 @@ private:
 
     // - - Main Widgets - -
     QMenuBar* m_menuBar;
-    QWidget* m_topChrome;
-    CremniyTitleBar* m_titleBar;
     QStatusBar* m_statusBar;
     QLabel* m_statusLabel;
     QWidget* m_mainWidget;

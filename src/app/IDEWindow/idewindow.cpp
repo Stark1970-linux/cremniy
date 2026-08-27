@@ -8,8 +8,8 @@
 #include "dialogs/configurebuild.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
+#include "core/theme/thememanager.h"
 #include "widgets/search/searchpanel.h"
-#include "widgets/cremniytitlebar.h"
 #include <QShortcut>
 #include <qtimer.h>
 
@@ -17,25 +17,16 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     : QMainWindow(parent), m_projectPath(ProjectPath) {
     setProperty("projectPath", ProjectPath);
     // - - Window Settings - -
-    setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
+    setWindowFlags(Qt::Window);
     this->setWindowTitle("Cremniy");
     setMinimumSize(800, 600);
+    ThemeManager::instance().applySystemTitleBar(this);
 
-    // - - Custom title bar + menu bar - -
-    m_topChrome = new QWidget(this);
-    m_topChrome->setObjectName("CremniyTopChrome");
-    auto* chromeLayout = new QVBoxLayout(m_topChrome);
-    chromeLayout->setContentsMargins(0, 0, 0, 0);
-    chromeLayout->setSpacing(0);
-
-    m_titleBar = new CremniyTitleBar(this, m_topChrome);
-    chromeLayout->addWidget(m_titleBar);
-
-    auto* menu = new QMenuBar(m_topChrome);
+    // - - Native system title bar + menu bar - -
+    auto* menu = new QMenuBar(this);
     m_menuBar = menu;
     menu->setNativeMenuBar(false);
-    chromeLayout->addWidget(menu);
-    setMenuWidget(m_topChrome);
+    setMenuBar(menu);
 
     MenuBarBuilder menuBarBuilder(menu, this);
 

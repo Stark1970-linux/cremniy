@@ -132,8 +132,6 @@ qt_add_executable(${PROJECT_NAME}
 
     # Widgets
     widgets/clickablelineedit.h
-    widgets/cremniytitlebar.cpp
-    widgets/cremniytitlebar.h
     widgets/filetab.cpp
     widgets/filetab.h
     widgets/filetreepanel.cpp
@@ -169,6 +167,8 @@ qt_add_executable(${PROJECT_NAME}
     core/settings/appsettings.h
     core/theme/thememanager.cpp
     core/theme/thememanager.h
+    core/theme/systemtitlebar.cpp
+    core/theme/systemtitlebar.h
     core/settings/settingspage.h
     core/settings/settingsregistry.cpp
     core/settings/settingsregistry.h
@@ -271,6 +271,17 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Network
     ${CREMNIY_LIBGIT2_TARGET}
 )
+
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dwmapi)
+endif()
+
+if(UNIX AND NOT APPLE)
+    find_library(XCB_LIBRARY NAMES xcb)
+    if(XCB_LIBRARY)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${XCB_LIBRARY})
+    endif()
+endif()
 
 if(NOT WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE

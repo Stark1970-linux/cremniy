@@ -18,7 +18,6 @@
 
 class RecentProjectsPage;
 class CreateProjectPage;
-class CremniyTitleBar;
 
 class WelcomeForm : public QWidget {
     Q_OBJECT
@@ -30,7 +29,6 @@ public:
     void openProject(const QString& path, const QString& language = {});
 
 private:
-    CremniyTitleBar*    m_titleBar;
     QStackedWidget*     m_stack;
     RecentProjectsPage* m_recentPage;
     CreateProjectPage*  m_createPage;
