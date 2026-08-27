@@ -144,6 +144,11 @@ bool TerminalWidget::resizePty(QSize size)
     return m_pty->resize(size);
 }
 
+void TerminalWidget::setClipboard(const QString &text)
+{
+    QApplication::clipboard()->setText(text, QClipboard::Clipboard);
+}
+
 void TerminalWidget::contextMenuRequested(const QPoint &pos)
 {
     QMenu menu(this);

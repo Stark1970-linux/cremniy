@@ -36,6 +36,7 @@ signals:
 protected:
     qint64 writeToPty(const QByteArray &data) override;
     bool resizePty(QSize size) override;
+    void setClipboard(const QString &text) override;
     void contextMenuRequested(const QPoint &pos) override;
     std::optional<Link> toLink(const QString &text) override;
     void linkActivated(const Link &link) override;
