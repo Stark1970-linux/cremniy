@@ -12,7 +12,6 @@
 #include <QVBoxLayout>
 
 #include "codeeditorsettings.h"
-#include "core/git/gitblameservice.h"
 #include "core/settings/settingsregistry.h"
 
 namespace {
@@ -38,7 +37,7 @@ const bool registered = SettingsRegistry::instance().registerModulePage("codeEdi
     // Схема настроек модуля: фабрика собирает её, чтобы экспорт/импорт INI
     // знал о модуле, не имея о нём никакой информации в ядре.
     {
-        { GitBlameService::enabledSettingKey(), false },
+        { CodeEditorSettings::keyGitBlameEnabled(), false },
         { CodeEditorSettings::keyGitBlameColor(), QStringLiteral("#6D6552") },
         { CodeEditorSettings::keyGitBlamePadding(), 6 },
     }
@@ -96,7 +95,7 @@ CodeEditorSettingsPage::CodeEditorSettingsPage(QWidget* parent)
 
 void CodeEditorSettingsPage::load()
 {
-    m_gitBlameEnabled->setChecked(GitBlameService::instance()->isEnabled());
+    m_gitBlameEnabled->setChecked(CodeEditorSettings::gitBlameEnabled());
     m_options->setEnabled(m_gitBlameEnabled->isChecked());
 
     const QString color = CodeEditorSettings::gitBlameColor();
@@ -118,7 +117,7 @@ bool CodeEditorSettingsPage::validate(QString* errorMessage) const
 
 void CodeEditorSettingsPage::apply()
 {
-    GitBlameService::instance()->setEnabled(m_gitBlameEnabled->isChecked());
+    CodeEditorSettings::setGitBlameEnabled(m_gitBlameEnabled->isChecked());
     CodeEditorSettings::setGitBlameColor(m_gitBlameColor->currentData().toString());
     CodeEditorSettings::setGitBlamePadding(m_gitBlamePadding->value());
 }

@@ -1,6 +1,5 @@
 #include "gitblameservice.h"
 
-#include "core/settings/appsettings.h"
 #include "internal/gitblameengine.h"
 #include "internal/gitrepository.h"
 
@@ -21,33 +20,8 @@ GitBlameService* GitBlameService::instance() {
     return &service;
 }
 
-QString GitBlameService::enabledSettingKey() {
-    // Keep the existing key so upgrades retain the user's preference and old
-    // exported settings remain importable. Ownership now belongs to Git core.
-    return QStringLiteral("modules/codeEditor/gitBlameEnabled");
-}
-
 GitBlameService::GitBlameService(QObject* parent)
     : QObject(parent) {
-    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
-            this, [this](const QString& key) {
-                if (key == enabledSettingKey())
-                    emit enabledChanged(isEnabled());
-            });
-}
-
-bool GitBlameService::isEnabled() const {
-    return AppSettings::value(enabledSettingKey(), false).toBool();
-}
-
-void GitBlameService::setEnabled(bool enabled) {
-    if (isEnabled() == enabled)
-        return;
-
-    AppSettings::setValue(enabledSettingKey(), enabled);
-    if (!enabled)
-        m_requestVersions.clear();
-    emit SettingsNotifier::instance() -> settingsChanged(enabledSettingKey());
 }
 
 void GitBlameService::requestBlame(const QString& filePath) {

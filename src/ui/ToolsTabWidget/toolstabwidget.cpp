@@ -5,10 +5,32 @@
 #include <qfileinfo.h>
 
 #include "core/file/FileDataBuffer.h"
+#include "core/git/gitblameservice.h"
 #include "ui/ToolsTabWidget/toolstabwidget.h"
 #include "core/modules/ModuleManager.h"
 #include "core/modules/TabBase.h"
+#include "core/settings/appsettings.h"
 #include "Modules/Tabs/CodeEditor/codeeditortab.h"
+
+namespace {
+
+QVector<TabGitBlameLineInfo> toTabBlameLines(const QVector<BlameLineInfo>& lines)
+{
+    QVector<TabGitBlameLineInfo> result;
+    result.reserve(lines.size());
+    for (const BlameLineInfo& line : lines) {
+        result.append({line.authorName,
+                       line.authorEmail,
+                       line.commitDate,
+                       line.shortOid,
+                       line.fullOid,
+                       line.commitSummary,
+                       line.isUncommitted});
+    }
+    return result;
+}
+
+} // namespace
 
 ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
     : QTabWidget(parent)
@@ -108,6 +130,7 @@ void ToolsTabWidget::createTab(const ModuleDescription<TabBase>& desc, bool isAl
     TabBase* tab = desc.creator();
     if (!tab) return;
 
+    connectGitIntegration(tab);
     tab->setFile(m_filePath);
     tab->setFileDataBuffer(m_sharedBuffer);
 
@@ -144,6 +167,34 @@ void ToolsTabWidget::createTab(const ModuleDescription<TabBase>& desc, bool isAl
 
     insertTab(insertIndex, tab, tab->icon(), desc.name());
     updateCloseButtons();
+}
+
+void ToolsTabWidget::connectGitIntegration(TabBase* tab)
+{
+    GitBlameService* service = GitBlameService::instance();
+
+    connect(tab, &TabBase::gitBlameRequested,
+            service, &GitBlameService::requestBlame);
+    connect(service, &GitBlameService::blameReady,
+            tab, [tab](const QString& filePath, const QVector<BlameLineInfo>& lines) {
+                tab->setGitBlameData(filePath, toTabBlameLines(lines));
+            });
+    connect(service, &GitBlameService::blameFailed,
+            tab, [tab](const QString& filePath, const QString& error) {
+                tab->setGitBlameError(filePath, error);
+            });
+    connect(service, &GitBlameService::repositoryChanged,
+            tab, &TabBase::refreshGitBlame);
+    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
+            tab, [tab](const QString& key) {
+                if (key == TabBase::gitBlameEnabledSettingKey()) {
+                    const bool enabled = AppSettings::value(key, false).toBool();
+                    tab->setGitBlameSlot(enabled);
+                }
+            });
+
+    tab->setGitBlameSlot(
+        AppSettings::value(TabBase::gitBlameEnabledSettingKey(), false).toBool());
 }
 
 void ToolsTabWidget::refreshDataAllTabs(){

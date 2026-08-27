@@ -1,5 +1,7 @@
 #include "gitmenu.h"
 #include "core/git/gitblameservice.h"
+#include "core/modules/TabBase.h"
+#include "core/settings/appsettings.h"
 #include "ui/MenuBar/menufactory.h"
 #include <QApplication>
 #include <QFileDialog>
@@ -88,7 +90,8 @@ GitMenu::GitMenu() : BaseMenu(tr("Git"))
     addSeparator();
     m_toggleBlame = addAction(tr("Inline Git Blame"));
     m_toggleBlame->setCheckable(true);
-    m_toggleBlame->setChecked(GitBlameService::instance()->isEnabled());
+    m_toggleBlame->setChecked(
+        AppSettings::value(TabBase::gitBlameEnabledSettingKey(), false).toBool());
 }
 
 void GitMenu::setupConnections(IDEWindow* ideWind)
@@ -154,10 +157,20 @@ void GitMenu::setupConnections(IDEWindow* ideWind)
     connect(m_showLogGraph, &QAction::triggered, this, &GitMenu::onShowLogGraph);
 
     auto *blameService = GitBlameService::instance();
-    connect(m_toggleBlame, &QAction::toggled,
-            blameService, &GitBlameService::setEnabled);
-    connect(blameService, &GitBlameService::enabledChanged,
-            m_toggleBlame, &QAction::setChecked);
+    connect(m_toggleBlame, &QAction::toggled, this, [](bool enabled) {
+        const QString key = TabBase::gitBlameEnabledSettingKey();
+        if (AppSettings::value(key, false).toBool() == enabled)
+            return;
+        AppSettings::setValue(key, enabled);
+        emit SettingsNotifier::instance()->settingsChanged(key);
+    });
+    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
+            m_toggleBlame, [this](const QString& key) {
+                if (key == TabBase::gitBlameEnabledSettingKey()) {
+                    m_toggleBlame->setChecked(
+                        AppSettings::value(key, false).toBool());
+                }
+            });
     connect(m_git, &GitManager::repositoryChanged,
             blameService, &GitBlameService::repositoryChanged);
 }

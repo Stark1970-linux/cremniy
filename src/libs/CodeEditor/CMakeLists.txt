@@ -16,6 +16,7 @@ add_library(CodeEditor STATIC
     include/core/LineIndex.h
     include/core/UTF8Decoder.h
     include/widgets/CustomCodeEditor.h
+    include/widgets/EditorBlameLineInfo.h
     include/widgets/EditorEditOperations.h
     include/widgets/EditorLanguageSupport.h
     include/widgets/EditorTypingBehaviors.h
@@ -98,4 +99,4 @@ target_include_directories(CodeEditor PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/QCodeEditor/src
 )
 
-target_link_libraries(CodeEditor PUBLIC Qt6::Widgets cremniy_git_core)
+target_link_libraries(CodeEditor PUBLIC Qt6::Widgets)

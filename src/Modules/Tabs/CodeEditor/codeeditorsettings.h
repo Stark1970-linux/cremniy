@@ -14,8 +14,12 @@
 // автоматически попадают в экспорт/импорт INI.
 namespace CodeEditorSettings {
 
+QString keyGitBlameEnabled();
 QString keyGitBlameColor();
 QString keyGitBlamePadding();
+
+bool gitBlameEnabled();
+void setGitBlameEnabled(bool enabled);
 
 // Default Gray chain is documented in the settings page UI.
 QString gitBlameColor();

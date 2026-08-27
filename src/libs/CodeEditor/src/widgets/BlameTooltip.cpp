@@ -14,7 +14,7 @@ BlameTooltip::BlameTooltip(QWidget* parent)
     setFixedSize(320, 140); /* Default size, will be adjusted if needed */
 }
 
-void BlameTooltip::setBlameInfo(const BlameLineInfo& info)
+void BlameTooltip::setBlameInfo(const EditorBlameLineInfo& info)
 {
     m_info = info;
 

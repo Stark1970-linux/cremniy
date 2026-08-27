@@ -10,9 +10,8 @@
 /**
  * @brief Application-facing interface for asynchronous Git blame requests.
  *
- * The service owns background execution, shared enablement state and
- * invalidation events. Consumers only request blame for an absolute file path
- * and receive a correlated result; they never manage repositories or threads.
+ * The service owns background execution and request correlation. Module state
+ * and presentation are routed through TabBase by the application shell.
  */
 class GitBlameService final : public QObject {
     Q_OBJECT
@@ -20,15 +19,9 @@ class GitBlameService final : public QObject {
 public:
     static GitBlameService* instance();
 
-    static QString enabledSettingKey();
-
-    bool isEnabled() const;
-    void setEnabled(bool enabled);
-
     void requestBlame(const QString& filePath);
 
 signals:
-    void enabledChanged(bool enabled);
     void blameReady(const QString& filePath, const QVector<BlameLineInfo>& result);
     void blameFailed(const QString& filePath, const QString& error);
     void repositoryChanged();

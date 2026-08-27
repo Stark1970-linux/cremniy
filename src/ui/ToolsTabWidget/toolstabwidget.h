@@ -34,6 +34,7 @@ private:
     void createAlwaysTabs();
     void updateCloseButtons();
     void createTab(const ModuleDescription<TabBase>& desc, bool isAlways = false, bool tabClosable = true);
+    void connectGitIntegration(TabBase* tab);
     FileDataBuffer* m_sharedBuffer = nullptr;
     QString m_filePath;
 

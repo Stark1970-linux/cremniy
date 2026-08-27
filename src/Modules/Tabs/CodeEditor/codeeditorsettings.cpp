@@ -1,5 +1,6 @@
 #include "codeeditorsettings.h"
 
+#include "core/modules/TabBase.h"
 #include "core/settings/appsettings.h"
 
 namespace CodeEditorSettings {
@@ -7,8 +8,23 @@ namespace CodeEditorSettings {
 static const QString kDefaultBlameColor = QStringLiteral("#6D6552");
 static const int kDefaultBlamePadding = 6;
 
+QString keyGitBlameEnabled() { return TabBase::gitBlameEnabledSettingKey(); }
 QString keyGitBlameColor() { return QStringLiteral("modules/codeEditor/gitBlameColor"); }
 QString keyGitBlamePadding() { return QStringLiteral("modules/codeEditor/gitBlamePadding"); }
+
+bool gitBlameEnabled()
+{
+    return AppSettings::value(keyGitBlameEnabled(), false).toBool();
+}
+
+void setGitBlameEnabled(bool enabled)
+{
+    if (gitBlameEnabled() == enabled)
+        return;
+
+    AppSettings::setValue(keyGitBlameEnabled(), enabled);
+    emit SettingsNotifier::instance()->settingsChanged(keyGitBlameEnabled());
+}
 
 QString gitBlameColor()
 {

@@ -5,7 +5,6 @@
 #include "core/modules/ModuleManager.h"
 #include "core/settings/appsettings.h"
 #include "codeeditorsettings.h"
-#include "core/git/gitblameservice.h"
 
 #include <QBoxLayout>
 #include <QFileInfo>
@@ -99,19 +98,9 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
 
     connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
 
-    auto *blameService = GitBlameService::instance();
-    m_codeEditorWidget->setGitBlameEnabled(blameService->isEnabled());
+    m_codeEditorWidget->setGitBlameEnabled(false);
     m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
     m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
-
-    connect(blameService, &GitBlameService::enabledChanged,
-            this, &CodeEditorTab::setGitBlameSlot);
-    connect(blameService, &GitBlameService::blameReady,
-            this, &CodeEditorTab::onBlameFinished);
-    connect(blameService, &GitBlameService::blameFailed,
-            this, &CodeEditorTab::onBlameFailed);
-    connect(blameService, &GitBlameService::repositoryChanged,
-            this, &CodeEditorTab::requestBlameUpdate);
 
     connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
             this, [this](const QString &key) {
@@ -177,20 +166,32 @@ void CodeEditorTab::requestBlameUpdate()
         return;
     }
 
-    GitBlameService::instance()->requestBlame(m_fileContext->filePath());
+    emit gitBlameRequested(m_fileContext->filePath());
 }
 
-void CodeEditorTab::onBlameFinished(const QString &filePath, const QVector<BlameLineInfo> &result)
+void CodeEditorTab::setGitBlameData(const QString &filePath,
+                                    const QVector<TabGitBlameLineInfo> &lines)
 {
     if (!m_fileContext
         || QFileInfo(m_fileContext->filePath()).absoluteFilePath() != filePath
         || !m_codeEditorWidget->isGitBlameEnabled())
         return;
 
-    m_codeEditorWidget->setBlameData(result);
+    QVector<EditorBlameLineInfo> editorLines;
+    editorLines.reserve(lines.size());
+    for (const TabGitBlameLineInfo &line : lines) {
+        editorLines.append({line.authorName,
+                            line.authorEmail,
+                            line.commitDate,
+                            line.shortOid,
+                            line.fullOid,
+                            line.commitSummary,
+                            line.isUncommitted});
+    }
+    m_codeEditorWidget->setBlameData(editorLines);
 }
 
-void CodeEditorTab::onBlameFailed(const QString &filePath, const QString &error)
+void CodeEditorTab::setGitBlameError(const QString &filePath, const QString &error)
 {
     Q_UNUSED(error);
     if (m_fileContext
@@ -200,15 +201,19 @@ void CodeEditorTab::onBlameFailed(const QString &filePath, const QString &error)
 
 void CodeEditorTab::setGitBlameSlot(bool checked)
 {
-    if (m_codeEditorWidget->isGitBlameEnabled() == checked)
-        return;
-
-    m_codeEditorWidget->setGitBlameEnabled(checked);
-    if (checked) {
+    m_gitBlameEnabled = checked;
+    const bool effectiveEnabled = checked && !m_largeFileMode;
+    m_codeEditorWidget->setGitBlameEnabled(effectiveEnabled);
+    if (effectiveEnabled) {
         requestBlameUpdate();
     } else {
         m_codeEditorWidget->setBlameData({});
     }
+}
+
+void CodeEditorTab::refreshGitBlame()
+{
+    requestBlameUpdate();
 }
 
 QString CodeEditorTab::detectLanguage(const QString& filePath)
@@ -250,7 +255,7 @@ void CodeEditorTab::setTabData()
             } else {
                 m_codeEditorWidget->setWordWrapEnabled(true);
                 m_codeEditorWidget->setFileExt(CustomCodeEditor::syntaxKeyForPath(m_fileContext->filePath()));
-                m_codeEditorWidget->setGitBlameEnabled(GitBlameService::instance()->isEnabled());
+                m_codeEditorWidget->setGitBlameEnabled(m_gitBlameEnabled);
             }
         }
         m_codeEditorWidget->setBuffer(m_dataBuffer);

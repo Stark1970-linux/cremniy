@@ -3,7 +3,6 @@
 
 #include "libs/CodeEditor/include/widgets/CustomCodeEditor.h"
 #include "core/modules/TabBase.h"
-#include "core/git/gitblameservice.h"
 #include <QShortcut>
 #include <QWidget>
 
@@ -29,6 +28,7 @@ private:
     */
     bool forceSetData = false;
     bool m_largeFileMode = false;
+    bool m_gitBlameEnabled = false;
     bool m_updatingSelection = false;
     QShortcut* m_goToLineShortcut = nullptr;
     QString m_currentLang = "Plain Text";
@@ -69,12 +69,14 @@ public slots:
     void setWordWrapSlot(bool checked) override;
     void setTabReplaceSlot(bool checked) override;
     void setTabWidthSlot(int width) override;
-    void setGitBlameSlot(bool checked);
+    void setGitBlameSlot(bool checked) override;
+    void setGitBlameData(const QString &filePath,
+                         const QVector<TabGitBlameLineInfo> &lines) override;
+    void setGitBlameError(const QString &filePath, const QString &error) override;
+    void refreshGitBlame() override;
 
 private slots:
     void requestBlameUpdate();
-    void onBlameFinished(const QString &filePath, const QVector<BlameLineInfo> &result);
-    void onBlameFailed(const QString &filePath, const QString &error);
 };
 
 #endif // CODEEDITORTAB_H
