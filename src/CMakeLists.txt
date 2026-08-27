@@ -20,9 +20,11 @@ if(NOT PROJECT_VERSION)
     set(PROJECT_VERSION "0.0.0")
 endif()
 
-project(cremniy VERSION ${PROJECT_VERSION} LANGUAGES CXX)
+project(cremniy VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 
 message(STATUS "Cremniy version: ${PROJECT_VERSION}")
+
+include(CTest)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -134,6 +136,8 @@ qt_add_executable(${PROJECT_NAME}
     widgets/filetreepanel.h
     widgets/terminal/terminalwidget.cpp
     widgets/terminal/terminalwidget.h
+    widgets/terminal/terminalpanel.cpp
+    widgets/terminal/terminalpanel.h
     widgets/search/searchpanel.cpp
     widgets/search/searchpanel.h
 
@@ -159,11 +163,7 @@ qt_add_executable(${PROJECT_NAME}
     core/search/searchengine.cpp
     core/search/searchengine.h
 
-    core/settings/appsettings.cpp
-    core/settings/appsettings.h
     core/settings/settingspage.h
-    core/settings/settingsregistry.cpp
-    core/settings/settingsregistry.h
 
     core/update/updatechecker.cpp
     core/update/updatechecker.h
@@ -179,12 +179,6 @@ qt_add_executable(${PROJECT_NAME}
     core/modules/TabBase.h
     core/modules/WindowBase.h
     core/modules/ReferenceBase.h
-
-    # Git
-    core/git/gitmanager.cpp
-    core/git/gitmanager.h
-    core/git/gitblameworker.cpp
-    core/git/gitblameworker.h
 
     # UI
     ui/FilesTabWidget/filestabwidget.cpp
@@ -236,11 +230,20 @@ qt_add_resources(${PROJECT_NAME} "phoicons"
 )
 
 # - - Libs - -
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/settings/ ${CMAKE_BINARY_DIR}/core/settings/)
+target_link_libraries(${PROJECT_NAME} PRIVATE cremniy_settings_core)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/git/ ${CMAKE_BINARY_DIR}/core/git/)
+target_link_libraries(${PROJECT_NAME} PRIVATE cremniy_git_core)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/CodeEditor/ ${CMAKE_BINARY_DIR}/libs/CodeEditor/)
 target_link_libraries(${PROJECT_NAME} PRIVATE CodeEditor)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/HexEditor/ ${CMAKE_BINARY_DIR}/libs/HexEditor/)
 target_link_libraries(${PROJECT_NAME} PRIVATE HexEditor)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/Terminal/ ${CMAKE_BINARY_DIR}/libs/Terminal/)
+target_link_libraries(${PROJECT_NAME} PRIVATE cremniy_terminal_core)
 
 # - - Modules - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Modules/References/)
@@ -250,10 +253,6 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Modules/Windows/)
 # - - Menus - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ui/MenuBar/Menus/)
 
-if(CREMNIY_LIBGIT2_INCLUDE_DIRS)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${CREMNIY_LIBGIT2_INCLUDE_DIRS})
-endif()
-
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Widgets
@@ -261,7 +260,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Concurrent
     Qt6::Svg
     Qt6::Network
-    ${CREMNIY_LIBGIT2_TARGET}
 )
 
 if(NOT WIN32)
