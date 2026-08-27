@@ -69,7 +69,7 @@ void FilesTabWidget::tabSelect(int index) {
 
 void FilesTabWidget::createBuildTab(const ProjectInfo &projInfo){
     BuildTab *buildTab = new BuildTab(projInfo, this);
-    int new_tab_index = this->addTab(buildTab, QString("Build '%1'").arg(projInfo.name));
+    int new_tab_index = this->addTab(buildTab, tr("Build '%1'").arg(projInfo.name));
     this->setCurrentIndex(new_tab_index);
 }
 
