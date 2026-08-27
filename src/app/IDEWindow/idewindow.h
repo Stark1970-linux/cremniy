@@ -126,6 +126,7 @@ public slots:
 signals:
     void saveFileSignal();
     void CloseProject();
+    void terminalVisibilityChanged(bool visible);
 
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);

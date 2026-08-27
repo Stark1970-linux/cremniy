@@ -20,6 +20,9 @@ public slots:
     void newTerminal();
     void closeActiveTerminal();
 
+signals:
+    void closeRequested();
+
 private:
     TerminalWidget *currentTerminal() const;
     void closeTerminalTab(int index);

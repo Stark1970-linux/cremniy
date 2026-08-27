@@ -188,17 +188,33 @@ void IDEWindow::on_openBuildConfigurate(){
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     if (checked && !m_terminalPanel) {
-        m_terminalPanel = new TerminalPanel(m_projectPath, this);
-        m_verticalSplitter->addWidget(m_terminalPanel);
+        auto *panel = new TerminalPanel(m_projectPath, this);
+        m_terminalPanel = panel;
+        m_verticalSplitter->addWidget(panel);
         m_verticalSplitter->setCollapsible(1, true);
         m_verticalSplitter->setSizes({800, 200});
+
+        connect(panel, &TerminalPanel::closeRequested, this, [this, panel] {
+            if (m_terminalPanel != panel)
+                return;
+
+            m_terminalPanel = nullptr;
+            panel->hide();
+            panel->deleteLater();
+            emit terminalVisibilityChanged(false);
+
+            if (auto *tab = currentFileTab())
+                tab->setFocus(Qt::ShortcutFocusReason);
+        });
     }
 
     if (!m_terminalPanel) {
+        emit terminalVisibilityChanged(false);
         return;
     }
 
     m_terminalPanel->setVisible(checked);
+    emit terminalVisibilityChanged(checked);
 
     if (checked) {
         m_terminalPanel->focusActiveTerminal();

@@ -122,6 +122,12 @@ void TerminalPanel::closeTerminalTab(int index)
     QWidget *terminal = m_tabs->widget(index);
     m_tabs->removeTab(index);
     terminal->deleteLater();
+
+    if (m_tabs->count() == 0) {
+        emit closeRequested();
+        return;
+    }
+
     updateActions();
     focusActiveTerminal();
 }
