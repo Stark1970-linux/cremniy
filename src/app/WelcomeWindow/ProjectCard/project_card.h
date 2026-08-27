@@ -16,6 +16,8 @@
 #include "projects_history_manager.h"
 #include <QWidget>
 
+class QLabel;
+
 class ProjectCard : public QWidget {
     Q_OBJECT
 
@@ -32,6 +34,9 @@ private:
     QString m_path;
 
     static QString shortLang(const QString& lang);
+    void applyBadgeColor();
+    QLabel* m_badge = nullptr;
+    QString m_language;
 };
 
 #endif /* PROJECT_CARD_H */

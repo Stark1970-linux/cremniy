@@ -1,7 +1,9 @@
 #include "iconprovider.h"
+#include <QApplication>
 #include <QIcon>
 #include <QPixmap>
 #include <QPainter>
+#include "core/theme/thememanager.h"
 
 IconProvider::IconProvider() : QFileIconProvider() 
 {
@@ -63,7 +65,12 @@ QIcon IconProvider::icon(const QFileInfo &info) const {
     }
 
     if (!ic.isNull()) {
-        return paintIcon(ic, isFolder ? QColor("#FFFFFF") : Qt::white);
+        QColor iconColor = qApp ? qApp->property("cremniyIconColor").value<QColor>() : QColor();
+        if (!iconColor.isValid())
+            iconColor = ThemeManager::instance().theme(ThemeManager::instance().currentThemeId()).iconColor;
+        if (!iconColor.isValid())
+            iconColor = Qt::white;
+        return paintIcon(ic, iconColor);
     }
 
     return QFileIconProvider::icon(info);

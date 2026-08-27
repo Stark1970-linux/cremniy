@@ -37,6 +37,17 @@ ThemeDefinition makeDarkTheme()
     t.id = QStringLiteral("builtin.dark");
     t.name = QObject::tr("Dark");
     t.isBuiltin = true;
+    t.iconColor = QColor("#FFFFFF");
+    t.titleBarColor = QColor("#252526");
+    t.projectIconColors = {
+        { QStringLiteral("C"), QColor("#4A6FA5") },
+        { QStringLiteral("C++"), QColor("#00599C") },
+        { QStringLiteral("ASM"), QColor("#8B0000") },
+        { QStringLiteral("C + ASM"), QColor("#6A0DAD") },
+        { QStringLiteral("Rust"), QColor("#CE422B") },
+        { QStringLiteral("Custom"), QColor("#2E7D32") },
+        { QStringLiteral("?"), QColor("#3A3A3A") },
+    };
     t.colors = {
         { QPalette::Window,          QColor("#1E1E1E") },
         { QPalette::WindowText,      QColor("#D4D4D4") },
@@ -62,6 +73,17 @@ ThemeDefinition makeLightTheme()
     t.id = QStringLiteral("builtin.light");
     t.name = QObject::tr("Light");
     t.isBuiltin = true;
+    t.iconColor = QColor("#1E1E1E");
+    t.titleBarColor = QColor("#F3F3F3");
+    t.projectIconColors = {
+        { QStringLiteral("C"), QColor("#4A6FA5") },
+        { QStringLiteral("C++"), QColor("#00599C") },
+        { QStringLiteral("ASM"), QColor("#8B0000") },
+        { QStringLiteral("C + ASM"), QColor("#6A0DAD") },
+        { QStringLiteral("Rust"), QColor("#CE422B") },
+        { QStringLiteral("Custom"), QColor("#2E7D32") },
+        { QStringLiteral("?"), QColor("#3A3A3A") },
+    };
     t.colors = {
         { QPalette::Window,          QColor("#F3F3F3") },
         { QPalette::WindowText,      QColor("#1E1E1E") },
@@ -177,16 +199,23 @@ void ThemeManager::setCurrentTheme(const QString& id)
     emit currentThemeChanged(id);
 }
 
-void ThemeManager::previewPalette(const QMap<QPalette::ColorRole, QColor>& colors) const
+void ThemeManager::previewPalette(const QMap<QPalette::ColorRole, QColor>& colors)
 {
-    ThemeDefinition temp;
+    ThemeDefinition temp = theme(m_currentThemeId);
     temp.colors = colors;
-    applyThemeToApplication(temp);
+    previewTheme(temp);
 }
 
-void ThemeManager::restoreCurrentTheme() const
+void ThemeManager::previewTheme(const ThemeDefinition& definition)
+{
+    applyThemeToApplication(definition);
+    emit themePreviewChanged();
+}
+
+void ThemeManager::restoreCurrentTheme()
 {
     applyThemeToApplication(theme(m_currentThemeId));
+    emit themePreviewChanged();
 }
 
 QString ThemeManager::suggestedNewThemeName() const
@@ -211,7 +240,11 @@ QString ThemeManager::createCustomTheme(const QString& name, const QString& base
     def.id = QStringLiteral("custom.%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     def.name = name.trimmed().isEmpty() ? suggestedNewThemeName() : name.trimmed();
     def.isBuiltin = false;
-    def.colors = theme(baseThemeId).colors;
+    const ThemeDefinition base = theme(baseThemeId);
+    def.colors = base.colors;
+    def.iconColor = base.iconColor;
+    def.titleBarColor = base.titleBarColor;
+    def.projectIconColors = base.projectIconColors;
 
     m_customThemes.append(def);
     saveCustomThemes();
@@ -227,6 +260,18 @@ bool ThemeManager::updateCustomTheme(const ThemeDefinition& definition)
                 return false;
             t.name = definition.name;
             t.colors = definition.colors;
+            t.iconColor = definition.iconColor.isValid()
+                ? definition.iconColor
+                : m_builtins.first().iconColor;
+            t.titleBarColor = definition.titleBarColor.isValid()
+                ? definition.titleBarColor
+                : m_builtins.first().titleBarColor;
+            t.projectIconColors = definition.projectIconColors;
+            for (auto it = m_builtins.first().projectIconColors.constBegin();
+                 it != m_builtins.first().projectIconColors.constEnd(); ++it) {
+                if (!t.projectIconColors.contains(it.key()) || !t.projectIconColors.value(it.key()).isValid())
+                    t.projectIconColors.insert(it.key(), it.value());
+            }
             saveCustomThemes();
             emit themesChanged();
             if (m_currentThemeId == t.id)
@@ -273,6 +318,19 @@ void ThemeManager::loadCustomThemes()
             if (!stored.isEmpty())
                 def.colors.insert(roleInfo.role, QColor(stored));
         }
+
+        const QString storedIconColor = settings.value("iconColor").toString();
+        const QString storedTitleBarColor = settings.value("titleBarColor").toString();
+        const QColor parsedIconColor(storedIconColor);
+        const QColor parsedTitleBarColor(storedTitleBarColor);
+        def.iconColor = parsedIconColor.isValid() ? parsedIconColor : m_builtins.first().iconColor;
+        def.titleBarColor = parsedTitleBarColor.isValid() ? parsedTitleBarColor : m_builtins.first().titleBarColor;
+        for (auto it = m_builtins.first().projectIconColors.constBegin();
+             it != m_builtins.first().projectIconColors.constEnd(); ++it) {
+            const QString key = QStringLiteral("projectIconColor.") + it.key();
+            const QColor parsed(settings.value(key).toString());
+            def.projectIconColors.insert(it.key(), parsed.isValid() ? parsed : it.value());
+        }
         // Заполняем пропущенные роли из тёмной темы, чтобы не остаться
         // с "дырами" в палитре (например, после добавления новой роли).
         const auto fallback = m_builtins.first().colors;
@@ -300,6 +358,12 @@ void ThemeManager::saveCustomThemes() const
             if (!key.isEmpty())
                 settings.setValue(key, it.value().name(QColor::HexRgb));
         }
+        settings.setValue("iconColor", t.iconColor.name(QColor::HexRgb));
+        settings.setValue("titleBarColor", t.titleBarColor.name(QColor::HexRgb));
+        for (auto it = t.projectIconColors.constBegin(); it != t.projectIconColors.constEnd(); ++it) {
+            if (it.value().isValid())
+                settings.setValue(QStringLiteral("projectIconColor.") + it.key(), it.value().name(QColor::HexRgb));
+        }
     }
     settings.endArray();
 }
@@ -310,6 +374,11 @@ void ThemeManager::applyThemeToApplication(const ThemeDefinition& def) const
         return;
 
     qApp->setPalette(def.toQPalette());
+    qApp->setProperty("cremniyIconColor", def.iconColor);
+    qApp->setProperty("cremniyTitleBarColor", def.titleBarColor);
+    for (auto it = def.projectIconColors.constBegin(); it != def.projectIconColors.constEnd(); ++it) {
+        qApp->setProperty((QStringLiteral("cremniyProjectIconColor_") + it.key()).toLatin1().constData(), it.value());
+    }
     qApp->setStyleSheet(regenerateStyleSheet(def));
 }
 

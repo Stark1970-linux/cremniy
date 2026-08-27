@@ -132,6 +132,8 @@ qt_add_executable(${PROJECT_NAME}
 
     # Widgets
     widgets/clickablelineedit.h
+    widgets/cremniytitlebar.cpp
+    widgets/cremniytitlebar.h
     widgets/filetab.cpp
     widgets/filetab.h
     widgets/filetreepanel.cpp

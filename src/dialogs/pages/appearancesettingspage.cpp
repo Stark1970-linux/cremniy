@@ -20,7 +20,7 @@
 namespace {
 QString categoryTitle()
 {
-    return QObject::tr("Modules");
+    return QObject::tr("Application");
 }
 
 QString pageTitle()
@@ -28,14 +28,14 @@ QString pageTitle()
     return QObject::tr("Appearance");
 }
 
-const bool registered = SettingsRegistry::instance().registerModulePage("appearance", {
-    "modules.appearance",
-    "modules",
+const bool registered = SettingsRegistry::instance().registerPage({
+    "application.appearance",
+    "application",
     &categoryTitle,
-    300,
+    100,
     &pageTitle,
-    50,
-    {},
+    200,
+    "application",
     [](QWidget* parent) { return new AppearanceSettingsPage(parent); },
     // Схема настроек этого модуля: экспорт/импорт INI и рассылка
     // SettingsNotifier узнают о ключах темы отсюда, а не от ядра -
@@ -72,8 +72,10 @@ AppearanceSettingsPage::AppearanceSettingsPage(QWidget* parent)
     auto* scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setFocusPolicy(Qt::NoFocus);
 
     m_themesContainer = new QWidget(scrollArea);
+    m_themesContainer->setFocusPolicy(Qt::NoFocus);
     m_themesLayout = new QVBoxLayout(m_themesContainer);
     m_themesLayout->setSpacing(8);
     m_themesLayout->addStretch(1);
@@ -94,7 +96,7 @@ void AppearanceSettingsPage::rebuildThemeList()
     while (m_themesLayout->count() > 1) {
         QLayoutItem* item = m_themesLayout->takeAt(0);
         if (item->widget())
-            item->widget()->deleteLater();
+            delete item->widget();
         delete item;
     }
 
@@ -103,6 +105,7 @@ void AppearanceSettingsPage::rebuildThemeList()
     for (const ThemeDefinition& def : ThemeManager::instance().themes()) {
         auto* card = new QFrame(m_themesContainer);
         card->setObjectName("themeSwatchCard");
+        card->setFocusPolicy(Qt::NoFocus);
         card->setProperty("selected", def.id == currentId);
         card->setCursor(Qt::PointingHandCursor);
 

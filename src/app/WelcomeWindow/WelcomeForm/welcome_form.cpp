@@ -15,14 +15,17 @@
 #include "../CreateProjectPage/create_project_page.h"
 #include "app/IDEWindow/idewindow.h"
 #include "projects_history_manager.h"
+#include "widgets/cremniytitlebar.h"
 
 #include <QDir>
 #include <QFile>
+#include <QVBoxLayout>
 
 WelcomeForm::WelcomeForm(QWidget* parent)
     : QWidget(parent)
 {
     setWindowTitle("Cremniy");
+    setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
     resize(500, 380);
 
     loadStyles();
@@ -30,6 +33,9 @@ WelcomeForm::WelcomeForm(QWidget* parent)
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
+
+    m_titleBar = new CremniyTitleBar(this, this);
+    layout->addWidget(m_titleBar);
 
     m_stack = new QStackedWidget(this);
     layout->addWidget(m_stack);

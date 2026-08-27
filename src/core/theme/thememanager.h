@@ -29,6 +29,9 @@ struct ThemeDefinition
     QString name;                     // отображаемое имя
     bool isBuiltin = false;           // встроенные темы нельзя удалить/переименовать
     QMap<QPalette::ColorRole, QColor> colors;
+    QColor iconColor;
+    QColor titleBarColor;
+    QMap<QString, QColor> projectIconColors;
 
     QPalette toQPalette() const;
 };
@@ -53,9 +56,11 @@ public:
 
     // Применяет палитру немедленно, не сохраняя выбор (используется для
     // live-превью в редакторе палитры).
-    void previewPalette(const QMap<QPalette::ColorRole, QColor>& colors) const;
+    void previewPalette(const QMap<QPalette::ColorRole, QColor>& colors);
+    // Применяет полную тему без сохранения (используется live-preview).
+    void previewTheme(const ThemeDefinition& definition);
     // Возвращает приложение к сохранённой текущей теме (отмена превью).
-    void restoreCurrentTheme() const;
+    void restoreCurrentTheme();
 
     // Создаёт новую пользовательскую тему (копию baseThemeId) и возвращает её id.
     QString createCustomTheme(const QString& name, const QString& baseThemeId);
@@ -67,6 +72,7 @@ public:
 signals:
     void themesChanged();
     void currentThemeChanged(const QString& id);
+    void themePreviewChanged();
 
 private:
     ThemeManager();

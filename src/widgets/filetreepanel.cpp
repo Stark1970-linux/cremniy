@@ -14,6 +14,7 @@
 #include "exclusionfilterproxymodel.h"
 #include "core/icons/iconprovider.h"
 #include "dialogs/filecreatedialog.h"
+#include "core/theme/thememanager.h"
 
 
 FileTreePanel::FileTreePanel(QWidget* parent, QFileSystemModel* model, QSortFilterProxyModel* proxy, const QString& rootPath)
@@ -32,9 +33,7 @@ FileTreePanel::FileTreePanel(QWidget* parent, QFileSystemModel* model, QSortFilt
     setupConnections();
 }
 
-FileTreePanel::~FileTreePanel() {
-    delete m_iconProvider;
-}
+FileTreePanel::~FileTreePanel() = default;
 
 void FileTreePanel::setupModel() {
     m_fileModel->setRootPath(m_root_path);
@@ -105,6 +104,21 @@ void FileTreePanel::setupConnections() {
         m_treeView->edit(m_treeView->currentIndex());
     });
     connect(m_delete, &QAction::triggered, this, &FileTreePanel::remove);
+
+    auto refreshIcons = [this] {
+        if (!m_fileModel || !m_treeView) return;
+
+        // QFileSystemModel caches DecorationRole values. Reinstalling the
+        // provider forces the model to invalidate that cache and request
+        // freshly painted icons with the new theme color. QFileSystemModel
+        // owns the provider, so FileTreePanel must not delete it manually.
+        auto* provider = new IconProvider();
+        m_fileModel->setIconProvider(provider);
+        m_iconProvider = provider;
+        m_treeView->viewport()->update();
+    };
+    connect(&ThemeManager::instance(), &ThemeManager::currentThemeChanged, this, refreshIcons);
+    connect(&ThemeManager::instance(), &ThemeManager::themePreviewChanged, this, refreshIcons);
 
     /* - - Delete shortcut - - */
     auto* deleteShortcut = new QShortcut(QKeySequence(Qt::Key_Delete), m_treeView);

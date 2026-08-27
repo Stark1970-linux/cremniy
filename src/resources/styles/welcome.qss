@@ -42,30 +42,6 @@ QScrollBar::sub-line:vertical {
     border-radius: 5px;
 }
 
-#ProjectCardBadge[language="C"] {
-    background: #4a6fa5;
-}
-
-#ProjectCardBadge[language="C++"] {
-    background: #00599c;
-}
-
-#ProjectCardBadge[language="ASM"] {
-    background: #8b0000;
-}
-
-#ProjectCardBadge[language="C + ASM"] {
-    background: #6a0dad;
-}
-
-#ProjectCardBadge[language="Rust"] {
-    background: #ce422b;
-}
-
-#ProjectCardBadge[language="Custom"] {
-    background: #2e7d32;
-}
-
 #ProjectCardName {
     color: #e8e8e8;
     font-size: 13px;

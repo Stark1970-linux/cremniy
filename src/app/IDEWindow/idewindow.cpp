@@ -9,6 +9,7 @@
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/search/searchpanel.h"
+#include "widgets/cremniytitlebar.h"
 #include <QShortcut>
 #include <qtimer.h>
 
@@ -16,14 +17,27 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     : QMainWindow(parent), m_projectPath(ProjectPath) {
     setProperty("projectPath", ProjectPath);
     // - - Window Settings - -
-    this->setWindowState(Qt::WindowMaximized);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
     this->setWindowTitle("Cremniy");
     setMinimumSize(800, 600);
 
-    // - - Menu Bar - -
-    auto const menu = menuBar();
-    MenuBarBuilder menuBarBuilder(menu, this);
+    // - - Custom title bar + menu bar - -
+    m_topChrome = new QWidget(this);
+    m_topChrome->setObjectName("CremniyTopChrome");
+    auto* chromeLayout = new QVBoxLayout(m_topChrome);
+    chromeLayout->setContentsMargins(0, 0, 0, 0);
+    chromeLayout->setSpacing(0);
+
+    m_titleBar = new CremniyTitleBar(this, m_topChrome);
+    chromeLayout->addWidget(m_titleBar);
+
+    auto* menu = new QMenuBar(m_topChrome);
+    m_menuBar = menu;
     menu->setNativeMenuBar(false);
+    chromeLayout->addWidget(menu);
+    setMenuWidget(m_topChrome);
+
+    MenuBarBuilder menuBarBuilder(menu, this);
 
     // - - Get Project Info - -
     if (!ProjectInfoManager::loadProjectInfo(ProjectPath, m_projectInfo)){
@@ -81,6 +95,7 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     m_mainLayout->addWidget(m_verticalSplitter);
     setCentralWidget(m_mainWidget);
 
+    this->setWindowState(Qt::WindowMaximized);
 
     // - - Tunning Widgets/Layouts - -
     m_mainSplitter->setSizes({200, 1000, 0});
