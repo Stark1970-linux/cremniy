@@ -40,6 +40,7 @@ public:
     explicit CodeEditorTab(QWidget *parent = nullptr);
 
     QIcon icon() const override { return QIcon(":/icons/code.svg"); };
+    bool gitBlameEnabled() const override { return m_gitBlameEnabled; }
     QString selectedSearchText() const;
     bool revealSearchMatch(int oneBasedLine, int zeroBasedColumn, int length);
 

@@ -27,6 +27,7 @@ public:
     int saveToFileCurrentTab(QString path);
     void setDataInTabs(QByteArray &data, int index = -1, int excluded_index = -1);
     FileDataBuffer* sharedBuffer() const { return m_sharedBuffer; }
+    bool gitBlameEnabled() const;
     CodeEditorTab* codeEditorTab(bool activate = false);
 
 private:
@@ -49,6 +50,7 @@ public slots:
     void setWordWrapSlot(bool checked);
     void setTabReplaceSlot(bool checked);
     void setTabWidthSlot(int width);
+    void setGitBlameSlot(bool checked);
 
     void openTabModule(ModuleDescription<TabBase> desc);
 
@@ -61,6 +63,8 @@ signals:
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);
     void setTabWidthSignal(int width);
+    void setGitBlameSignal(bool checked);
+    void gitBlameEnabledChanged(bool enabled);
 
 };
 

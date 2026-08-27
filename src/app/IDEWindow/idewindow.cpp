@@ -113,6 +113,9 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     connect(this, &IDEWindow::setWordWrapSignal, m_filesTabWidget, &FilesTabWidget::setWordWrapSlot);
     connect(this, &IDEWindow::setTabReplaceSignal, m_filesTabWidget, &FilesTabWidget::setTabReplaceSlot);
     connect(this, &IDEWindow::setTabWidthSignal, m_filesTabWidget, &FilesTabWidget::setTabWidthSlot);
+    connect(this, &IDEWindow::setGitBlameSignal, m_filesTabWidget, &FilesTabWidget::setGitBlameSlot);
+    connect(m_filesTabWidget, &FilesTabWidget::gitBlameEnabledChanged,
+            this, &IDEWindow::gitBlameEnabledChanged);
     connect(this, &IDEWindow::openTabModule, m_filesTabWidget, &FilesTabWidget::openTabModule);
 
     connect(m_filesTreeView, &FileTreePanel::openFileRequested, this, [this](const QString& filePath, const QString& fileName) {
@@ -156,6 +159,11 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 }
 
 IDEWindow::~IDEWindow() = default;
+
+bool IDEWindow::gitBlameEnabled() const
+{
+    return m_filesTabWidget && m_filesTabWidget->gitBlameEnabled();
+}
 
 void IDEWindow::configurateBuild(){
 
@@ -231,6 +239,11 @@ void IDEWindow::on_SetTabReplace(bool checked) {
 
 void IDEWindow::on_SetTabWidth(int width) {
     emit setTabWidthSignal(width);
+}
+
+void IDEWindow::on_SetGitBlame(bool enabled)
+{
+    emit setGitBlameSignal(enabled);
 }
 
 void IDEWindow::on_Toggle_FileTree(bool checked) const {

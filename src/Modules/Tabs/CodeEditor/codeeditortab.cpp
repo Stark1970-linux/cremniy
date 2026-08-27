@@ -98,7 +98,8 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
 
     connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
 
-    m_codeEditorWidget->setGitBlameEnabled(false);
+    m_gitBlameEnabled = CodeEditorSettings::gitBlameEnabled();
+    m_codeEditorWidget->setGitBlameEnabled(m_gitBlameEnabled);
     m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
     m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
 
@@ -106,7 +107,9 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
             this, [this](const QString &key) {
         // Модуль сам знает свои ключи и сам решает, что изменилось;
         // ядро лишь сообщает «такой-то ключ поменялся».
-        if (key == CodeEditorSettings::keyGitBlameColor()) {
+        if (key == CodeEditorSettings::keyGitBlameEnabled()) {
+            setGitBlameSlot(CodeEditorSettings::gitBlameEnabled());
+        } else if (key == CodeEditorSettings::keyGitBlameColor()) {
             m_codeEditorWidget->setGitBlameColor(CodeEditorSettings::gitBlameColor());
         } else if (key == CodeEditorSettings::keyGitBlamePadding()) {
             m_codeEditorWidget->setGitBlamePadding(CodeEditorSettings::gitBlamePadding());
@@ -201,7 +204,13 @@ void CodeEditorTab::setGitBlameError(const QString &filePath, const QString &err
 
 void CodeEditorTab::setGitBlameSlot(bool checked)
 {
+    if (m_gitBlameEnabled == checked)
+        return;
+
     m_gitBlameEnabled = checked;
+    if (CodeEditorSettings::gitBlameEnabled() != checked)
+        CodeEditorSettings::setGitBlameEnabled(checked);
+
     const bool effectiveEnabled = checked && !m_largeFileMode;
     m_codeEditorWidget->setGitBlameEnabled(effectiveEnabled);
     if (effectiveEnabled) {
@@ -209,6 +218,7 @@ void CodeEditorTab::setGitBlameSlot(bool checked)
     } else {
         m_codeEditorWidget->setBlameData({});
     }
+    emit gitBlameEnabledChanged(checked);
 }
 
 void CodeEditorTab::refreshGitBlame()

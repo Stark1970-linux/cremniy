@@ -9,7 +9,6 @@
 #include "ui/ToolsTabWidget/toolstabwidget.h"
 #include "core/modules/ModuleManager.h"
 #include "core/modules/TabBase.h"
-#include "core/settings/appsettings.h"
 #include "Modules/Tabs/CodeEditor/codeeditortab.h"
 
 namespace {
@@ -98,6 +97,16 @@ CodeEditorTab* ToolsTabWidget::codeEditorTab(bool activate)
     return nullptr;
 }
 
+bool ToolsTabWidget::gitBlameEnabled() const
+{
+    for (int index = 0; index < count(); ++index) {
+        const auto* tab = qobject_cast<const TabBase*>(widget(index));
+        if (tab && tab->gitBlameEnabled())
+            return true;
+    }
+    return false;
+}
+
 void ToolsTabWidget::updateCloseButtons()
 {
     for (int index = 0; index < count(); ++index) {
@@ -150,6 +159,9 @@ void ToolsTabWidget::createTab(const ModuleDescription<TabBase>& desc, bool isAl
     connect(this, &ToolsTabWidget::setWordWrapSignal, tab, &TabBase::setWordWrapSlot);
     connect(this, &ToolsTabWidget::setTabReplaceSignal, tab, &TabBase::setTabReplaceSlot);
     connect(this, &ToolsTabWidget::setTabWidthSignal, tab, &TabBase::setTabWidthSlot);
+    connect(this, &ToolsTabWidget::setGitBlameSignal, tab, &TabBase::setGitBlameSlot);
+    connect(tab, &TabBase::gitBlameEnabledChanged,
+            this, &ToolsTabWidget::gitBlameEnabledChanged);
 
     int insertIndex = count();
 
@@ -185,16 +197,6 @@ void ToolsTabWidget::connectGitIntegration(TabBase* tab)
             });
     connect(service, &GitBlameService::repositoryChanged,
             tab, &TabBase::refreshGitBlame);
-    connect(SettingsNotifier::instance(), &SettingsNotifier::settingsChanged,
-            tab, [tab](const QString& key) {
-                if (key == TabBase::gitBlameEnabledSettingKey()) {
-                    const bool enabled = AppSettings::value(key, false).toBool();
-                    tab->setGitBlameSlot(enabled);
-                }
-            });
-
-    tab->setGitBlameSlot(
-        AppSettings::value(TabBase::gitBlameEnabledSettingKey(), false).toBool());
 }
 
 void ToolsTabWidget::refreshDataAllTabs(){
@@ -273,6 +275,11 @@ void ToolsTabWidget::setTabReplaceSlot(bool checked){
 void ToolsTabWidget::setTabWidthSlot(int width){
     qDebug("signal: tab width");
     emit setTabWidthSignal(width);
+}
+
+void ToolsTabWidget::setGitBlameSlot(bool checked)
+{
+    emit setGitBlameSignal(checked);
 }
 
 void ToolsTabWidget::openTabModule(ModuleDescription<TabBase> desc){

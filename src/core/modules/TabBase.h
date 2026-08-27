@@ -47,10 +47,6 @@ protected:
     bool m_modifyIndicator = false;
 
 public:
-    static QString gitBlameEnabledSettingKey() {
-        return QStringLiteral("modules/codeEditor/gitBlameEnabled");
-    }
-
     /**
      * @brief Конструктор класса
      *
@@ -190,6 +186,9 @@ public slots:
      */
     virtual void setGitBlameSlot(bool checked) { Q_UNUSED(checked); }
 
+    /** @brief Return whether this module currently displays Git blame data. */
+    virtual bool gitBlameEnabled() const { return false; }
+
     /** @brief Deliver Git blame data through the common module boundary. */
     virtual void setGitBlameData(const QString& filePath,
                                  const QVector<TabGitBlameLineInfo>& lines) {
@@ -209,6 +208,9 @@ public slots:
 signals:
     /** @brief Request Git blame without accessing the Git component directly. */
     void gitBlameRequested(const QString& filePath);
+
+    /** @brief Notify the application shell that the module's blame state changed. */
+    void gitBlameEnabledChanged(bool enabled);
 
     /**
      * @brief Status bar information changed

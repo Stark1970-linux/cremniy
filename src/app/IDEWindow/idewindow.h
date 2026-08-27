@@ -23,6 +23,7 @@ class IDEWindow : public QMainWindow {
 public:
     explicit IDEWindow(const QString &ProjectPath, QWidget *parent = nullptr);
     ~IDEWindow() override;
+    bool gitBlameEnabled() const;
 
 private:
     FileTab* currentFileTab() const;
@@ -43,7 +44,7 @@ private:
     QSplitter* m_mainSplitter;
 
     // - - General Widgets - -
-    FilesTabWidget* m_filesTabWidget;
+    FilesTabWidget* m_filesTabWidget = nullptr;
 
     // - - Sidebar Widgets - -
     QWidget* m_leftSidebar;
@@ -118,6 +119,9 @@ public slots:
      */
     void on_SetTabWidth(int width);
 
+    /** @brief Route the Git blame command to modules through TabBase. */
+    void on_SetGitBlame(bool enabled);
+
     /**
      * @brief Отображение дерева файлов
     */
@@ -131,6 +135,8 @@ signals:
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);
     void setTabWidthSignal(int width);
+    void setGitBlameSignal(bool enabled);
+    void gitBlameEnabledChanged(bool enabled);
 
     void openTabModule(ModuleDescription<TabBase> desc);
 };
