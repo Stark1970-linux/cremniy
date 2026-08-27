@@ -13,6 +13,7 @@
 
 #include "app/WelcomeWindow/WelcomeForm/welcome_form.h"
 #include "core/locale/LanguageManager.h"
+#include "core/theme/thememanager.h"
 #include "core/update/updatechecker.h"
 #include "libs/CodeEditor/include/languages/LanguageRegistration.h"
 
@@ -68,26 +69,10 @@ int main(int argc, char *argv[])
     // Style
     QApplication::setStyle("Fusion");
 
-    QFile baseStyleFile(":/styles/base.qss");
-    if (!baseStyleFile.open(QFile::ReadOnly)) {
-        qWarning() << "Failed to open the baseStyle file: " << baseStyleFile.errorString();
-        return 1;
-    }
-
-    // Переименовал в qssThemeFile
-    QFile qssThemeFile(":/styles/dark.qss");
-    if (!qssThemeFile.open(QFile::ReadOnly)) {
-        qWarning() << "Failed to open the theme file: " << qssThemeFile.errorString();
-        return 1;
-    }
-
-    QString baseStyle = QLatin1String(baseStyleFile.readAll());
-    QString themeData = QLatin1String(qssThemeFile.readAll());
-
-    baseStyleFile.close();
-    qssThemeFile.close(); // Теперь закрываем правильный файл
-
-    a.setStyleSheet(baseStyle + "\n" + themeData);
+    // Тема (палитра + QSS) применяется через ThemeManager: он хранит
+    // встроенные темы (Dark/Light) и пользовательские темы, созданные в
+    // редакторе палитры, и переносит выбор пользователя между запусками.
+    ThemeManager::instance().setCurrentTheme(ThemeManager::instance().currentThemeId());
 
     WelcomeForm wf;
 

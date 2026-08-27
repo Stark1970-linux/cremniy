@@ -9,7 +9,7 @@
         <file>icons/welcome-caret-down.svg</file>
         <file>icons/welcome-folder.svg</file>
         <file>styles/base.qss</file>
-        <file>styles/dark.qss</file>
+        <file>styles/theme.qss</file>
         <file>styles/welcome.qss</file>
         <file>fonts/JetBrainsMono-Italic.ttf</file>
         <file>fonts/JetBrainsMono-Regular.ttf</file>

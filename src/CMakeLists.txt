@@ -121,8 +121,12 @@ qt_add_executable(${PROJECT_NAME}
     dialogs/filecreatedialog.h
     dialogs/settingsdialog.cpp
     dialogs/settingsdialog.h
+    dialogs/paletteeditordialog.cpp
+    dialogs/paletteeditordialog.h
     dialogs/pages/generalsettingspage.cpp
     dialogs/pages/generalsettingspage.h
+    dialogs/pages/appearancesettingspage.cpp
+    dialogs/pages/appearancesettingspage.h
     dialogs/pages/filessettingspage.cpp
     dialogs/pages/filessettingspage.h
 
@@ -161,6 +165,8 @@ qt_add_executable(${PROJECT_NAME}
 
     core/settings/appsettings.cpp
     core/settings/appsettings.h
+    core/theme/thememanager.cpp
+    core/theme/thememanager.h
     core/settings/settingspage.h
     core/settings/settingsregistry.cpp
     core/settings/settingsregistry.h
