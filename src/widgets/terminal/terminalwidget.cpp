@@ -7,6 +7,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
+#include <QFontDatabase>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QStandardPaths>
@@ -25,6 +26,18 @@ struct ShellCommand
     QString executable;
     QStringList arguments;
 };
+
+QFont applicationTerminalFont()
+{
+    QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    if (QFontDatabase::hasFamily(QStringLiteral("JetBrains Mono")))
+        font.setFamily(QStringLiteral("JetBrains Mono"));
+    font.setPointSize(10);
+    font.setStyleHint(QFont::Monospace);
+    font.setFixedPitch(true);
+    font.setWeight(QFont::Normal);
+    return font;
+}
 
 ShellCommand defaultShell()
 {
@@ -72,6 +85,7 @@ TerminalWidget::TerminalWidget(QWidget *parent, const QString &workingDirectory)
     , m_workingDirectory(QDir::cleanPath(workingDirectory))
 {
     setObjectName(QStringLiteral("terminalView"));
+    setFont(applicationTerminalFont());
     setColors(defaultTerminalColors());
     setSurfaceIntegration(this);
     enableMouseTracking(true);

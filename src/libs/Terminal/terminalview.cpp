@@ -12,6 +12,7 @@
 #include <QDesktopServices>
 #include <QDeadlineTimer>
 #include <QElapsedTimer>
+#include <QFontDatabase>
 #include <QGlyphRun>
 #include <QLoggingCategory>
 #include <QMenu>
@@ -100,26 +101,12 @@ public:
     std::function<void()> m_surfaceUpdater;
 };
 
-QString defaultFontFamily()
+QFont defaultTerminalFont()
 {
-#ifdef Q_OS_DARWIN
-    return QLatin1String("Menlo");
-#elif defined(Q_OS_WIN)
-    return QLatin1String("Consolas");
-#else
-    return QLatin1String("Monospace");
-#endif
-}
-
-int defaultFontSize()
-{
-#ifdef Q_OS_DARWIN
-        return 12;
-#elif defined(Q_OS_WIN)
-    return 10;
-#else
-    return 9;
-#endif
+    QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    font.setStyleHint(QFont::Monospace);
+    font.setFixedPitch(true);
+    return font;
 }
 
 TerminalView::TerminalView(QWidget *parent)
@@ -127,7 +114,7 @@ TerminalView::TerminalView(QWidget *parent)
     , d(std::make_unique<TerminalViewPrivate>())
 {
     setupSurface();
-    setFont(QFont(defaultFontFamily(), defaultFontSize()));
+    setFont(defaultTerminalFont());
 
     connect(&d->m_cursorBlinkTimer, &QTimer::timeout, this, [this] {
         if (hasFocus())
@@ -307,10 +294,11 @@ void TerminalView::setFont(const QFont &font)
     QAbstractScrollArea::setFont(font);
 
     QFontMetricsF qfm{font};
-    qCInfo(terminalLog) << font.family() << font.pointSize() << qfm.averageCharWidth()
+    const qreal cellWidth = qfm.horizontalAdvance(QLatin1Char('M'));
+    qCInfo(terminalLog) << font.family() << font.pointSize() << cellWidth
                         << qfm.maxWidth() << viewport()->size();
 
-    d->m_cellSize = {qfm.averageCharWidth(), (double) qCeil(qfm.height())};
+    d->m_cellSize = {cellWidth, (double) qCeil(qfm.height())};
 
     QAbstractScrollArea::setFont(font);
 
