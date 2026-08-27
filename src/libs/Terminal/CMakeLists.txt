@@ -30,8 +30,6 @@ endif()
 add_library(cremniy_terminal_core STATIC
     celliterator.cpp
     celliterator.h
-    glyphcache.cpp
-    glyphcache.h
     keys.cpp
     keys.h
     ptyprocess.cpp

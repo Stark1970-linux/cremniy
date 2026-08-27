@@ -154,11 +154,6 @@ protected:
 
     void setupSurface();
 
-    int paintCell(QPainter &p,
-                  const QRectF &cellRect,
-                  QPoint gridPos,
-                  const TerminalCell &cell,
-                  QFont &f) const;
     void paintCells(QPainter &painter, QPaintEvent *event) const;
     void paintCursor(QPainter &painter) const;
     void paintPreedit(QPainter &painter) const;
@@ -170,7 +165,9 @@ protected:
     QPoint viewportToGlobal(QPoint p) const;
     QPoint globalToViewport(QPoint p) const;
     QPoint globalToGrid(QPointF p) const;
+    QPoint globalToRenderedGrid(QPointF p) const;
     QPointF gridToGlobal(QPoint p, bool bottom = false, bool right = false) const;
+    qreal renderedColumnX(int column, int row) const;
     QRect gridToViewport(QRect rect) const;
     QPoint toGridPos(QMouseEvent *event) const;
 
@@ -218,4 +215,3 @@ private:
 };
 
 } // namespace TerminalSolution
-

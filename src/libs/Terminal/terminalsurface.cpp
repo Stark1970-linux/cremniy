@@ -68,15 +68,17 @@ struct TerminalSurfacePrivate
             auto p = static_cast<TerminalSurfacePrivate *>(user);
             QByteArray d(s, len);
 
-            // If its just a couple of chars, or we already have data in the writeBuffer,
-            // add the new data to the write buffer and start the delay timer
-            if (d.size() < batchFlushSize || !p->m_writeBuffer.isEmpty()) {
+            // Preserve ordering while a partial write is pending. Do not delay regular
+            // interactive input: restarting the single-shot timer for every key press
+            // makes continuous typing wait until the user pauses.
+            if (!p->m_writeBuffer.isEmpty()) {
                 p->m_writeBuffer.append(d);
-                p->m_delayWriteTimer.start();
+                if (!p->m_delayWriteTimer.isActive())
+                    p->m_delayWriteTimer.start();
                 return;
             }
 
-            // Try to write the data ...
+            // Try to write new input immediately.
             qint64 result = p->m_writeToPty(d);
 
             if (result != d.size()) {
@@ -240,6 +242,7 @@ struct TerminalSurfacePrivate
         result.foregroundColor = toVariantColor(*fg);
 
         result.bold = cell.attrs.bold;
+        result.italic = cell.attrs.italic;
         result.strikeOut = cell.attrs.strike;
 
         if (cell.attrs.underline > 0) {
@@ -706,4 +709,3 @@ void TerminalSurface::enableLiveReflow(bool enable)
 }
 
 } // namespace TerminalSolution
-

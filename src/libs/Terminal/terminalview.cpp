@@ -2,29 +2,21 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0+ OR GPL-3.0 WITH Qt-GPL-exception-1.0
 
 #include "terminalview.h"
-#include "glyphcache.h"
 #include "terminalsurface.h"
 
-
 #include <QApplication>
-#include <QCache>
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QDeadlineTimer>
 #include <QElapsedTimer>
 #include <QFontDatabase>
-#include <QGlyphRun>
 #include <QLoggingCategory>
 #include <QMenu>
 #include <QMimeData>
 #include <QPaintEvent>
 #include <QPainter>
-#include <QPainterPath>
-#include <QPixmapCache>
-#include <QRawFont>
 #include <QRegularExpression>
 #include <QScrollBar>
-#include <QTextItem>
 #include <QTextLayout>
 #include <QToolTip>
 
@@ -37,8 +29,8 @@ namespace TerminalSolution {
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-// Minimum time between two refreshes. (30fps)
-static constexpr milliseconds minRefreshInterval = 33ms;
+static constexpr milliseconds minFlushInterval = 8ms;
+static constexpr milliseconds minPaintInterval = 16ms;
 
 class TerminalViewPrivate
 {
@@ -49,10 +41,10 @@ public:
         m_cursorBlinkTimer.setSingleShot(false);
 
         m_flushDelayTimer.setSingleShot(true);
-        m_flushDelayTimer.setInterval(minRefreshInterval);
+        m_flushDelayTimer.setInterval(minFlushInterval);
 
         m_updateTimer.setSingleShot(true);
-        m_updateTimer.setInterval(minRefreshInterval);
+        m_updateTimer.setInterval(minPaintInterval);
 
         m_scrollTimer.setSingleShot(false);
         m_scrollTimer.setInterval(500ms);
@@ -193,7 +185,9 @@ void TerminalView::setupSurface()
     });
     connect(d->m_surface.get(), &TerminalSurface::invalidated, this, [this](const QRect &rect) {
         setSelection(std::nullopt);
-        updateViewportRect(gridToViewport(rect));
+        const QRect dirtyRows{QPoint{0, rect.top()},
+                              QPoint{d->m_surface->liveSize().width() - 1, rect.bottom()}};
+        updateViewportRect(gridToViewport(dirtyRows));
         if (verticalScrollBar()->value() == verticalScrollBar()->maximum())
             verticalScrollBar()->setValue(d->m_surface->fullSize().height());
     });
@@ -202,12 +196,6 @@ void TerminalView::setupSurface()
         &TerminalSurface::cursorChanged,
         this,
         [this](const Cursor &oldCursor, const Cursor &newCursor) {
-            int startX = oldCursor.position.x();
-            int endX = newCursor.position.x();
-
-            if (startX > endX)
-                std::swap(startX, endX);
-
             int startY = oldCursor.position.y();
             int endY = newCursor.position.y();
             if (startY > endY)
@@ -215,7 +203,9 @@ void TerminalView::setupSurface()
 
             d->m_cursor = newCursor;
 
-            updateViewportRect(gridToViewport(QRect{QPoint{startX, startY}, QPoint{endX, endY}}));
+            const QRect dirtyRows{QPoint{0, startY},
+                                  QPoint{d->m_surface->liveSize().width() - 1, endY}};
+            updateViewportRect(gridToViewport(dirtyRows));
             configBlinkTimer();
         });
     connect(d->m_surface.get(), &TerminalSurface::altscreenChanged, this, [this] {
@@ -299,7 +289,7 @@ void TerminalView::setFont(const QFont &font)
 
     QAbstractScrollArea::setFont(terminalFont);
 
-    QFontMetricsF qfm{terminalFont};
+    QFontMetricsF qfm{terminalFont, viewport()};
     const qreal cellWidth = qfm.horizontalAdvance(QLatin1Char('M'));
     qCInfo(terminalLog) << terminalFont.family() << terminalFont.pointSize() << cellWidth
                         << qfm.maxWidth() << viewport()->size();
@@ -404,7 +394,7 @@ void TerminalView::flushVTerm(bool force)
     const system_clock::time_point now = system_clock::now();
     const milliseconds timeSinceLastFlush = duration_cast<milliseconds>(now - d->m_lastFlush);
 
-    const bool shouldFlushImmediately = timeSinceLastFlush > minRefreshInterval;
+    const bool shouldFlushImmediately = timeSinceLastFlush > minFlushInterval;
     if (force || shouldFlushImmediately) {
         if (d->m_flushDelayTimer.isActive())
             d->m_flushDelayTimer.stop();
@@ -415,7 +405,7 @@ void TerminalView::flushVTerm(bool force)
     }
 
     if (!d->m_flushDelayTimer.isActive()) {
-        const milliseconds timeToNextFlush = (minRefreshInterval - timeSinceLastFlush);
+        const milliseconds timeToNextFlush = (minFlushInterval - timeSinceLastFlush);
         d->m_flushDelayTimer.start(timeToNextFlush.count());
     }
 }
@@ -514,6 +504,72 @@ QPoint TerminalView::globalToGrid(QPointF p) const
     return QPoint(p.x() / d->m_cellSize.width(), p.y() / d->m_cellSize.height());
 }
 
+QPoint TerminalView::globalToRenderedGrid(QPointF p) const
+{
+    const int rowCount = d->m_surface->fullSize().height();
+    const int columnCount = d->m_surface->liveSize().width();
+    if (rowCount <= 0 || columnCount <= 0)
+        return {};
+
+    const int row = qBound(0, qFloor(p.y() / d->m_cellSize.height()), rowCount - 1);
+    QString text;
+    QList<QTextLayout::FormatRange> formats;
+    QVector<int> columnsForTextOffset;
+    columnsForTextOffset.append(0);
+
+    for (int cellX = 0; cellX < columnCount;) {
+        const auto cell = d->m_surface->fetchCell(cellX, row);
+        const int occupiedCells = qMax(cell.width, 1);
+        const QString cellText = cell.text.isEmpty()
+                                     ? QString(occupiedCells, QLatin1Char(' '))
+                                     : cell.text;
+
+        QTextCharFormat format;
+        format.setFontWeight(cell.bold ? QFont::Bold : QFont::Normal);
+        format.setFontItalic(cell.italic);
+
+        const int textStart = static_cast<int>(text.size());
+        text += cellText;
+        const int textEnd = static_cast<int>(text.size());
+
+        for (int offset = textStart; offset < textEnd; ++offset) {
+            const int relativeOffset = offset - textStart;
+            columnsForTextOffset.append(
+                cellX
+                + ((relativeOffset + 1) * occupiedCells) / qMax(textEnd - textStart, 1));
+        }
+        columnsForTextOffset.last() = qMin(cellX + occupiedCells, columnCount);
+
+        if (!formats.isEmpty() && formats.constLast().start + formats.constLast().length
+                                      == textStart
+            && formats.constLast().format == format) {
+            formats.last().length += cellText.size();
+        } else {
+            QTextLayout::FormatRange range;
+            range.start = textStart;
+            range.length = cellText.size();
+            range.format = format;
+            formats.append(range);
+        }
+
+        cellX += occupiedCells;
+    }
+
+    QTextLayout layout(text, font(), viewport());
+    layout.setFormats(formats);
+    layout.beginLayout();
+    const QTextLine line = layout.createLine();
+    layout.endLayout();
+
+    if (!line.isValid())
+        return {qBound(0, qFloor(p.x() / d->m_cellSize.width()), columnCount), row};
+
+    const int textOffset = qBound(0,
+                                  line.xToCursor(p.x(), QTextLine::CursorBetweenCharacters),
+                                  static_cast<int>(text.size()));
+    return {columnsForTextOffset.value(textOffset, columnCount), row};
+}
+
 QPointF TerminalView::gridToGlobal(QPoint p, bool bottom, bool right) const
 {
     QPointF result = QPointF(p.x() * d->m_cellSize.width(), p.y() * d->m_cellSize.height());
@@ -522,157 +578,56 @@ QPointF TerminalView::gridToGlobal(QPoint p, bool bottom, bool right) const
     return result;
 }
 
+qreal TerminalView::renderedColumnX(int column, int row) const
+{
+    if (column <= 0)
+        return 0.0;
+
+    QString text;
+    QList<QTextLayout::FormatRange> formats;
+
+    for (int cellX = 0; cellX < column;) {
+        const auto cell = d->m_surface->fetchCell(cellX, row);
+        const int occupiedCells = qMax(cell.width, 1);
+        const QString cellText = cell.text.isEmpty()
+                                     ? QString(occupiedCells, QLatin1Char(' '))
+                                     : cell.text;
+
+        QTextCharFormat format;
+        format.setFontWeight(cell.bold ? QFont::Bold : QFont::Normal);
+        format.setFontItalic(cell.italic);
+
+        const int textStart = text.size();
+        text += cellText;
+
+        if (!formats.isEmpty() && formats.constLast().start + formats.constLast().length
+                                      == textStart
+            && formats.constLast().format == format) {
+            formats.last().length += cellText.size();
+        } else {
+            QTextLayout::FormatRange range;
+            range.start = textStart;
+            range.length = cellText.size();
+            range.format = format;
+            formats.append(range);
+        }
+
+        cellX += occupiedCells;
+    }
+
+    QTextLayout layout(text, font(), viewport());
+    layout.setFormats(formats);
+    layout.beginLayout();
+    const QTextLine line = layout.createLine();
+    layout.endLayout();
+
+    return line.isValid() ? line.cursorToX(text.size()) : column * d->m_cellSize.width();
+}
+
 qreal TerminalView::topMargin() const
 {
     return viewport()->size().height()
            - (d->m_surface->liveSize().height() * d->m_cellSize.height());
-}
-
-static QPixmap generateWavyPixmap(qreal maxRadius, const QPen &pen)
-{
-    const qreal radiusBase = qMax(qreal(1), maxRadius);
-    const qreal pWidth = pen.widthF();
-
-    const QString key = QLatin1String("WaveUnderline-") % pen.color().name()
-                        % QString::number(int(radiusBase), 16) % QString::number(int(pWidth), 16);
-
-    QPixmap pixmap;
-    if (QPixmapCache::find(key, &pixmap))
-        return pixmap;
-
-    const qreal halfPeriod = qMax(qreal(2), qreal(radiusBase * 1.61803399)); // the golden ratio
-    const int width = qCeil(100 / (2 * halfPeriod)) * (2 * halfPeriod);
-    const qreal radius = qFloor(radiusBase * 2) / 2.;
-
-    QPainterPath path;
-
-    qreal xs = 0;
-    qreal ys = radius;
-
-    while (xs < width) {
-        xs += halfPeriod;
-        ys = -ys;
-        path.quadTo(xs - halfPeriod / 2, ys, xs, 0);
-    }
-
-    pixmap = QPixmap(width, radius * 2);
-    pixmap.fill(Qt::transparent);
-    {
-        QPen wavePen = pen;
-        wavePen.setCapStyle(Qt::SquareCap);
-
-        // This is to protect against making the line too fat, as happens on macOS
-        // due to it having a rather thick width for the regular underline.
-        const qreal maxPenWidth = .8 * radius;
-        if (wavePen.widthF() > maxPenWidth)
-            wavePen.setWidthF(maxPenWidth);
-
-        QPainter imgPainter(&pixmap);
-        imgPainter.setPen(wavePen);
-        imgPainter.setRenderHint(QPainter::Antialiasing);
-        imgPainter.translate(0, radius);
-        imgPainter.drawPath(path);
-    }
-
-    QPixmapCache::insert(key, pixmap);
-
-    return pixmap;
-}
-
-// Copied from qpainter.cpp
-static void drawTextItemDecoration(QPainter &painter,
-                                   const QPointF &pos,
-                                   QTextCharFormat::UnderlineStyle underlineStyle,
-                                   QTextItem::RenderFlags flags,
-                                   qreal width,
-                                   const QColor &underlineColor,
-                                   const QRawFont &font)
-{
-    if (underlineStyle == QTextCharFormat::NoUnderline
-        && !(flags & (QTextItem::StrikeOut | QTextItem::Overline)))
-        return;
-
-    const QPen oldPen = painter.pen();
-    const QBrush oldBrush = painter.brush();
-    painter.setBrush(Qt::NoBrush);
-    QPen pen = oldPen;
-    pen.setStyle(Qt::SolidLine);
-    pen.setWidthF(font.lineThickness());
-    pen.setCapStyle(Qt::FlatCap);
-
-    QLineF line(qFloor(pos.x()), pos.y(), qFloor(pos.x() + width), pos.y());
-
-    const qreal underlineOffset = font.underlinePosition();
-
-    /*if (underlineStyle == QTextCharFormat::SpellCheckUnderline) {
-        QPlatformTheme *theme = QGuiApplicationPrivate::platformTheme();
-        if (theme)
-            underlineStyle = QTextCharFormat::UnderlineStyle(
-                theme->themeHint(QPlatformTheme::SpellCheckUnderlineStyle).toInt());
-        if (underlineStyle == QTextCharFormat::SpellCheckUnderline) // still not resolved
-            underlineStyle = QTextCharFormat::WaveUnderline;
-    }*/
-
-    if (underlineStyle == QTextCharFormat::WaveUnderline) {
-        painter.save();
-        painter.translate(0, pos.y() + 1);
-        qreal maxHeight = font.descent() - qreal(1);
-
-        QColor uc = underlineColor;
-        if (uc.isValid())
-            pen.setColor(uc);
-
-        // Adapt wave to underlineOffset or pen width, whatever is larger, to make it work on all platforms
-        const QPixmap wave = generateWavyPixmap(qMin(qMax(underlineOffset, pen.widthF()),
-                                                     maxHeight / qreal(2.)),
-                                                pen);
-        const int descent = qFloor(maxHeight);
-
-        painter.setBrushOrigin(painter.brushOrigin().x(), 0);
-        painter.fillRect(pos.x(), 0, qCeil(width), qMin(wave.height(), descent), wave);
-        painter.restore();
-    } else if (underlineStyle != QTextCharFormat::NoUnderline) {
-        // Deliberately ceil the offset to avoid the underline coming too close to
-        // the text above it, but limit it to stay within descent.
-        qreal adjustedUnderlineOffset = std::ceil(underlineOffset) + 0.5;
-        if (underlineOffset <= font.descent())
-            adjustedUnderlineOffset = qMin(adjustedUnderlineOffset, font.descent() - qreal(0.5));
-        const qreal underlinePos = pos.y() + adjustedUnderlineOffset;
-        QColor uc = underlineColor;
-        if (uc.isValid())
-            pen.setColor(uc);
-
-        pen.setStyle((Qt::PenStyle)(underlineStyle));
-        painter.setPen(pen);
-        QLineF underline(line.x1(), underlinePos, line.x2(), underlinePos);
-        painter.drawLine(underline);
-    }
-
-    pen.setStyle(Qt::SolidLine);
-    pen.setColor(oldPen.color());
-
-    if (flags & QTextItem::StrikeOut) {
-        QLineF strikeOutLine = line;
-        strikeOutLine.translate(0., -font.ascent() / 3.);
-        QColor uc = underlineColor;
-        if (uc.isValid())
-            pen.setColor(uc);
-        painter.setPen(pen);
-        painter.drawLine(strikeOutLine);
-    }
-
-    if (flags & QTextItem::Overline) {
-        QLineF overline = line;
-        overline.translate(0., -font.ascent());
-        QColor uc = underlineColor;
-        if (uc.isValid())
-            pen.setColor(uc);
-        painter.setPen(pen);
-        painter.drawLine(overline);
-    }
-
-    painter.setPen(oldPen);
-    painter.setBrush(oldBrush);
 }
 
 bool TerminalView::paintSelection(QPainter &p, const QRectF &cellRect, const QPoint gridPos) const
@@ -689,75 +644,20 @@ bool TerminalView::paintSelection(QPainter &p, const QRectF &cellRect, const QPo
     return isInSelection;
 }
 
-int TerminalView::paintCell(QPainter &p,
-                            const QRectF &cellRect,
-                            QPoint gridPos,
-                            const TerminalCell &cell,
-                            QFont &f) const
-{
-    bool paintBackground = !paintSelection(p, cellRect, gridPos);
-
-    bool isDefaultBg = std::holds_alternative<int>(cell.backgroundColor)
-                       && std::get<int>(cell.backgroundColor) == 17;
-
-    if (paintBackground && !isDefaultBg)
-        p.fillRect(cellRect, toQColor(cell.backgroundColor));
-
-    p.setPen(toQColor(cell.foregroundColor));
-
-    f.setBold(cell.bold);
-    f.setItalic(cell.italic);
-
-    if (!cell.text.isEmpty()) {
-        const auto r = GlyphCache::instance().get(f, cell.text);
-
-        if (r) {
-            QPointF finalPos = cellRect.topLeft();
-            const qreal verticalOverflow = r->boundingRect().height() - cellRect.height();
-            if (verticalOverflow > 0)
-                finalPos.ry() -= verticalOverflow / 2.0;
-
-            p.drawGlyphRun(finalPos, *r);
-
-            bool tempLink = false;
-            if (d->m_linkSelection) {
-                int chPos = d->m_surface->gridToPos(gridPos);
-                tempLink = chPos >= d->m_linkSelection->start && chPos < d->m_linkSelection->end;
-            }
-            if (cell.underlineStyle != QTextCharFormat::NoUnderline || cell.strikeOut || tempLink) {
-                QTextItem::RenderFlags flags;
-                //flags.setFlag(QTextItem::RenderFlag::Underline, cell.format.fontUnderline());
-                flags.setFlag(QTextItem::StrikeOut, cell.strikeOut);
-                finalPos.setY(finalPos.y() + r->rawFont().ascent());
-                drawTextItemDecoration(p,
-                                       finalPos,
-                                       tempLink ? QTextCharFormat::DashUnderline
-                                                : cell.underlineStyle,
-                                       flags,
-                                       cellRect.size().width(),
-                                       {},
-                                       r->rawFont());
-            }
-        }
-    }
-
-    return cell.width;
-}
-
 void TerminalView::paintCursor(QPainter &p) const
 {
     auto cursor = d->m_surface->cursor();
 
-    const int cursorCellWidth = d->m_surface->cellWidthAt(cursor.position.x(), cursor.position.y());
+    const int cursorCellWidth = qMax(
+        d->m_surface->cellWidthAt(cursor.position.x(), cursor.position.y()), 1);
+    const QPointF cursorTopLeft{renderedColumnX(cursor.position.x(), cursor.position.y()),
+                                gridToGlobal(cursor.position).y()};
+    const QSizeF cursorSize{d->m_cellSize.width() * cursorCellWidth, d->m_cellSize.height()};
 
     if (!d->m_preEditString.isEmpty()) {
         cursor.shape = Cursor::Shape::Underline;
     } else if (d->m_passwordModeActive) {
-        QRectF cursorRect = QRectF(gridToGlobal(cursor.position),
-                                   gridToGlobal({cursor.position.x() + cursorCellWidth,
-                                                 cursor.position.y()},
-                                                true))
-                                .toAlignedRect();
+        QRectF cursorRect = QRectF(cursorTopLeft, cursorSize).toAlignedRect();
 
         const qreal unit = qMax<qreal>(1.0, cursorRect.height() / 8.0);
         const QRectF body = cursorRect.adjusted(unit, cursorRect.height() * 0.42,
@@ -781,11 +681,7 @@ void TerminalView::paintCursor(QPainter &p) const
                             || !d->m_cursorBlinkTimer.isActive();
 
     if (cursor.visible && blinkState) {
-        QRectF cursorRect = QRectF(gridToGlobal(cursor.position),
-                                   gridToGlobal({cursor.position.x() + cursorCellWidth,
-                                                 cursor.position.y()},
-                                                true))
-                                .toAlignedRect();
+        QRectF cursorRect = QRectF(cursorTopLeft, cursorSize).toAlignedRect();
 
         cursorRect.adjust(1, 1, -1, -1);
 
@@ -817,8 +713,9 @@ void TerminalView::paintPreedit(QPainter &p) const
 {
     auto cursor = d->m_surface->cursor();
     if (!d->m_preEditString.isEmpty()) {
-        QRectF rect = QRectF(gridToGlobal(cursor.position),
-                             gridToGlobal({cursor.position.x(), cursor.position.y()}, true, true));
+        const QPointF cursorTopLeft{renderedColumnX(cursor.position.x(), cursor.position.y()),
+                                    gridToGlobal(cursor.position).y()};
+        QRectF rect(cursorTopLeft, d->m_cellSize);
 
         rect.setWidth(viewport()->width() - rect.x());
 
@@ -832,8 +729,6 @@ void TerminalView::paintPreedit(QPainter &p) const
 
 void TerminalView::paintCells(QPainter &p, QPaintEvent *event) const
 {
-    QFont f = font();
-
     const int scrollOffset = verticalScrollBar()->value();
 
     const int maxRow = d->m_surface->fullSize().height();
@@ -844,16 +739,89 @@ void TerminalView::paintCells(QPainter &p, QPaintEvent *event) const
                                 + scrollOffset);
 
     for (int cellY = startRow; cellY < endRow; ++cellY) {
+        struct RowCell
+        {
+            int column;
+            int textStart;
+            int textEnd;
+            TerminalCell cell;
+        };
+
+        QString lineText;
+        QList<QTextLayout::FormatRange> formats;
+        QList<RowCell> rowCells;
+
         for (int cellX = 0; cellX < d->m_surface->liveSize().width();) {
             const auto cell = d->m_surface->fetchCell(cellX, cellY);
+            const int occupiedCells = qMax(cell.width, 1);
 
-            QRectF cellRect(gridToGlobal({cellX, cellY}),
-                            QSizeF{d->m_cellSize.width() * cell.width, d->m_cellSize.height()});
+            const QString cellText = cell.text.isEmpty()
+                                         ? QString(occupiedCells, QLatin1Char(' '))
+                                         : cell.text;
 
-            int numCells = paintCell(p, cellRect, {cellX, cellY}, cell, f);
+            QTextCharFormat format;
+            format.setForeground(toQColor(cell.foregroundColor));
+            format.setFontWeight(cell.bold ? QFont::Bold : QFont::Normal);
+            format.setFontItalic(cell.italic);
+            format.setFontStrikeOut(cell.strikeOut);
 
-            cellX += numCells;
+            QTextCharFormat::UnderlineStyle underlineStyle = cell.underlineStyle;
+            if (d->m_linkSelection) {
+                const int position = d->m_surface->gridToPos({cellX, cellY});
+                if (position >= d->m_linkSelection->start
+                    && position < d->m_linkSelection->end) {
+                    underlineStyle = QTextCharFormat::DashUnderline;
+                }
+            }
+            format.setUnderlineStyle(underlineStyle);
+
+            const int textStart = lineText.size();
+            lineText += cellText;
+            rowCells.append({cellX, textStart, static_cast<int>(lineText.size()), cell});
+
+            if (!formats.isEmpty() && formats.constLast().start + formats.constLast().length
+                                          == textStart
+                && formats.constLast().format == format) {
+                formats.last().length += cellText.size();
+            } else {
+                QTextLayout::FormatRange range;
+                range.start = textStart;
+                range.length = cellText.size();
+                range.format = format;
+                formats.append(range);
+            }
+
+            cellX += occupiedCells;
         }
+
+        QTextLayout layout(lineText, font(), viewport());
+        layout.setFormats(formats);
+        layout.beginLayout();
+        QTextLine line = layout.createLine();
+        if (line.isValid())
+            line.setNumColumns(lineText.size());
+        layout.endLayout();
+
+        if (line.isValid()) {
+            const qreal rowTop = gridToGlobal({0, cellY}).y();
+            for (const RowCell &rowCell : rowCells) {
+                const qreal left = line.cursorToX(rowCell.textStart);
+                const qreal right = line.cursorToX(rowCell.textEnd);
+                const QRectF cellRect{QPointF{qMin(left, right), rowTop},
+                                      QSizeF{qAbs(right - left), d->m_cellSize.height()}};
+
+                const bool paintBackground = !paintSelection(
+                    p, cellRect, {rowCell.column, cellY});
+                const bool isDefaultBackground = std::holds_alternative<int>(
+                                                       rowCell.cell.backgroundColor)
+                                                   && std::get<int>(rowCell.cell.backgroundColor)
+                                                          == ColorIndex::Background;
+                if (paintBackground && !isDefaultBackground)
+                    p.fillRect(cellRect, toQColor(rowCell.cell.backgroundColor));
+            }
+        }
+
+        layout.draw(&p, gridToGlobal({0, cellY}));
     }
 }
 
@@ -916,7 +884,7 @@ void TerminalView::paintEvent(QPaintEvent *event)
                            QString("Paint: %1ms").arg(t.elapsed()));
     }
 
-    d->m_sinceLastPaint = QDeadlineTimer(minRefreshInterval);
+    d->m_sinceLastPaint = QDeadlineTimer(minPaintInterval);
 }
 
 void TerminalView::keyPressEvent(QKeyEvent *event)
@@ -1144,7 +1112,8 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             setSelection(newSelection);
         } else {
             d->m_selectLineMode = false;
-            int pos = d->m_surface->gridToPos(globalToGrid(viewportToGlobal(event->pos())));
+            int pos = d->m_surface->gridToPos(
+                globalToRenderedGrid(viewportToGlobal(event->pos())));
             setSelection(Selection{pos, pos, false});
         }
         event->accept();
@@ -1201,8 +1170,10 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
         QPoint posBoundedToViewport = event->pos();
         posBoundedToViewport.setX(qBound(0, posBoundedToViewport.x(), viewport()->width()));
 
-        int start = d->m_surface->gridToPos(globalToGrid(d->m_activeMouseSelect.start));
-        int newEnd = d->m_surface->gridToPos(globalToGrid(viewportToGlobal(posBoundedToViewport)));
+        int start = d->m_surface->gridToPos(
+            globalToRenderedGrid(d->m_activeMouseSelect.start));
+        int newEnd = d->m_surface->gridToPos(
+            globalToRenderedGrid(viewportToGlobal(posBoundedToViewport)));
 
         if (start > newEnd) {
             std::swap(start, newEnd);
@@ -1311,8 +1282,9 @@ bool TerminalView::checkLinkAt(const QPoint &pos)
 
 TerminalView::TextAndOffsets TerminalView::textAt(const QPoint &pos) const
 {
-    auto it = d->m_surface->iteratorAt(globalToGrid(viewportToGlobal(pos)));
-    auto itRev = d->m_surface->rIteratorAt(globalToGrid(viewportToGlobal(pos)));
+    const QPoint gridPos = globalToRenderedGrid(viewportToGlobal(pos));
+    auto it = d->m_surface->iteratorAt(gridPos);
+    auto itRev = d->m_surface->rIteratorAt(gridPos);
 
     std::u32string whiteSpaces = U" \t\x00a0";
 
