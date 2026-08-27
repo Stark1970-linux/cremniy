@@ -60,7 +60,7 @@ namespace GitInternal {
         int error = git_reference_dwim(
             &reference, repository.handle(), referenceName.toUtf8().constData());
         if (error != 0) {
-            repository.setError(gitTr("Branch not found: ") + branchName);
+            repository.setError(gitTr("Branch not found: %1").arg(branchName));
             return false;
         }
 
@@ -134,7 +134,7 @@ namespace GitInternal {
         if (git_reference_dwim(
                 &reference, repository.handle(), referenceName.toUtf8().constData())
             != 0) {
-            repository.setError(gitTr("Branch not found: ") + branchName);
+            repository.setError(gitTr("Branch not found: %1").arg(branchName));
             return false;
         }
 
@@ -164,7 +164,7 @@ namespace GitInternal {
         if (git_reference_dwim(
                 &reference, repository.handle(), referenceName.toUtf8().constData())
             != 0) {
-            repository.setError(gitTr("Branch not found: ") + oldName);
+            repository.setError(gitTr("Branch not found: %1").arg(oldName));
             return false;
         }
 

@@ -92,7 +92,7 @@ void BlameTooltip::paintEvent(QPaintEvent* event)
     emailFont.setPointSize(8);
     painter.setFont(emailFont);
     painter.setPen(palette().placeholderText().color());
-    painter.drawText(x, y, QString("<%1>").arg(m_info.authorEmail));
+    painter.drawText(x, y, tr("<%1>").arg(m_info.authorEmail));
 
     y += 24;
 
@@ -112,7 +112,7 @@ void BlameTooltip::paintEvent(QPaintEvent* event)
     painter.setFont(footerFont);
     painter.setPen(palette().placeholderText().color());
 
-    QString footerText = QString("%1 • %2")
+    QString footerText = tr("%1 • %2")
         .arg(m_info.fullOid.left(10))
         .arg(QLocale::system().toString(m_info.commitDate, QLocale::ShortFormat));
 

@@ -32,7 +32,7 @@ namespace GitInternal {
                                           ? branchName
                                           : QStringLiteral("refs/heads/") + branchName;
         if (git_reference_name_to_id(&mergeOid, repository.handle(), referenceName.toUtf8().constData()) != 0) {
-            repository.setError(tr("Failed to find: ") + branchName);
+            repository.setError(tr("Failed to find: %1").arg(branchName));
             return false;
         }
 
@@ -85,7 +85,7 @@ namespace GitInternal {
         if (error == 0) {
             const git_commit* parents[] = {headCommit, mergedCommit};
             git_oid commitOid;
-            const QByteArray message = (tr("Merge branch '") + branchName + QStringLiteral("'")).toUtf8();
+            const QByteArray message = tr("Merge branch '%1'").arg(branchName).toUtf8();
             error = git_commit_create(&commitOid,
                                       repository.handle(),
                                       "HEAD",

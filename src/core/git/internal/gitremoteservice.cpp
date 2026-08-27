@@ -37,7 +37,7 @@ namespace GitInternal {
 
         git_remote* gitRemote = nullptr;
         if (git_remote_lookup(&gitRemote, repository.handle(), remote.toUtf8().constData()) != 0) {
-            repository.setError(gitTr("Remote not found: ") + remote);
+            repository.setError(gitTr("Remote not found: %1").arg(remote));
             return false;
         }
 
@@ -90,7 +90,7 @@ namespace GitInternal {
 
         git_remote* gitRemote = nullptr;
         if (git_remote_lookup(&gitRemote, repository.handle(), remote.toUtf8().constData()) != 0) {
-            repository.setError(gitTr("Remote not found: ") + remote);
+            repository.setError(gitTr("Remote not found: %1").arg(remote));
             return false;
         }
 

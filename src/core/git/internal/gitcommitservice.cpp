@@ -365,7 +365,7 @@ namespace GitInternal {
             const QString referenceText = references.isEmpty()
                                               ? QString()
                                               : QStringLiteral(" (") + references.join(QStringLiteral(", ")) + QStringLiteral(")");
-            result += QStringLiteral("* %1 %2%3\n  | %4 <%5>\n  | %6\n")
+            result += gitTr("* %1 %2%3\n  | %4 <%5>\n  | %6\n")
                           .arg(oidString.left(7), date, referenceText, author, email, message);
 
             git_commit_free(commit);

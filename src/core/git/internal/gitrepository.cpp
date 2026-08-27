@@ -109,17 +109,17 @@ namespace GitInternal {
 
     QString Repository::userName() const {
         if (!m_repository)
-            return QStringLiteral("User");
+            return gitTr("User");
 
         git_config* config = nullptr;
         if (git_repository_config(&config, m_repository) != 0)
-            return QStringLiteral("User");
+            return gitTr("User");
 
         const char* value = nullptr;
         const int error = git_config_get_string(&value, config, "user.name");
         const QString name = (error == 0 && value)
                                  ? QString::fromUtf8(value)
-                                 : QStringLiteral("User");
+                                 : gitTr("User");
         git_config_free(config);
         return name;
     }

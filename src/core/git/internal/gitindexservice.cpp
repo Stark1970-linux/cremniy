@@ -168,8 +168,8 @@ namespace GitInternal {
         if (git_status_list_new(&statusList, repository.handle(), &options) != 0)
             return {};
 
-        QString result = gitTr("On branch ")
-                         + (currentBranch.isEmpty() ? QStringLiteral("HEAD") : currentBranch) + QLatin1Char('\n');
+        QString result = gitTr("On branch %1\n")
+                             .arg(currentBranch.isEmpty() ? QStringLiteral("HEAD") : currentBranch);
         const size_t count = git_status_list_entrycount(statusList);
         for (size_t i = 0; i < count; ++i) {
             const git_status_entry* entry = git_status_byindex(statusList, i);
@@ -184,19 +184,19 @@ namespace GitInternal {
 
             const unsigned int flags = entry->status;
             if (flags & GIT_STATUS_INDEX_NEW)
-                result += QStringLiteral("  ") + gitTr("new:") + QStringLiteral("    ") + path + QLatin1Char('\n');
+                result += gitTr("  new:    %1\n").arg(path);
             if (flags & GIT_STATUS_INDEX_MODIFIED)
-                result += QStringLiteral("  ") + gitTr("modified:") + QLatin1Char(' ') + path + QLatin1Char('\n');
+                result += gitTr("  modified: %1\n").arg(path);
             if (flags & GIT_STATUS_INDEX_DELETED)
-                result += QStringLiteral("  ") + gitTr("deleted:") + QLatin1Char(' ') + path + QLatin1Char('\n');
+                result += gitTr("  deleted: %1\n").arg(path);
             if (flags & GIT_STATUS_INDEX_RENAMED)
-                result += QStringLiteral("  ") + gitTr("renamed:") + QLatin1Char(' ') + path + QLatin1Char('\n');
+                result += gitTr("  renamed: %1\n").arg(path);
             if (flags & GIT_STATUS_WT_NEW)
-                result += QStringLiteral("  ") + gitTr("untracked:") + QLatin1Char(' ') + path + QLatin1Char('\n');
+                result += gitTr("  untracked: %1\n").arg(path);
             if (flags & GIT_STATUS_WT_MODIFIED)
-                result += QStringLiteral("  ") + gitTr("modified:") + QLatin1Char(' ') + path + QLatin1Char('\n');
+                result += gitTr("  modified: %1\n").arg(path);
             if (flags & GIT_STATUS_WT_DELETED)
-                result += QStringLiteral("  ") + gitTr("deleted:") + QLatin1Char(' ') + path + QLatin1Char('\n');
+                result += gitTr("  deleted: %1\n").arg(path);
         }
 
         git_status_list_free(statusList);

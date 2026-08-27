@@ -3587,7 +3587,7 @@ void CustomCodeEditor::renderInlineBlame(QPainter* painter)
         else timeStr = tr("%1 years ago").arg(secs / (86400 * 365));
     }
 
-    QString text = info.isUncommitted ? timeStr : QString("%1, %2").arg(info.authorName).arg(timeStr);
+    QString text = info.isUncommitted ? timeStr : tr("%1, %2").arg(info.authorName, timeStr);
 
     painter->save();
     painter->setFont(m_font);
