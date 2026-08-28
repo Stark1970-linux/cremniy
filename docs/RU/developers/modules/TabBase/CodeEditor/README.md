@@ -1,10 +1,4 @@
-<div align="center">
-
-[English](custom_code_editor.md) • Русский
-
-</div>
-
-# Кастомный редактор кода
+# Редактор кода
 
 ## Обзор
 
