@@ -126,6 +126,10 @@ void PaletteEditorDialog::buildUi()
     });
     form->addRow(systemTitleBarTitle, m_darkSystemTitleBarCheck);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> a6f770f5df59d66753da8e25600e6ca5b1b4f005
     auto* systemTitleBarHint = new QLabel(
         tr("Use the dark system window title bar. When disabled, the system uses the light title bar."),
         content);
@@ -133,6 +137,8 @@ void PaletteEditorDialog::buildUi()
     systemTitleBarHint->setWordWrap(true);
     form->addRow(systemTitleBarHint);
 
+=======
+>>>>>>> 75c4e5556857a947551c7cc687dadb5e37d561c0
     content->setLayout(form);
     scrollArea->setWidget(content);
     rootLayout->addWidget(scrollArea, 1);

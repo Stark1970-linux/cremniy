@@ -1,13 +1,13 @@
-#ifndef BLAMELINEINFO_H
-#define BLAMELINEINFO_H
+#pragma once
 
-#include <QString>
 #include <QDateTime>
+#include <QString>
 
 /**
- * @brief Information about a single line blame
+ * Presentation data for an inline line attribution in the code editor.
+ * The editor owns this view model and has no dependency on its data source.
  */
-struct BlameLineInfo {
+struct EditorBlameLineInfo {
     QString authorName;
     QString authorEmail;
     QDateTime commitDate;
@@ -16,5 +16,3 @@ struct BlameLineInfo {
     QString commitSummary;
     bool isUncommitted = false;
 };
-
-#endif // BLAMELINEINFO_H
