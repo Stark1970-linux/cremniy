@@ -151,6 +151,6 @@ QWidget#searchPanel QLabel#searchStatusLabel {
     font-size: 11px;
 }
 
-QDialog#settingsDialog QLabel#settingsHintLabel {
+QLabel#settingsHintLabel {
     font-size: 11px;
 }
