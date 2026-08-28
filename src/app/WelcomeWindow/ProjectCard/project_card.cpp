@@ -13,14 +13,33 @@
 
 #include "project_card.h"
 
-#include <QApplication>
 #include <QColor>
 #include <QFileInfo>
+#include <QHash>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
-#include "core/theme/thememanager.h"
+namespace {
+
+// Базовые цвета иконок языков программирования. Это фиксированные цвета,
+// не зависящие от темы и не редактируемые пользователем - только
+// нейтральный дефолт ("?") подстраивается под тему через QSS
+// (#ProjectCardBadge { background: palette(dark); }).
+QColor languageBadgeColor(const QString& language)
+{
+    static const QHash<QString, QColor> kColors = {
+        { QStringLiteral("C"),        QColor("#4A6FA5") },
+        { QStringLiteral("C++"),      QColor("#00599C") },
+        { QStringLiteral("ASM"),      QColor("#8B0000") },
+        { QStringLiteral("C + ASM"),  QColor("#6A0DAD") },
+        { QStringLiteral("Rust"),     QColor("#CE422B") },
+        { QStringLiteral("Custom"),   QColor("#2E7D32") },
+    };
+    return kColors.value(language);
+}
+
+} // namespace
 
 ProjectCard::ProjectCard(const utils::RecentProject& project, QWidget* parent)
     : QWidget(parent)
@@ -34,21 +53,26 @@ ProjectCard::ProjectCard(const utils::RecentProject& project, QWidget* parent)
     root->setSpacing(12);
 
     const QString language = project.language.isEmpty() ? "?" : project.language;
-    m_language = language;
 
     auto* badge = new QLabel(shortLang(language));
-    m_badge = badge;
     badge->setObjectName("ProjectCardBadge");
     badge->setFixedSize(42, 42);
     badge->setAlignment(Qt::AlignCenter);
     badge->setProperty("language", language);
-    root->addWidget(badge);
-    applyBadgeColor();
 
-    connect(&ThemeManager::instance(), &ThemeManager::currentThemeChanged,
-            this, [this](const QString&) { applyBadgeColor(); });
-    connect(&ThemeManager::instance(), &ThemeManager::themePreviewChanged,
-            this, [this]() { applyBadgeColor(); });
+    const QColor badgeColor = languageBadgeColor(language);
+    if (badgeColor.isValid()) {
+        // Известный язык - фиксированный базовый цвет, одинаковый во всех
+        // темах и не настраиваемый через редактор темы.
+        badge->setStyleSheet(QStringLiteral(
+            "QLabel#ProjectCardBadge { background-color: %1; }"
+        ).arg(badgeColor.name(QColor::HexRgb)));
+    }
+    // Неизвестный язык ("?") намеренно не красим инлайн-стилем: для него
+    // работает нейтральный QSS-фон #ProjectCardBadge { background: palette(dark); },
+    // который сам подстраивается под текущую тему.
+
+    root->addWidget(badge);
 
     auto* info = new QVBoxLayout();
     info->setSpacing(3);
@@ -95,23 +119,6 @@ ProjectCard::ProjectCard(const utils::RecentProject& project, QWidget* parent)
     connect(removeBtn, &QPushButton::clicked, this, [this]() {
         emit removeRequested(m_path);
     });
-}
-
-void ProjectCard::applyBadgeColor()
-{
-    if (!m_badge)
-        return;
-
-    const QByteArray propertyName = (QStringLiteral("cremniyProjectIconColor_") + m_language).toLatin1();
-    QColor color = qApp->property(propertyName.constData()).value<QColor>();
-    if (!color.isValid())
-        color = qApp->property("cremniyProjectIconColor_?").value<QColor>();
-    if (!color.isValid())
-        color = QColor("#3A3A3A");
-
-    m_badge->setStyleSheet(QStringLiteral(
-        "QLabel#ProjectCardBadge { background-color: %1; }"
-    ).arg(color.name(QColor::HexRgb)));
 }
 
 QString ProjectCard::shortLang(const QString& lang)

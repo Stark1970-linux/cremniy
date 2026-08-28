@@ -33,7 +33,6 @@ struct ThemeDefinition
     QMap<QPalette::ColorRole, QColor> colors;
     QColor iconColor;
     bool darkSystemTitleBar = false;
-    QMap<QString, QColor> projectIconColors;
 
     QPalette toQPalette() const;
 };

@@ -4,6 +4,8 @@
 #include <QApplication>
 #include <QFile>
 #include <QSettings>
+#include <QStandardPaths>
+#include <QDir>
 #include <QUuid>
 #include <QStringList>
 
@@ -11,6 +13,15 @@ namespace {
 
 QString settingsGroupCustomThemes() { return QStringLiteral("appearance/customThemes"); }
 QString settingsKeyCurrentTheme() { return QStringLiteral("appearance/currentTheme"); }
+
+// Единая точка правды для каталога, в котором хранятся файлы пользовательских
+// тем (по одному INI-файлу на тему). Используем AppConfigLocation, так как
+// темы - это конфигурация приложения, а не пользовательские данные проекта.
+QString themesDirPath()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+        + QStringLiteral("/themes");
+}
 
 // Порядок и метаданные ролей, которые пользователь может редактировать.
 // displayName/description специально держим в коде (а не через tr() в
@@ -40,15 +51,6 @@ ThemeDefinition makeDarkTheme()
     t.isBuiltin = true;
     t.iconColor = QColor("#FFFFFF");
     t.darkSystemTitleBar = true;
-    t.projectIconColors = {
-        { QStringLiteral("C"), QColor("#4A6FA5") },
-        { QStringLiteral("C++"), QColor("#00599C") },
-        { QStringLiteral("ASM"), QColor("#8B0000") },
-        { QStringLiteral("C + ASM"), QColor("#6A0DAD") },
-        { QStringLiteral("Rust"), QColor("#CE422B") },
-        { QStringLiteral("Custom"), QColor("#2E7D32") },
-        { QStringLiteral("?"), QColor("#3A3A3A") },
-    };
     t.colors = {
         { QPalette::Window,          QColor("#1E1E1E") },
         { QPalette::WindowText,      QColor("#D4D4D4") },
@@ -76,15 +78,6 @@ ThemeDefinition makeLightTheme()
     t.isBuiltin = true;
     t.iconColor = QColor("#1E1E1E");
     t.darkSystemTitleBar = false;
-    t.projectIconColors = {
-        { QStringLiteral("C"), QColor("#4A6FA5") },
-        { QStringLiteral("C++"), QColor("#00599C") },
-        { QStringLiteral("ASM"), QColor("#8B0000") },
-        { QStringLiteral("C + ASM"), QColor("#6A0DAD") },
-        { QStringLiteral("Rust"), QColor("#CE422B") },
-        { QStringLiteral("Custom"), QColor("#2E7D32") },
-        { QStringLiteral("?"), QColor("#3A3A3A") },
-    };
     t.colors = {
         { QPalette::Window,          QColor("#F3F3F3") },
         { QPalette::WindowText,      QColor("#1E1E1E") },
@@ -131,6 +124,13 @@ QPalette ThemeDefinition::toQPalette() const
     // выглядели "сломанными" при отключении.
     for (auto it = colors.constBegin(); it != colors.constEnd(); ++it)
         p.setColor(QPalette::Disabled, it.key(), it.value().darker(120));
+
+    const QColor textColor = colors.value(QPalette::Text, p.color(QPalette::Text));
+    QColor placeholder = textColor;
+    placeholder.setAlpha(150);
+    p.setColor(QPalette::Active, QPalette::PlaceholderText, placeholder);
+    p.setColor(QPalette::Inactive, QPalette::PlaceholderText, placeholder);
+    p.setColor(QPalette::Disabled, QPalette::PlaceholderText, textColor.darker(140));
     return p;
 }
 
@@ -245,7 +245,6 @@ QString ThemeManager::createCustomTheme(const QString& name, const QString& base
     def.colors = base.colors;
     def.iconColor = base.iconColor;
     def.darkSystemTitleBar = base.darkSystemTitleBar;
-    def.projectIconColors = base.projectIconColors;
 
     m_customThemes.append(def);
     saveCustomThemes();
@@ -265,12 +264,6 @@ bool ThemeManager::updateCustomTheme(const ThemeDefinition& definition)
                 ? definition.iconColor
                 : m_builtins.first().iconColor;
             t.darkSystemTitleBar = definition.darkSystemTitleBar;
-            t.projectIconColors = definition.projectIconColors;
-            for (auto it = m_builtins.first().projectIconColors.constBegin();
-                 it != m_builtins.first().projectIconColors.constEnd(); ++it) {
-                if (!t.projectIconColors.contains(it.key()) || !t.projectIconColors.value(it.key()).isValid())
-                    t.projectIconColors.insert(it.key(), it.value());
-            }
             saveCustomThemes();
             emit themesChanged();
             if (m_currentThemeId == t.id)
@@ -285,7 +278,10 @@ bool ThemeManager::removeCustomTheme(const QString& id)
 {
     for (int i = 0; i < m_customThemes.size(); ++i) {
         if (m_customThemes[i].id == id) {
+            const QString themeFilePath =
+                QDir(themesDirPath()).filePath(id + QStringLiteral(".ini"));
             m_customThemes.removeAt(i);
+            QFile::remove(themeFilePath);
             saveCustomThemes();
             emit themesChanged();
             if (m_currentThemeId == id)
@@ -300,77 +296,122 @@ void ThemeManager::loadCustomThemes()
 {
     m_customThemes.clear();
 
-    QSettings settings;
-    const int count = settings.beginReadArray(settingsGroupCustomThemes());
-    for (int i = 0; i < count; ++i) {
-        settings.setArrayIndex(i);
+    QDir themesDir(themesDirPath());
+    if (!themesDir.exists())
+        themesDir.mkpath(QStringLiteral("."));
 
+    // One-time migration from the previous themes location (AppDataLocation)
+    // to the current one (AppConfigLocation). Only runs if the new directory
+    // is still empty, so it never overwrites themes the user already has
+    // in the new location.
+    if (themesDir.entryList({QStringLiteral("*.ini")}, QDir::Files).isEmpty()) {
+        const QString oldThemesDirPath =
+            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/themes");
+        QDir oldThemesDir(oldThemesDirPath);
+        if (oldThemesDir.exists()) {
+            const QStringList oldFiles = oldThemesDir.entryList({QStringLiteral("*.ini")}, QDir::Files);
+            for (const QString& fileName : oldFiles)
+                QFile::copy(oldThemesDir.filePath(fileName), themesDir.filePath(fileName));
+        }
+    }
+
+    const QStringList files = themesDir.entryList({QStringLiteral("*.ini")}, QDir::Files, QDir::Name);
+    for (const QString& fileName : files) {
+        QSettings settings(themesDir.filePath(fileName), QSettings::IniFormat);
         ThemeDefinition def;
-        def.id = settings.value("id").toString();
-        def.name = settings.value("name").toString();
-        def.isBuiltin = false;
+        def.id = settings.value(QStringLiteral("id")).toString();
+        def.name = settings.value(QStringLiteral("name")).toString();
         if (def.id.isEmpty() || def.name.isEmpty())
             continue;
+        def.isBuiltin = false;
 
         for (const auto& roleInfo : kEditableRoles) {
             const QString stored = settings.value(roleInfo.id).toString();
-            if (!stored.isEmpty())
-                def.colors.insert(roleInfo.role, QColor(stored));
+            const QColor color(stored);
+            if (color.isValid())
+                def.colors.insert(roleInfo.role, color);
         }
 
-        const QString storedIconColor = settings.value("iconColor").toString();
-        const bool hasDarkSystemTitleBar = settings.contains("darkSystemTitleBar");
-        const QString storedTitleBarColor = settings.value("titleBarColor").toString();
-        const QColor parsedIconColor(storedIconColor);
-        const QColor parsedTitleBarColor(storedTitleBarColor);
-        def.iconColor = parsedIconColor.isValid() ? parsedIconColor : m_builtins.first().iconColor;
-        if (hasDarkSystemTitleBar)
-            def.darkSystemTitleBar = settings.value("darkSystemTitleBar").toBool();
-        else if (parsedTitleBarColor.isValid())
-            def.darkSystemTitleBar = parsedTitleBarColor.lightnessF() < 0.5;
-        else
-            def.darkSystemTitleBar = m_builtins.first().darkSystemTitleBar;
-        for (auto it = m_builtins.first().projectIconColors.constBegin();
-             it != m_builtins.first().projectIconColors.constEnd(); ++it) {
-            const QString key = QStringLiteral("projectIconColor.") + it.key();
-            const QColor parsed(settings.value(key).toString());
-            def.projectIconColors.insert(it.key(), parsed.isValid() ? parsed : it.value());
-        }
-        // Заполняем пропущенные роли из тёмной темы, чтобы не остаться
-        // с "дырами" в палитре (например, после добавления новой роли).
-        const auto fallback = m_builtins.first().colors;
-        for (auto it = fallback.constBegin(); it != fallback.constEnd(); ++it) {
+        const QColor iconColor(settings.value(QStringLiteral("iconColor")).toString());
+        def.iconColor = iconColor.isValid() ? iconColor : m_builtins.first().iconColor;
+        def.darkSystemTitleBar = settings.value(
+            QStringLiteral("darkSystemTitleBar"), m_builtins.first().darkSystemTitleBar).toBool();
+
+        // Fill newly introduced palette roles from the current Dark fallback.
+        for (auto it = m_builtins.first().colors.constBegin();
+             it != m_builtins.first().colors.constEnd(); ++it) {
             if (!def.colors.contains(it.key()))
                 def.colors.insert(it.key(), it.value());
         }
 
         m_customThemes.append(def);
     }
-    settings.endArray();
+
+    // One-time migration from the old QSettings array. The new source of
+    // truth is now the themes directory, so themes are portable and no
+    // longer mixed into the general application settings store.
+    if (m_customThemes.isEmpty()) {
+        QSettings legacy;
+        const int count = legacy.beginReadArray(settingsGroupCustomThemes());
+        for (int i = 0; i < count; ++i) {
+            legacy.setArrayIndex(i);
+            ThemeDefinition def;
+            def.id = legacy.value(QStringLiteral("id")).toString();
+            def.name = legacy.value(QStringLiteral("name")).toString();
+            if (def.id.isEmpty() || def.name.isEmpty())
+                continue;
+            def.isBuiltin = false;
+            for (const auto& roleInfo : kEditableRoles) {
+                const QColor color(legacy.value(roleInfo.id).toString());
+                if (color.isValid())
+                    def.colors.insert(roleInfo.role, color);
+            }
+            const QColor iconColor(legacy.value(QStringLiteral("iconColor")).toString());
+            def.iconColor = iconColor.isValid() ? iconColor : m_builtins.first().iconColor;
+            if (legacy.contains(QStringLiteral("darkSystemTitleBar")))
+                def.darkSystemTitleBar = legacy.value(QStringLiteral("darkSystemTitleBar")).toBool();
+            else {
+                const QColor oldTitleBar(legacy.value(QStringLiteral("titleBarColor")).toString());
+                def.darkSystemTitleBar = oldTitleBar.isValid()
+                    ? oldTitleBar.lightnessF() < 0.5
+                    : m_builtins.first().darkSystemTitleBar;
+            }
+            for (auto it = m_builtins.first().colors.constBegin();
+                 it != m_builtins.first().colors.constEnd(); ++it) {
+                if (!def.colors.contains(it.key()))
+                    def.colors.insert(it.key(), it.value());
+            }
+            m_customThemes.append(def);
+        }
+        legacy.endArray();
+        if (!m_customThemes.isEmpty()) {
+            saveCustomThemes();
+            legacy.remove(settingsGroupCustomThemes());
+            legacy.sync();
+        }
+    }
 }
 
 void ThemeManager::saveCustomThemes() const
 {
-    QSettings settings;
-    settings.beginWriteArray(settingsGroupCustomThemes());
-    for (int i = 0; i < m_customThemes.size(); ++i) {
-        settings.setArrayIndex(i);
-        const auto& t = m_customThemes[i];
-        settings.setValue("id", t.id);
-        settings.setValue("name", t.name);
+    QDir themesDir(themesDirPath());
+    if (!themesDir.exists())
+        themesDir.mkpath(QStringLiteral("."));
+
+    for (const auto& t : m_customThemes) {
+        QSettings settings(themesDir.filePath(t.id + QStringLiteral(".ini")), QSettings::IniFormat);
+        settings.clear();
+        settings.setValue(QStringLiteral("id"), t.id);
+        settings.setValue(QStringLiteral("name"), t.name);
         for (auto it = t.colors.constBegin(); it != t.colors.constEnd(); ++it) {
             const QString key = colorRoleKey(it.key());
             if (!key.isEmpty())
                 settings.setValue(key, it.value().name(QColor::HexRgb));
         }
-        settings.setValue("iconColor", t.iconColor.name(QColor::HexRgb));
-        settings.setValue("darkSystemTitleBar", t.darkSystemTitleBar);
-        for (auto it = t.projectIconColors.constBegin(); it != t.projectIconColors.constEnd(); ++it) {
-            if (it.value().isValid())
-                settings.setValue(QStringLiteral("projectIconColor.") + it.key(), it.value().name(QColor::HexRgb));
-        }
+        settings.setValue(QStringLiteral("iconColor"), t.iconColor.name(QColor::HexRgb));
+        settings.setValue(QStringLiteral("darkSystemTitleBar"), t.darkSystemTitleBar);
+        settings.sync();
     }
-    settings.endArray();
 }
 
 void ThemeManager::applySystemTitleBar(QWidget* window) const
@@ -390,9 +431,6 @@ void ThemeManager::applyThemeToApplication(const ThemeDefinition& def) const
     qApp->setProperty("cremniyDarkSystemTitleBar", def.darkSystemTitleBar);
     for (QWidget* window : qApp->topLevelWidgets())
         SystemTitleBar::apply(window, def.darkSystemTitleBar);
-    for (auto it = def.projectIconColors.constBegin(); it != def.projectIconColors.constEnd(); ++it) {
-        qApp->setProperty((QStringLiteral("cremniyProjectIconColor_") + it.key()).toLatin1().constData(), it.value());
-    }
     qApp->setStyleSheet(regenerateStyleSheet(def));
 }
 
