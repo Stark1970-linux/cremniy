@@ -105,12 +105,12 @@ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86
 For Debian-based distributions:
 ```bash
 sudo apt update
-sudo apt install cmake g++ qt6-base-dev libgit2-dev
+sudo apt install cmake g++ qt6-base-dev qt6-svg-dev qt6-tools-dev-tools libgit2-dev zlib1g-dev libssl-dev libpcre2-dev libhttp-parser-dev
 ```
 For Fedora:
 ```bash
 sudo dnf update --refresh
-sudo dnf install cmake gcc-c++ qt6-qtbase-devel libgit2-devel
+sudo dnf install cmake gcc-c++ qt6-qtbase-devel qt6-qtsvg-devel qt6-qttools-devel libgit2-devel zlib-devel openssl-devel pcre2-devel http-parser-devel
 ```
 
 > ℹ️ **NOTE:** 
