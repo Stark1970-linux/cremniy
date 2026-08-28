@@ -21,6 +21,7 @@ PaletteEditorDialog::PaletteEditorDialog(const QString& themeId, QWidget* parent
     m_workingColors = def.colors;
     m_workingTheme = def;
 
+    setObjectName(QStringLiteral("settingsDialog"));
     setWindowTitle(tr("Edit theme"));
     resize(420, 560);
     buildUi();
@@ -137,50 +138,6 @@ void PaletteEditorDialog::buildUi()
     });
     form->addRow(systemTitleBarBox, m_darkSystemTitleBarCheck);
 
-    auto* projectIconsHeading = new QLabel(tr("Project icons"), content);
-    QFont projectIconsFont = projectIconsHeading->font();
-    projectIconsFont.setBold(true);
-    projectIconsFont.setPointSize(projectIconsFont.pointSize() + 1);
-    projectIconsHeading->setFont(projectIconsFont);
-    projectIconsHeading->setObjectName("settingsSectionTitle");
-    form->addRow(projectIconsHeading);
-
-    const struct { const char* key; const char* title; } projectIconColors[] = {
-        { "C", QT_TR_NOOP("C") },
-        { "C++", QT_TR_NOOP("C++") },
-        { "ASM", QT_TR_NOOP("ASM") },
-        { "C + ASM", QT_TR_NOOP("C + ASM") },
-        { "Rust", QT_TR_NOOP("Rust") },
-        { "Custom", QT_TR_NOOP("Custom") },
-        { "?", QT_TR_NOOP("Unknown") },
-    };
-
-    for (const auto& info : projectIconColors) {
-        const QString key = QStringLiteral("projectIconColor.") + QString::fromLatin1(info.key);
-        auto* labelBox = new QWidget(content);
-        auto* labelLayout = new QVBoxLayout(labelBox);
-        labelLayout->setContentsMargins(0, 0, 0, 0);
-        labelLayout->setSpacing(2);
-        auto* title = new QLabel(tr(info.title), labelBox);
-        QFont titleFont = title->font();
-        titleFont.setBold(true);
-        title->setFont(titleFont);
-        auto* hint = new QLabel(tr("Color of this language badge on the Recent Projects page"), labelBox);
-        hint->setObjectName("settingsHintLabel");
-        hint->setWordWrap(true);
-        labelLayout->addWidget(title);
-        labelLayout->addWidget(hint);
-
-        auto* swatch = new QToolButton(content);
-        swatch->setObjectName("paletteColorSwatch");
-        swatch->setFixedSize(56, 28);
-        swatch->setToolTip(tr("Click to choose a color"));
-        connect(swatch, &QToolButton::clicked, this, [this, key]() { onPickExtraColor(key); });
-        m_extraSwatches.insert(key, swatch);
-        updateExtraSwatch(key);
-        form->addRow(labelBox, swatch);
-    }
-
     content->setLayout(form);
     scrollArea->setWidget(content);
     rootLayout->addWidget(scrollArea, 1);
@@ -224,8 +181,6 @@ void PaletteEditorDialog::onPickExtraColor(const QString& key)
     QColor current;
     if (key == QStringLiteral("iconColor"))
         current = m_workingTheme.iconColor;
-    else if (key.startsWith(QStringLiteral("projectIconColor.")))
-        current = m_workingTheme.projectIconColors.value(key.mid(QStringLiteral("projectIconColor.").size()));
     else
         return;
 
@@ -233,20 +188,14 @@ void PaletteEditorDialog::onPickExtraColor(const QString& key)
     connect(&dialog, &QColorDialog::currentColorChanged, this, [this, key](const QColor& color) {
         if (!color.isValid()) return;
         if (key == QStringLiteral("iconColor")) m_workingTheme.iconColor = color;
-        else if (key.startsWith(QStringLiteral("projectIconColor.")))
-            m_workingTheme.projectIconColors[key.mid(QStringLiteral("projectIconColor.").size())] = color;
         updateExtraSwatch(key);
         applyLivePreview();
     });
 
     if (dialog.exec() == QDialog::Accepted && dialog.selectedColor().isValid()) {
         if (key == QStringLiteral("iconColor")) m_workingTheme.iconColor = dialog.selectedColor();
-        else if (key.startsWith(QStringLiteral("projectIconColor.")))
-            m_workingTheme.projectIconColors[key.mid(QStringLiteral("projectIconColor.").size())] = dialog.selectedColor();
     } else {
         if (key == QStringLiteral("iconColor")) m_workingTheme.iconColor = current;
-        else if (key.startsWith(QStringLiteral("projectIconColor.")))
-            m_workingTheme.projectIconColors[key.mid(QStringLiteral("projectIconColor.").size())] = current;
     }
     updateExtraSwatch(key);
     applyLivePreview();
@@ -267,8 +216,6 @@ void PaletteEditorDialog::updateExtraSwatch(const QString& key)
     if (!swatch) return;
     QColor color;
     if (key == QStringLiteral("iconColor")) color = m_workingTheme.iconColor;
-    else if (key.startsWith(QStringLiteral("projectIconColor.")))
-        color = m_workingTheme.projectIconColors.value(key.mid(QStringLiteral("projectIconColor.").size()));
     if (!color.isValid()) return;
     swatch->setStyleSheet(QStringLiteral("QToolButton#paletteColorSwatch { background-color: %1; }").arg(color.name(QColor::HexRgb)));
 }
@@ -290,7 +237,6 @@ void PaletteEditorDialog::onSave()
     def.colors = m_workingColors;
     def.iconColor = m_workingTheme.iconColor;
     def.darkSystemTitleBar = m_workingTheme.darkSystemTitleBar;
-    def.projectIconColors = m_workingTheme.projectIconColors;
 
     ThemeManager::instance().updateCustomTheme(def);
     ThemeManager::instance().setCurrentTheme(m_themeId);

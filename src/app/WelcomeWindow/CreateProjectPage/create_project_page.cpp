@@ -31,7 +31,7 @@ CreateProjectPage::CreateProjectPage(QWidget* parent)
 
     /* Title */
     auto* title = new QLabel(tr("New Project"));
-    title->setStyleSheet("color:#e0e0e0; font-size:16px; font-weight:bold;");
+    title->setObjectName("CreateProjectTitle");
     root->addWidget(title);
     root->addSpacing(24);
 

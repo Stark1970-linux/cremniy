@@ -336,7 +336,7 @@ QDialog#settingsDialog QLabel#settingsDialogTitle {
     font-weight: 600;
 }
 
-QDialog#settingsDialog QLabel#settingsHintLabel {
+QLabel#settingsHintLabel {
     color: palette(placeholder-text);
 }
 
