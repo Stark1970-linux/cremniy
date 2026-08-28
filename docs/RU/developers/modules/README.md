@@ -1,4 +1,4 @@
-# Гайд по модулям
+# Модули
 
 Этот документ содержит **описание модулей** и **инструкцию** по их **разработке** и **добавлению** в Cremniy 
 
@@ -14,7 +14,7 @@
 	- [2.2. Tab](#22-tab)
 	- [2.3. Window](#23-window)
 	- [2.4. Reference](#24-reference)
-- [3. API](#unknown)
+- [3. API](#3-api)
 - [4. Настройки модулей](#4-настройки-модулей)
 
 ## 1. Описание модулей
@@ -149,6 +149,13 @@ ModuleManager::instance().registerReference("ExampleName", "ExampleGroup", []() 
     return true;
 }();
 ```
+
+## 3. API
+
+Подробная документация по созданию и API отдельных видов модулей:
+- [API для Tab-модулей (TabBase)](TabBaseAPI.md)
+- *API для Window-модулей (WindowBase) — в разработке*
+- *API для Reference-модулей (ReferenceBase) — в разработке*
 
 ## 4. Настройки модулей
 
