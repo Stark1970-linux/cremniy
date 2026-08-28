@@ -1,3 +1,0 @@
-#pragma once
-#define APP_LANGUAGES "@APP_LANGUAGES_STR@"
-#define CREMNIY_VERSION "@PROJECT_VERSION@"

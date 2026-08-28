@@ -1,6 +1,0 @@
-file(GLOB REFERENCES_DIRS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*)
-foreach(dir ${REFERENCES_DIRS})
-    if(IS_DIRECTORY ${dir})
-        add_subdirectory(${dir})
-    endif()
-endforeach()
