@@ -1,16 +1,17 @@
 #include "idewindow.h"
-#include "dialogs/filecreatedialog.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
 #include <qheaderview.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
-#include "core/icons/iconprovider.h"
 #include <QApplication>
+#include "dialogs/configurebuild.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/search/searchpanel.h"
+#include "widgets/terminal/terminalpanel.h"
 #include <QShortcut>
+#include <qtimer.h>
 
 IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     : QMainWindow(parent), m_projectPath(ProjectPath) {
@@ -18,11 +19,20 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     // - - Window Settings - -
     this->setWindowState(Qt::WindowMaximized);
     this->setWindowTitle("Cremniy");
+    setMinimumSize(800, 600);
 
     // - - Menu Bar - -
     auto const menu = menuBar();
     MenuBarBuilder menuBarBuilder(menu, this);
     menu->setNativeMenuBar(false);
+
+    // - - Get Project Info - -
+    if (!ProjectInfoManager::loadProjectInfo(ProjectPath, m_projectInfo)){
+        QString dirName = QDir(ProjectPath).dirName();
+        m_projectInfo.name = dirName;
+        m_projectInfo.path = ProjectPath;
+        ProjectInfoManager::saveProjectInfo(m_projectInfo);
+    }
 
     // - - Widgets - -
     m_statusBar = statusBar();
@@ -37,10 +47,7 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
 
     m_verticalSplitter = new QSplitter(Qt::Vertical, m_mainWidget);
 
-    // Terminal is initialized lazily on demand (see on_Toggle_Terminal)
-    // m_terminal = new TerminalWidget(this, ProjectPath);
-    // m_terminal->setVisible(false);
-    m_terminal = nullptr;
+    m_terminalPanel = nullptr;
 
     m_leftSidebar = new QWidget(this);
     auto const leftLayout = new QVBoxLayout(m_leftSidebar);
@@ -106,6 +113,9 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     connect(this, &IDEWindow::setWordWrapSignal, m_filesTabWidget, &FilesTabWidget::setWordWrapSlot);
     connect(this, &IDEWindow::setTabReplaceSignal, m_filesTabWidget, &FilesTabWidget::setTabReplaceSlot);
     connect(this, &IDEWindow::setTabWidthSignal, m_filesTabWidget, &FilesTabWidget::setTabWidthSlot);
+    connect(this, &IDEWindow::setGitBlameSignal, m_filesTabWidget, &FilesTabWidget::setGitBlameSlot);
+    connect(m_filesTabWidget, &FilesTabWidget::gitBlameEnabledChanged,
+            this, &IDEWindow::gitBlameEnabledChanged);
     connect(this, &IDEWindow::openTabModule, m_filesTabWidget, &FilesTabWidget::openTabModule);
 
     connect(m_filesTreeView, &FileTreePanel::openFileRequested, this, [this](const QString& filePath, const QString& fileName) {
@@ -142,26 +152,80 @@ IDEWindow::IDEWindow(const QString &ProjectPath, QWidget *parent)
     connect(m_searchPanel, &SearchPanel::statusMessage, this, [this](const QString& message) {
         m_statusLabel->setText(message);
     });
+
+    // - - Configure Build - -
+    QTimer::singleShot(0, this, &IDEWindow::configurateBuild);
+
 }
 
 IDEWindow::~IDEWindow() = default;
 
-void IDEWindow::on_Toggle_Terminal(bool checked) {
-    if (checked && !m_terminal) {
-        m_terminal = new TerminalWidget(this, m_projectPath);
-        m_verticalSplitter->addWidget(m_terminal);
-        m_verticalSplitter->setCollapsible(1, true);
-        m_verticalSplitter->setSizes({800, 200});
+bool IDEWindow::gitBlameEnabled() const
+{
+    return m_filesTabWidget && m_filesTabWidget->gitBlameEnabled();
+}
+
+void IDEWindow::configurateBuild(){
+
+    if (m_projectInfo.buildCommand.trimmed().isEmpty()){
+        openBuildConfigurate();
     }
 
-    if (!m_terminal) {
+}
+
+
+void IDEWindow::openBuildConfigurate(){
+
+    ConfigureBuild confBuildDialog(m_projectInfo, this);
+    if (confBuildDialog.exec() == QDialog::Accepted) {
+        ProjectInfoManager::saveProjectInfo(m_projectInfo);
+    }
+
+}
+
+
+void IDEWindow::on_Build(){
+    m_filesTabWidget->createBuildTab(m_projectInfo);
+}
+
+
+void IDEWindow::on_openBuildConfigurate(){
+    openBuildConfigurate();
+}
+
+
+void IDEWindow::on_Toggle_Terminal(bool checked) {
+    if (checked && !m_terminalPanel) {
+        auto *panel = new TerminalPanel(m_projectPath, this);
+        m_terminalPanel = panel;
+        m_verticalSplitter->addWidget(panel);
+        m_verticalSplitter->setCollapsible(1, true);
+        m_verticalSplitter->setSizes({800, 200});
+
+        connect(panel, &TerminalPanel::closeRequested, this, [this, panel] {
+            if (m_terminalPanel != panel)
+                return;
+
+            m_terminalPanel = nullptr;
+            panel->hide();
+            panel->deleteLater();
+            emit terminalVisibilityChanged(false);
+
+            if (auto *tab = currentFileTab())
+                tab->setFocus(Qt::ShortcutFocusReason);
+        });
+    }
+
+    if (!m_terminalPanel) {
+        emit terminalVisibilityChanged(false);
         return;
     }
 
-    m_terminal->setVisible(checked);
+    m_terminalPanel->setVisible(checked);
+    emit terminalVisibilityChanged(checked);
 
     if (checked) {
-        m_terminal->setFocus();
+        m_terminalPanel->focusActiveTerminal();
     }
 }
 
@@ -175,6 +239,11 @@ void IDEWindow::on_SetTabReplace(bool checked) {
 
 void IDEWindow::on_SetTabWidth(int width) {
     emit setTabWidthSignal(width);
+}
+
+void IDEWindow::on_SetGitBlame(bool enabled)
+{
+    emit setGitBlameSignal(enabled);
 }
 
 void IDEWindow::on_Toggle_FileTree(bool checked) const {

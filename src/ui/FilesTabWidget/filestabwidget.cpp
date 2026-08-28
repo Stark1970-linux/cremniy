@@ -18,6 +18,7 @@
 #include <qfileinfo.h>
 #include <QPushButton>
 #include "Modules/Tabs/CodeEditor/codeeditortab.h"
+#include "buildTab/buildtab.h"
 
 namespace {
 
@@ -58,12 +59,20 @@ void FilesTabWidget::tabSelect(int index) {
     FileTab *tab = qobject_cast<FileTab *>(widget(index));
     if (!tab || !tab->toolsTabWidget()) {
         emit statusBarInfoChanged(QString());
+        emit gitBlameEnabledChanged(false);
         return;
     }
     QWidget* currentTool = tab->toolsTabWidget()->currentWidget();
     QString lastInfo = currentTool ? currentTool->property("lastStatusBarInfo").toString() : QString();
     emit statusBarInfoChanged(lastInfo);
     emit searchDocumentsChanged();
+    emit gitBlameEnabledChanged(tab->gitBlameEnabled());
+}
+
+void FilesTabWidget::createBuildTab(const ProjectInfo &projInfo){
+    BuildTab *buildTab = new BuildTab(projInfo, this);
+    int new_tab_index = this->addTab(buildTab, tr("Build '%1'").arg(projInfo.name));
+    this->setCurrentIndex(new_tab_index);
 }
 
 // Create new tab and open file if he is not open already
@@ -96,7 +105,17 @@ void FilesTabWidget::openFile(QString filePath, QString tabTitle) {
     connect(this, &FilesTabWidget::setWordWrapSignal, filetab, &FileTab::setWordWrapSlot);
     connect(this, &FilesTabWidget::setTabReplaceSignal, filetab, &FileTab::setTabReplaceSlot);
     connect(this, &FilesTabWidget::setTabWidthSignal, filetab, &FileTab::setTabWidthSlot);
+    connect(this, &FilesTabWidget::setGitBlameSignal, filetab, &FileTab::setGitBlameSlot);
+    connect(filetab, &FileTab::gitBlameEnabledChanged,
+            this, &FilesTabWidget::gitBlameEnabledChanged);
+    emit gitBlameEnabledChanged(filetab->gitBlameEnabled());
 
+}
+
+bool FilesTabWidget::gitBlameEnabled() const
+{
+    const auto* fileTab = qobject_cast<const FileTab*>(currentWidget());
+    return fileTab && fileTab->gitBlameEnabled();
 }
 
 QVector<SearchDocument> FilesTabWidget::searchDocuments(SearchScope scope) const
@@ -409,4 +428,9 @@ void FilesTabWidget::setTabReplaceSlot(bool checked){
 
 void FilesTabWidget::setTabWidthSlot(int width){
     emit setTabWidthSignal(width);
+}
+
+void FilesTabWidget::setGitBlameSlot(bool checked)
+{
+    emit setGitBlameSignal(checked);
 }
